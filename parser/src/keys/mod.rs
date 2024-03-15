@@ -1,3 +1,4 @@
+#![allow(non_upper_case_globals)]
 //! Platform specific code for OS key code mappings.
 
 use kanata_keyberon::key_code::*;
