@@ -4,10 +4,10 @@ use parking_lot::Mutex;
 
 use crate::kanata::*;
 
-#[cfg(not(feature = "interception_driver"))]
+#[cfg(not(feature="interception_driver"))]
 mod llhook;
 
-#[cfg(feature = "interception_driver")]
+#[cfg(feature="interception_driver")]
 mod interception;
 
 pub static PRESSED_KEYS: Lazy<Mutex<HashSet<OsCode>>> =
@@ -21,7 +21,7 @@ pub fn set_win_altgr_behaviour(b: AltGrBehaviour) {
 }
 
 impl Kanata {
-    #[cfg(not(feature = "interception_driver"))]
+    #[cfg(not(feature="interception_driver"))]
     pub fn check_release_non_physical_shift(&mut self) -> Result<()> {
         fn state_filter(v: &State<'_, &&[&CustomAction]>) -> Option<State<'static, ()>> {
             match v {
@@ -123,7 +123,7 @@ impl Kanata {
         Ok(())
     }
 
-    #[cfg(feature = "interception_driver")]
+    #[cfg(feature="interception_driver")]
     pub fn check_release_non_physical_shift(&mut self) -> Result<()> {
         Ok(())
     }

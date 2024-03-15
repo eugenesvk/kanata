@@ -6,18 +6,18 @@ use encode_unicode::CharExt;
 
 use crate::oskbd::KeyValue;
 
-#[cfg(not(feature = "interception_driver"))]
+#[cfg(not(feature="interception_driver"))]
 mod llhook;
-#[cfg(not(feature = "interception_driver"))]
+#[cfg(not(feature="interception_driver"))]
 pub use llhook::*;
 
-#[cfg(feature = "interception_driver")]
+#[cfg(feature="interception_driver")]
 mod interception;
-#[cfg(feature = "interception_driver")]
+#[cfg(feature="interception_driver")]
 mod interception_convert;
-#[cfg(feature = "interception_driver")]
+#[cfg(feature="interception_driver")]
 pub use self::interception::*;
-#[cfg(feature = "interception_driver")]
+#[cfg(feature="interception_driver")]
 pub use interception_convert::*;
 
 pub const HI_RES_SCROLL_UNITS_IN_LO_RES: u16 = 120;
@@ -70,7 +70,7 @@ fn send_key_sendinput(code: u16, is_key_up: bool) {
             kb_input.dwFlags |= KEYEVENTF_KEYUP;
         }
 
-        #[cfg(feature = "win_sendinput_send_scancodes")]
+        #[cfg(feature="win_sendinput_send_scancodes")]
         {
             // GUI/Windows keys don't seem to like SCANCODE events so don't transform those.
             if i32::from(code) == VK_RWIN || i32::from(code) == VK_LWIN {
@@ -81,7 +81,7 @@ fn send_key_sendinput(code: u16, is_key_up: bool) {
                 kb_input.wScan = MapVirtualKeyA(code_u32, 0) as u16;
             }
         }
-        #[cfg(not(feature = "win_sendinput_send_scancodes"))]
+        #[cfg(not(feature="win_sendinput_send_scancodes"))]
         {
             kb_input.wVk = code;
         }
