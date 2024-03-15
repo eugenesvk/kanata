@@ -778,7 +778,7 @@ fn parse_deflocalkeys(
                 })?,
             None => bail_expr!(key_expr, "Key without a number in {def_local_keys_variant}"),
         };
-        log::debug!("custom mapping: {key} {}", osc.as_u16());
+        // log::debug!("custom mapping: {key} {}", osc.as_u16());
         localkeys.insert(key.to_owned(), osc);
     }
     Ok(localkeys)
