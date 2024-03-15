@@ -1,3 +1,4 @@
+#![allow(non_snake_case)]
 use anyhow::Result;
 
 use parking_lot::Mutex;

@@ -1,3 +1,4 @@
+#![allow(non_upper_case_globals)]
 use anyhow::{bail, Result};
 use clap::Parser;
 use kanata_parser::cfg;

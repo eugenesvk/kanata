@@ -1,3 +1,4 @@
+#![allow(non_snake_case)]
 use parking_lot::Mutex;
 use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender as Sender, TryRecvError};

@@ -1,3 +1,4 @@
+#![allow(non_upper_case_globals)]
 //! Implements the glue between OS input/output and keyberon state management.
 
 use anyhow::{bail, Result};
