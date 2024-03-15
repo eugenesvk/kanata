@@ -1,122 +1,131 @@
 // This file is adapted from the original ktrl's `keys.rs` file for Windows.
-
 use super::OsCode;
 
-#[allow(unused)]
-mod keys { // Taken from: github.com/retep998/winapi-rs/blob/0.3/src/um/winuser.rs#L253
-  pub const VK_CANCEL                        	:u16 = 0x03;
-  pub const VK_LBUTTON                       	:u16 = 0x01; pub const VK_RBUTTON 	:u16 = 0x02; pub const VK_MBUTTON	:u16 = 0x04;
-  pub const VK_XBUTTON1                      	:u16 = 0x05; pub const VK_XBUTTON2	:u16 = 0x06;
-  pub const VK_BACK                          	:u16 = 0x08;
-  pub const VK_TAB                           	:u16 = 0x09;
-  pub const VK_CLEAR                         	:u16 = 0x0C;
-  pub const VK_RETURN                        	:u16 = 0x0D;
-  pub const VK_MENU                          	:u16 = 0x12; pub const VK_LMENU	:u16 = 0xA4; pub const VK_RMENU	:u16 = 0xA5;
-  pub const VK_PAUSE                         	:u16 = 0x13;
-  pub const VK_CAPITAL                       	:u16 = 0x14;
-  pub const VK_LWIN                          	:u16 = 0x5B; pub const VK_RWIN    	:u16 = 0x5C;
-  pub const VK_LSHIFT                        	:u16 = 0xA0; pub const VK_RSHIFT  	:u16 = 0xA1; pub const VK_SHIFT  	:u16 = 0x10;
-  pub const VK_LCONTROL                      	:u16 = 0xA2; pub const VK_RCONTROL	:u16 = 0xA3; pub const VK_CONTROL	:u16 = 0x11;
-  pub const VK_KANA                          	:u16 = 0x15;
-  pub const VK_HANGEUL                       	:u16 = 0x15;
-  pub const VK_HANGUL                        	:u16 = 0x15;
-  pub const VK_NUMLOCK                       	:u16 = 0x90; pub const VK_SCROLL     	:u16 = 0x91;
-  pub const VK_OEM_FJ_LOYA                   	:u16 = 0x95; pub const VK_OEM_FJ_ROYA	:u16 = 0x96;
-  pub const VK_JUNJA                         	:u16 = 0x17;
-  pub const VK_FINAL                         	:u16 = 0x18;
-  pub const VK_HANJA                         	:u16 = 0x19;
-  pub const VK_KANJI                         	:u16 = 0x19;
-  pub const VK_ESCAPE                        	:u16 = 0x1B;
-  pub const VK_CONVERT                       	:u16 = 0x1C;
-  pub const VK_NONCONVERT                    	:u16 = 0x1D;
-  pub const VK_ACCEPT                        	:u16 = 0x1E;
-  pub const VK_MODECHANGE                    	:u16 = 0x1F;
-  pub const VK_SPACE                         	:u16 = 0x20;
-  pub const VK_PRIOR                         	:u16 = 0x21; pub const VK_NEXT	:u16 = 0x22;
-  pub const VK_HOME                          	:u16 = 0x24; pub const VK_END 	:u16 = 0x23;
-  pub const VK_DOWN                          	:u16 = 0x28; pub const VK_UP  	:u16 = 0x26; pub const VK_LEFT	:u16 = 0x25; pub const VK_RIGHT	:u16 = 0x27;
-  pub const VK_SELECT                        	:u16 = 0x29;
-  pub const VK_PRINT                         	:u16 = 0x2A;
-  pub const VK_EXECUTE                       	:u16 = 0x2B;
-  pub const VK_SNAPSHOT                      	:u16 = 0x2C;
-  pub const VK_INSERT                        	:u16 = 0x2D;
-  pub const VK_DELETE                        	:u16 = 0x2E;
-  pub const VK_HELP                          	:u16 = 0x2F;
-  pub const VK_APPS                          	:u16 = 0x5D;
-  pub const VK_SLEEP                         	:u16 = 0x5F;
-  pub const VK_NUMPAD0                       	:u16 = 0x60; pub const VK_NUMPAD1 	:u16 = 0x61; pub const VK_NUMPAD2	:u16 = 0x62; pub const VK_NUMPAD3	:u16 = 0x63; pub const VK_NUMPAD4	:u16 = 0x64; pub const VK_NUMPAD5	:u16 = 0x65; pub const VK_NUMPAD6	:u16 = 0x66; pub const VK_NUMPAD7	:u16 = 0x67; pub const VK_NUMPAD8	:u16 = 0x68; pub const VK_NUMPAD9	:u16 = 0x69;
-  pub const VK_MULTIPLY                      	:u16 = 0x6A; pub const VK_DIVIDE  	:u16 = 0x6F;
-  pub const VK_ADD                           	:u16 = 0x6B; pub const VK_SUBTRACT	:u16 = 0x6D;
-  pub const VK_SEPARATOR                     	:u16 = 0x6C;
-  pub const VK_DECIMAL                       	:u16 = 0x6E;
-  pub const VK_F1                            	:u16 = 0x70; pub const VK_F2 	:u16 = 0x71; pub const VK_F3 	:u16 = 0x72; pub const VK_F4 	:u16 = 0x73; pub const VK_F5 	:u16 = 0x74; pub const VK_F6 	:u16 = 0x75; pub const VK_F7 	:u16 = 0x76; pub const VK_F8 	:u16 = 0x77; pub const VK_F9 	:u16 = 0x78; pub const VK_F10	:u16 = 0x79;
-  pub const VK_F11                           	:u16 = 0x7A; pub const VK_F12	:u16 = 0x7B; pub const VK_F13	:u16 = 0x7C; pub const VK_F14	:u16 = 0x7D; pub const VK_F15	:u16 = 0x7E; pub const VK_F16	:u16 = 0x7F; pub const VK_F17	:u16 = 0x80; pub const VK_F18	:u16 = 0x81; pub const VK_F19	:u16 = 0x82; pub const VK_F20	:u16 = 0x83;
-  pub const VK_F21                           	:u16 = 0x84; pub const VK_F22	:u16 = 0x85; pub const VK_F23	:u16 = 0x86; pub const VK_F24	:u16 = 0x87;
-  pub const VK_NAVIGATION_VIEW               	:u16 = 0x88;
-  pub const VK_NAVIGATION_MENU               	:u16 = 0x89;
-  pub const VK_NAVIGATION_DOWN               	:u16 = 0x8B; pub const VK_NAVIGATION_UP	:u16 = 0x8A; pub const VK_NAVIGATION_LEFT	:u16 = 0x8C; pub const VK_NAVIGATION_RIGHT	:u16 = 0x8D;
-  pub const VK_NAVIGATION_ACCEPT             	:u16 = 0x8E;
-  pub const VK_NAVIGATION_CANCEL             	:u16 = 0x8F;
-  pub const VK_OEM_NEC_EQUAL                 	:u16 = 0x92;
-  pub const VK_OEM_FJ_JISHO                  	:u16 = 0x92; pub const VK_OEM_FJ_MASSHOU	:u16 = 0x93; pub const VK_OEM_FJ_TOUROKU	:u16 = 0x94;
-  pub const VK_BROWSER_BACK                  	:u16 = 0xA6;
-  pub const VK_BROWSER_FORWARD               	:u16 = 0xA7;
-  pub const VK_BROWSER_REFRESH               	:u16 = 0xA8;
-  pub const VK_BROWSER_STOP                  	:u16 = 0xA9;
-  pub const VK_BROWSER_SEARCH                	:u16 = 0xAA;
-  pub const VK_BROWSER_FAVORITES             	:u16 = 0xAB;
-  pub const VK_BROWSER_HOME                  	:u16 = 0xAC;
-  pub const VK_VOLUME_DOWN                   	:u16 = 0xAE; pub const VK_VOLUME_UP       	:u16 = 0xAF; pub const VK_VOLUME_MUTE	:u16 = 0xAD;
-  pub const VK_MEDIA_NEXT_TRACK              	:u16 = 0xB0; pub const VK_MEDIA_PREV_TRACK	:u16 = 0xB1;
-  pub const VK_MEDIA_PLAY_PAUSE              	:u16 = 0xB3; pub const VK_MEDIA_STOP      	:u16 = 0xB2;
-  pub const VK_LAUNCH_MAIL                   	:u16 = 0xB4;
-  pub const VK_LAUNCH_MEDIA_SELECT           	:u16 = 0xB5;
-  pub const VK_LAUNCH_APP1                   	:u16 = 0xB6; pub const VK_LAUNCH_APP2	:u16 = 0xB7;
-  pub const VK_OEM_PLUS                      	:u16 = 0xBB;
-  pub const VK_OEM_COMMA                     	:u16 = 0xBC;
-  pub const VK_OEM_MINUS                     	:u16 = 0xBD;
-  pub const VK_OEM_PERIOD                    	:u16 = 0xBE;
-  pub const VK_GAMEPAD_A                     	:u16 = 0xC3; pub const VK_GAMEPAD_B             	:u16 = 0xC4; pub const VK_GAMEPAD_X	:u16 = 0xC5; pub const VK_GAMEPAD_Y	:u16 = 0xC6;
-  pub const VK_GAMEPAD_LEFT_SHOULDER         	:u16 = 0xC8; pub const VK_GAMEPAD_RIGHT_SHOULDER	:u16 = 0xC7;
-  pub const VK_GAMEPAD_LEFT_TRIGGER          	:u16 = 0xC9; pub const VK_GAMEPAD_RIGHT_TRIGGER 	:u16 = 0xCA;
-  pub const VK_GAMEPAD_DPAD_DOWN             	:u16 = 0xCC; pub const VK_GAMEPAD_DPAD_UP       	:u16 = 0xCB;
-  pub const VK_GAMEPAD_DPAD_LEFT             	:u16 = 0xCD; pub const VK_GAMEPAD_DPAD_RIGHT    	:u16 = 0xCE;
-  pub const VK_GAMEPAD_MENU                  	:u16 = 0xCF;
-  pub const VK_GAMEPAD_VIEW                  	:u16 = 0xD0;
-  pub const VK_GAMEPAD_LEFT_THUMBSTICK_BUTTON	:u16 = 0xD1; pub const VK_GAMEPAD_RIGHT_THUMBSTICK_BUTTON	:u16 = 0xD2;
-  pub const VK_GAMEPAD_LEFT_THUMBSTICK_DOWN  	:u16 = 0xD4; pub const VK_GAMEPAD_LEFT_THUMBSTICK_UP     	:u16 = 0xD3; pub const VK_GAMEPAD_LEFT_THUMBSTICK_LEFT 	:u16 = 0xD6; pub const VK_GAMEPAD_LEFT_THUMBSTICK_RIGHT 	:u16 = 0xD5;
-  pub const VK_GAMEPAD_RIGHT_THUMBSTICK_DOWN 	:u16 = 0xD8; pub const VK_GAMEPAD_RIGHT_THUMBSTICK_UP    	:u16 = 0xD7; pub const VK_GAMEPAD_RIGHT_THUMBSTICK_LEFT	:u16 = 0xDA; pub const VK_GAMEPAD_RIGHT_THUMBSTICK_RIGHT	:u16 = 0xD9;
-  pub const VK_OEM_1                         	:u16 = 0xBA; pub const VK_OEM_2                          	:u16 = 0xBF; pub const VK_OEM_3                        	:u16 = 0xC0; pub const VK_OEM_4                         	:u16 = 0xDB;pub const VK_OEM_5	:u16 = 0xDC;pub const VK_OEM_6	:u16 = 0xDD;pub const VK_OEM_7	:u16 = 0xDE;pub const VK_OEM_8	:u16 = 0xDF;
-  pub const VK_OEM_AX                        	:u16 = 0xE1;
-  pub const VK_OEM_102                       	:u16 = 0xE2;
-  pub const VK_ICO_HELP                      	:u16 = 0xE3;
-  pub const VK_ICO_00                        	:u16 = 0xE4;
-  pub const VK_PROCESSKEY                    	:u16 = 0xE5;
-  pub const VK_ICO_CLEAR                     	:u16 = 0xE6;
-  pub const VK_PACKET                        	:u16 = 0xE7;
-  pub const VK_OEM_RESET                     	:u16 = 0xE9;
-  pub const VK_OEM_JUMP                      	:u16 = 0xEA;
-  pub const VK_OEM_PA1                       	:u16 = 0xEB;
-  pub const VK_OEM_PA2                       	:u16 = 0xEC;
-  pub const VK_OEM_PA3                       	:u16 = 0xED;
-  pub const VK_OEM_WSCTRL                    	:u16 = 0xEE;
-  pub const VK_OEM_CUSEL                     	:u16 = 0xEF;
-  pub const VK_OEM_ATTN                      	:u16 = 0xF0;
-  pub const VK_OEM_FINISH                    	:u16 = 0xF1;
-  pub const VK_OEM_COPY                      	:u16 = 0xF2;
-  pub const VK_OEM_AUTO                      	:u16 = 0xF3;
-  pub const VK_OEM_ENLW                      	:u16 = 0xF4;
-  pub const VK_OEM_BACKTAB                   	:u16 = 0xF5;
-  pub const VK_ATTN                          	:u16 = 0xF6;
-  pub const VK_CRSEL                         	:u16 = 0xF7;
-  pub const VK_EXSEL                         	:u16 = 0xF8;
-  pub const VK_EREOF                         	:u16 = 0xF9;
-  pub const VK_PLAY                          	:u16 = 0xFA;
-  pub const VK_ZOOM                          	:u16 = 0xFB;
-  pub const VK_NONAME                        	:u16 = 0xFC;
-  pub const VK_PA1                           	:u16 = 0xFD;
-  pub const VK_OEM_CLEAR                     	:u16 = 0xFE;
-  pub const VK_KPENTER_FAKE                  	:u16 = 0xFF;
+#[allow(unused)] mod keys { // modified from github.com/microsoft/windows-rs/blob/0.55.0/crates/libs/sys/src/Windows/Win32/UI/Input/KeyboardAndMouse/mod.rs
+  pub type VirtualKey = u16; // 247 from previous 197
+  // Modifiers and sp
+  pub const vk_lcontrol	:VirtualKey = 162u16;pub const vk_rcontrol	:VirtualKey = 163u16;pub const vk_control	:VirtualKey =  17u16;
+  pub const vk_lshift  	:VirtualKey = 160u16;pub const vk_rshift  	:VirtualKey = 161u16;pub const vk_shift  	:VirtualKey =  16u16;
+  pub const vk_lwin    	:VirtualKey =  91u16;pub const vk_rwin    	:VirtualKey =  92u16;
+  pub const vk_rmenu   	:VirtualKey = 165u16;
+  // Alphanumeric
+  pub const vk0	:VirtualKey =  48u16;pub const vk1	:VirtualKey =  49u16;pub const vk2	:VirtualKey =  50u16;pub const vk3	:VirtualKey =  51u16;pub const vk4	:VirtualKey =  52u16;pub const vk5	:VirtualKey =  53u16;pub const vk6	:VirtualKey =  54u16;pub const vk7	:VirtualKey =  55u16;pub const vk8	:VirtualKey =  56u16;pub const vk9	:VirtualKey =  57u16;
+  pub const vk_a	:VirtualKey =  65u16;pub const vk_b	:VirtualKey =  66u16;pub const vk_c	:VirtualKey =  67u16;pub const vk_d	:VirtualKey =  68u16;pub const vk_e	:VirtualKey =  69u16;pub const vk_f	:VirtualKey =  70u16;pub const vk_g	:VirtualKey =  71u16;pub const vk_h	:VirtualKey =  72u16;pub const vk_i	:VirtualKey =  73u16;pub const vk_j	:VirtualKey =  74u16;pub const vk_k	:VirtualKey =  75u16;pub const vk_l	:VirtualKey =  76u16;pub const vk_o	:VirtualKey =  79u16;pub const vk_n	:VirtualKey =  78u16;pub const vk_m	:VirtualKey =  77u16;pub const vk_p	:VirtualKey =  80u16;pub const vk_q	:VirtualKey =  81u16;pub const vk_r	:VirtualKey =  82u16;pub const vk_s	:VirtualKey =  83u16;pub const vk_t	:VirtualKey =  84u16;pub const vk_u	:VirtualKey =  85u16;pub const vk_v	:VirtualKey =  86u16;pub const vk_w	:VirtualKey =  87u16;pub const vk_x	:VirtualKey =  88u16;pub const vk_y	:VirtualKey =  89u16;pub const vk_z	:VirtualKey =  90u16;
+  // Num
+  pub const vk_numpad0	:VirtualKey =  96u16;pub const vk_numpad1	:VirtualKey =  97u16;pub const vk_numpad2	:VirtualKey =  98u16;pub const vk_numpad3	:VirtualKey =  99u16;pub const vk_numpad4	:VirtualKey = 100u16;pub const vk_numpad5	:VirtualKey = 101u16;pub const vk_numpad6	:VirtualKey = 102u16;pub const vk_numpad7	:VirtualKey = 103u16;pub const vk_numpad8	:VirtualKey = 104u16;pub const vk_numpad9	:VirtualKey = 105u16;
+  // Function
+  pub const vk_f1               	:VirtualKey = 112u16;pub const vk_f2     	:VirtualKey = 113u16;pub const vk_f3 	:VirtualKey = 114u16;pub const vk_f4 	:VirtualKey = 115u16;pub const vk_f5 	:VirtualKey = 116u16;pub const vk_f6 	:VirtualKey = 117u16;pub const vk_f7 	:VirtualKey = 118u16;pub const vk_f8 	:VirtualKey = 119u16;pub const vk_f9 	:VirtualKey = 120u16;
+  pub const vk_f10              	:VirtualKey = 121u16;pub const vk_f11    	:VirtualKey = 122u16;pub const vk_f12	:VirtualKey = 123u16;pub const vk_f13	:VirtualKey = 124u16;pub const vk_f14	:VirtualKey = 125u16;pub const vk_f15	:VirtualKey = 126u16;pub const vk_f16	:VirtualKey = 127u16;pub const vk_f17	:VirtualKey = 128u16;pub const vk_f18	:VirtualKey = 129u16;pub const vk_f19	:VirtualKey = 130u16;
+  pub const vk_f20              	:VirtualKey = 131u16;pub const vk_f21    	:VirtualKey = 132u16;pub const vk_f22	:VirtualKey = 133u16;pub const vk_f23	:VirtualKey = 134u16;pub const vk_f24	:VirtualKey = 135u16;
+  pub const vk_abnt_c1          	:VirtualKey = 193u16;pub const vk_abnt_c2	:VirtualKey = 194u16;
+  pub const vk_accept           	:VirtualKey =  30u16;
+  pub const vk_add              	:VirtualKey = 107u16;
+  pub const vk_apps             	:VirtualKey =  93u16;
+  pub const vk_attn             	:VirtualKey = 246u16;
+  pub const vk_back             	:VirtualKey =   8u16;
+  pub const vk_browser_back     	:VirtualKey = 166u16;pub const vk_browser_favorites	:VirtualKey = 171u16;pub const vk_browser_forward	:VirtualKey = 167u16;pub const vk_browser_home	:VirtualKey = 172u16;pub const vk_browser_refresh	:VirtualKey = 168u16;pub const vk_browser_search	:VirtualKey = 170u16;pub const vk_browser_stop	:VirtualKey = 169u16;
+  pub const vk_cancel           	:VirtualKey =   3u16;
+  pub const vk_capital          	:VirtualKey =  20u16;
+  pub const vk_clear            	:VirtualKey =  12u16;
+  pub const vk_convert          	:VirtualKey =  28u16;
+  pub const vk_crsel            	:VirtualKey = 247u16;
+  pub const vk_dbe_alphanumeric 	:VirtualKey = 240u16;pub const vk_dbe_codeinput	:VirtualKey = 250u16;pub const vk_dbe_dbcschar	:VirtualKey = 244u16;pub const vk_dbe_determinestring	:VirtualKey = 252u16;pub const vk_dbe_enterdlgconversionmode	:VirtualKey = 253u16;pub const vk_dbe_enterimeconfigmode	:VirtualKey = 248u16;pub const vk_dbe_enterwordregistermode	:VirtualKey = 247u16;pub const vk_dbe_flushstring	:VirtualKey = 249u16;pub const vk_dbe_hiragana	:VirtualKey = 242u16;pub const vk_dbe_katakana	:VirtualKey = 241u16;pub const vk_dbe_nocodeinput	:VirtualKey = 251u16;pub const vk_dbe_noroman	:VirtualKey = 246u16;pub const vk_dbe_roman	:VirtualKey = 245u16;pub const vk_dbe_sbcschar	:VirtualKey = 243u16;
+  pub const vk_decimal          	:VirtualKey = 110u16;
+  pub const vk_delete           	:VirtualKey =  46u16;
+  pub const vk_divide           	:VirtualKey = 111u16;
+  pub const vk_down             	:VirtualKey =  40u16;
+  pub const vk_end              	:VirtualKey =  35u16;
+  pub const vk_ereof            	:VirtualKey = 249u16;
+  pub const vk_escape           	:VirtualKey =  27u16;
+  pub const vk_execute          	:VirtualKey =  43u16;
+  pub const vk_exsel            	:VirtualKey = 248u16;
+  pub const vk_final            	:VirtualKey =  24u16;
+  pub const vk_hangeul          	:VirtualKey =  21u16;
+  pub const vk_hangul           	:VirtualKey =  21u16;
+  pub const vk_hanja            	:VirtualKey =  25u16;
+  pub const vk_kana             	:VirtualKey =  21u16;
+  pub const vk_kanji            	:VirtualKey =  25u16;
+  pub const vk_help             	:VirtualKey =  47u16;
+  pub const vk_home             	:VirtualKey =  36u16;
+  pub const vk_ico00            	:VirtualKey = 228u16;
+  pub const vk_ico_clear        	:VirtualKey = 230u16;
+  pub const vk_ico_help         	:VirtualKey = 227u16;
+  pub const vk_ime_off          	:VirtualKey =  26u16;
+  pub const vk_ime_on           	:VirtualKey =  22u16;
+  pub const vk_insert           	:VirtualKey =  45u16;
+  pub const vk_junja            	:VirtualKey =  23u16;
+  pub const vk_launch_app1      	:VirtualKey = 182u16;pub const vk_launch_app2	:VirtualKey = 183u16;pub const vk_launch_mail	:VirtualKey = 180u16;pub const vk_launch_media_select	:VirtualKey = 181u16;
+  pub const vk_lbutton          	:VirtualKey =   1u16;
+  pub const vk_left             	:VirtualKey =  37u16;
+  pub const vk_lmenu            	:VirtualKey = 164u16;
+  pub const vk_mbutton          	:VirtualKey =   4u16;
+  pub const vk_media_stop       	:VirtualKey = 178u16;pub const vk_media_play_pause	:VirtualKey = 179u16;
+  pub const vk_media_prev_track 	:VirtualKey = 177u16;pub const vk_media_next_track	:VirtualKey = 176u16;
+  pub const vk_menu             	:VirtualKey =  18u16;
+  pub const vk_modechange       	:VirtualKey =  31u16;
+  pub const vk_multiply         	:VirtualKey = 106u16;
+  pub const vk_navigation_accept	:VirtualKey = 142u16;pub const vk_navigation_cancel	:VirtualKey = 143u16;pub const vk_navigation_menu	:VirtualKey = 137u16;pub const vk_navigation_view 	:VirtualKey = 136u16;
+  pub const vk_navigation_down  	:VirtualKey = 139u16;pub const vk_navigation_up    	:VirtualKey = 138u16;pub const vk_navigation_left	:VirtualKey = 140u16;pub const vk_navigation_right	:VirtualKey = 141u16;
+  pub const vk_next             	:VirtualKey =  34u16;
+  pub const vk_noname           	:VirtualKey = 252u16;
+  pub const vk_nonconvert       	:VirtualKey =  29u16;
+  pub const vk_numlock          	:VirtualKey = 144u16;
+  pub const vk_oem102           	:VirtualKey = 226u16;
+  pub const vk_oem1             	:VirtualKey = 186u16;pub const vk_oem2	:VirtualKey = 191u16;pub const vk_oem3	:VirtualKey = 192u16;pub const vk_oem4	:VirtualKey = 219u16;pub const vk_oem5	:VirtualKey = 220u16;pub const vk_oem6	:VirtualKey = 221u16;pub const vk_oem7	:VirtualKey = 222u16;pub const vk_oem8	:VirtualKey = 223u16;
+  pub const vk_oem_attn         	:VirtualKey = 240u16;
+  pub const vk_oem_auto         	:VirtualKey = 243u16;
+  pub const vk_oem_ax           	:VirtualKey = 225u16;
+  pub const vk_oem_backtab      	:VirtualKey = 245u16;
+  pub const vk_oem_clear        	:VirtualKey = 254u16;
+  pub const vk_oem_comma        	:VirtualKey = 188u16;
+  pub const vk_oem_copy         	:VirtualKey = 242u16;
+  pub const vk_oem_cusel        	:VirtualKey = 239u16;
+  pub const vk_oem_enlw         	:VirtualKey = 244u16;
+  pub const vk_oem_finish       	:VirtualKey = 241u16;
+  pub const vk_oem_fj_jisho     	:VirtualKey = 146u16;
+  pub const vk_oem_fj_loya      	:VirtualKey = 149u16;
+  pub const vk_oem_fj_masshou   	:VirtualKey = 147u16;
+  pub const vk_oem_fj_roya      	:VirtualKey = 150u16;
+  pub const vk_oem_fj_touroku   	:VirtualKey = 148u16;
+  pub const vk_oem_jump         	:VirtualKey = 234u16;
+  pub const vk_oem_minus        	:VirtualKey = 189u16;
+  pub const vk_oem_nec_equal    	:VirtualKey = 146u16;
+  pub const vk_oem_pa1          	:VirtualKey = 235u16;pub const vk_oem_pa2	:VirtualKey = 236u16;pub const vk_oem_pa3	:VirtualKey = 237u16;
+  pub const vk_oem_period       	:VirtualKey = 190u16;
+  pub const vk_oem_plus         	:VirtualKey = 187u16;
+  pub const vk_oem_reset        	:VirtualKey = 233u16;
+  pub const vk_oem_wsctrl       	:VirtualKey = 238u16;
+  pub const vk_pa1              	:VirtualKey = 253u16;
+  pub const vk_packet           	:VirtualKey = 231u16;
+  pub const vk_pause            	:VirtualKey =  19u16;
+  pub const vk_play             	:VirtualKey = 250u16;
+  pub const vk_print            	:VirtualKey =  42u16;
+  pub const vk_prior            	:VirtualKey =  33u16;
+  pub const vk_processkey       	:VirtualKey = 229u16;
+  pub const vk_rbutton          	:VirtualKey =   2u16;
+  pub const vk_return           	:VirtualKey =  13u16;
+  pub const vk_right            	:VirtualKey =  39u16;
+  pub const vk_scroll           	:VirtualKey = 145u16;
+  pub const vk_select           	:VirtualKey =  41u16;
+  pub const vk_separator        	:VirtualKey = 108u16;
+  pub const vk_sleep            	:VirtualKey =  95u16;
+  pub const vk_snapshot         	:VirtualKey =  44u16;
+  pub const vk_space            	:VirtualKey =  32u16;
+  pub const vk_subtract         	:VirtualKey = 109u16;
+  pub const vk_tab              	:VirtualKey =   9u16;
+  pub const vk_up               	:VirtualKey =  38u16;
+  pub const vk_volume_mute      	:VirtualKey = 173u16;pub const vk_volume_down	:VirtualKey = 174u16;pub const vk_volume_up	:VirtualKey = 175u16;
+  pub const vk_xbutton1         	:VirtualKey =   5u16;pub const vk_xbutton2   	:VirtualKey =   6u16;
+  pub const vk_zoom             	:VirtualKey = 251u16;
+  pub const vk_none             	:VirtualKey = 255u16;
+  // Gamepad
+  pub const vk_gamepad_a                    	:VirtualKey = 195u16;pub const vk_gamepad_b                  	:VirtualKey = 196u16;pub const vk_gamepad_x	:VirtualKey = 197u16;pub const vk_gamepad_y	:VirtualKey = 198u16;
+  pub const vk_gamepad_menu                 	:VirtualKey = 207u16;pub const vk_gamepad_view               	:VirtualKey = 208u16;
+  pub const vk_gamepad_dpad_down             	:VirtualKey = 204u16;pub const vk_gamepad_dpad_left           	:VirtualKey = 205u16;pub const vk_gamepad_dpad_right	:VirtualKey = 206u16;pub const vk_gamepad_dpad_up	:VirtualKey = 203u16;
+  pub const vk_gamepad_left_trigger          	:VirtualKey = 201u16;pub const vk_gamepad_right_trigger       	:VirtualKey = 202u16;
+  pub const vk_gamepad_left_shoulder         	:VirtualKey = 200u16;pub const vk_gamepad_right_shoulder      	:VirtualKey = 199u16;
+  pub const vk_gamepad_left_thumbstick_button 	:VirtualKey = 209u16;pub const vk_gamepad_left_thumbstick_down 	:VirtualKey = 212u16;pub const vk_gamepad_left_thumbstick_left 	:VirtualKey = 214u16;pub const vk_gamepad_left_thumbstick_right 	:VirtualKey = 213u16;pub const vk_gamepad_left_thumbstick_up 	:VirtualKey = 211u16;
+  pub const vk_gamepad_right_thumbstick_button	:VirtualKey = 210u16;pub const vk_gamepad_right_thumbstick_down	:VirtualKey = 216u16;pub const vk_gamepad_right_thumbstick_left	:VirtualKey = 218u16;pub const vk_gamepad_right_thumbstick_right	:VirtualKey = 217u16;pub const vk_gamepad_right_thumbstick_up	:VirtualKey = 215u16;
 }
 pub use keys::*;
 
@@ -124,79 +133,79 @@ impl OsCode {
   pub(super) const fn from_u16_windows(code	:u16) -> Option<Self> {
     match code {
       0x30                  	=> Some(OsCode::KEY_0),
-      0x31                  	=> Some(OsCode::KEY_1),0x32            	=> Some(OsCode::KEY_2),0x33        	=> Some(OsCode::KEY_3),0x34        	=> Some(OsCode::KEY_4),0x35            	=> Some(OsCode::KEY_5),0x36            	=> Some(OsCode::KEY_6),0x37	=> Some(OsCode::KEY_7),0x38	=> Some(OsCode::KEY_8),0x39	=> Some(OsCode::KEY_9),
-      0x41                  	=> Some(OsCode::KEY_A),0x42            	=> Some(OsCode::KEY_B),0x43        	=> Some(OsCode::KEY_C),0x44        	=> Some(OsCode::KEY_D),0x45            	=> Some(OsCode::KEY_E),0x46            	=> Some(OsCode::KEY_F),0x47	=> Some(OsCode::KEY_G),0x48	=> Some(OsCode::KEY_H),0x49	=> Some(OsCode::KEY_I),0x4A	=> Some(OsCode::KEY_J),
-      0x4B                  	=> Some(OsCode::KEY_K),0x4C            	=> Some(OsCode::KEY_L),0x4D        	=> Some(OsCode::KEY_M),0x4E        	=> Some(OsCode::KEY_N),0x4F            	=> Some(OsCode::KEY_O),0x50            	=> Some(OsCode::KEY_P),0x51	=> Some(OsCode::KEY_Q),0x52	=> Some(OsCode::KEY_R),0x53	=> Some(OsCode::KEY_S),0x54	=> Some(OsCode::KEY_T),
-      0x55                  	=> Some(OsCode::KEY_U),0x56            	=> Some(OsCode::KEY_V),0x57        	=> Some(OsCode::KEY_W),0x58        	=> Some(OsCode::KEY_X),0x59            	=> Some(OsCode::KEY_Y),0x5A            	=> Some(OsCode::KEY_Z),
-      VK_OEM_1              	=> Some(OsCode::KEY_SEMICOLON),VK_OEM_2	=> Some(OsCode::KEY_SLASH),VK_OEM_3	=> Some(OsCode::KEY_GRAVE),VK_OEM_4	=> Some(OsCode::KEY_LEFTBRACE),VK_OEM_5	=> Some(OsCode::KEY_BACKSLASH),VK_OEM_6	=> Some(OsCode::KEY_RIGHTBRACE),VK_OEM_7	=> Some(OsCode::KEY_APOSTROPHE),
-      VK_OEM_MINUS          	=> Some(OsCode::KEY_MINUS),
-      VK_OEM_PERIOD         	=> Some(OsCode::KEY_DOT),
-      VK_OEM_PLUS           	=> Some(OsCode::KEY_EQUAL),
-      VK_BACK               	=> Some(OsCode::KEY_BACKSPACE),
-      VK_ESCAPE             	=> Some(OsCode::KEY_ESC),
-      VK_TAB                	=> Some(OsCode::KEY_TAB),
-      VK_RETURN             	=> Some(OsCode::KEY_ENTER),
-      VK_LCONTROL           	=> Some(OsCode::KEY_LEFTCTRL),VK_RCONTROL           	=> Some(OsCode::KEY_RIGHTCTRL),
-      VK_LSHIFT             	=> Some(OsCode::KEY_LEFTSHIFT),VK_RSHIFT	=> Some(OsCode::KEY_RIGHTSHIFT),
-      VK_HANGEUL            	=> Some(OsCode::KEY_HANGEUL),
-      VK_HANJA              	=> Some(OsCode::KEY_HANJA),
-      VK_OEM_COMMA          	=> Some(OsCode::KEY_COMMA),
-      VK_MULTIPLY           	=> Some(OsCode::KEY_KPASTERISK),
-      VK_LMENU              	=> Some(OsCode::KEY_LEFTALT),
-      VK_SPACE              	=> Some(OsCode::KEY_SPACE),
-      VK_CAPITAL            	=> Some(OsCode::KEY_CAPSLOCK),
-      VK_NUMLOCK            	=> Some(OsCode::KEY_NUMLOCK),
-      VK_CLEAR              	=> Some(OsCode::KEY_CLEAR),
-      VK_SCROLL             	=> Some(OsCode::KEY_SCROLLLOCK),
-      VK_NUMPAD0            	=> Some(OsCode::KEY_KP0),
-      VK_NUMPAD1            	=> Some(OsCode::KEY_KP1),VK_NUMPAD2	=> Some(OsCode::KEY_KP2),VK_NUMPAD3	=> Some(OsCode::KEY_KP3),VK_NUMPAD4	=> Some(OsCode::KEY_KP4),VK_NUMPAD5	=> Some(OsCode::KEY_KP5),VK_NUMPAD6	=> Some(OsCode::KEY_KP6),VK_NUMPAD7	=> Some(OsCode::KEY_KP7),VK_NUMPAD8	=> Some(OsCode::KEY_KP8),VK_NUMPAD9	=> Some(OsCode::KEY_KP9),
-      VK_SUBTRACT           	=> Some(OsCode::KEY_KPMINUS),
-      VK_ADD                	=> Some(OsCode::KEY_KPPLUS),
-      VK_DECIMAL            	=> Some(OsCode::KEY_KPDOT),
-      VK_KPENTER_FAKE       	=> Some(OsCode::KEY_KPENTER),
-      VK_DIVIDE             	=> Some(OsCode::KEY_KPSLASH),
-      VK_RMENU              	=> Some(OsCode::KEY_RIGHTALT),
-      VK_HOME               	=> Some(OsCode::KEY_HOME),
-      VK_UP                 	=> Some(OsCode::KEY_UP),
-      VK_PRIOR              	=> Some(OsCode::KEY_PAGEUP),
-      VK_LEFT               	=> Some(OsCode::KEY_LEFT),
-      VK_RIGHT              	=> Some(OsCode::KEY_RIGHT),
-      VK_END                	=> Some(OsCode::KEY_END),
-      VK_DOWN               	=> Some(OsCode::KEY_DOWN),
-      VK_NEXT               	=> Some(OsCode::KEY_PAGEDOWN),
-      VK_INSERT             	=> Some(OsCode::KEY_INSERT),
-      VK_DELETE             	=> Some(OsCode::KEY_DELETE),
-      VK_VOLUME_MUTE        	=> Some(OsCode::KEY_MUTE),
-      VK_VOLUME_DOWN        	=> Some(OsCode::KEY_VOLUMEDOWN),
-      VK_VOLUME_UP          	=> Some(OsCode::KEY_VOLUMEUP),
-      VK_PAUSE              	=> Some(OsCode::KEY_PAUSE),
-      VK_LWIN               	=> Some(OsCode::KEY_LEFTMETA),
-      VK_RWIN               	=> Some(OsCode::KEY_RIGHTMETA),
-      VK_APPS               	=> Some(OsCode::KEY_COMPOSE),
-      VK_BROWSER_BACK       	=> Some(OsCode::KEY_BACK),
-      VK_BROWSER_FORWARD    	=> Some(OsCode::KEY_FORWARD),
-      VK_MEDIA_NEXT_TRACK   	=> Some(OsCode::KEY_NEXTSONG),
-      VK_MEDIA_PLAY_PAUSE   	=> Some(OsCode::KEY_PLAYPAUSE),
-      VK_MEDIA_PREV_TRACK   	=> Some(OsCode::KEY_PREVIOUSSONG),
-      VK_MEDIA_STOP         	=> Some(OsCode::KEY_STOP),
-      VK_BROWSER_HOME       	=> Some(OsCode::KEY_HOMEPAGE),
-      VK_LAUNCH_MAIL        	=> Some(OsCode::KEY_MAIL),
-      VK_LAUNCH_MEDIA_SELECT	=> Some(OsCode::KEY_MEDIA),
-      VK_BROWSER_REFRESH    	=> Some(OsCode::KEY_REFRESH),
-      VK_F1                 	=> Some(OsCode::KEY_F1),VK_F2  	=> Some(OsCode::KEY_F2),VK_F3  	=> Some(OsCode::KEY_F3),VK_F4  	=> Some(OsCode::KEY_F4),VK_F5  	=> Some(OsCode::KEY_F5),VK_F6  	=> Some(OsCode::KEY_F6),VK_F7  	=> Some(OsCode::KEY_F7),VK_F8  	=> Some(OsCode::KEY_F8),VK_F9  	=> Some(OsCode::KEY_F9),VK_F10 	=> Some(OsCode::KEY_F10),
-      VK_F11                	=> Some(OsCode::KEY_F11),VK_F12	=> Some(OsCode::KEY_F12),VK_F13	=> Some(OsCode::KEY_F13),VK_F14	=> Some(OsCode::KEY_F14),VK_F15	=> Some(OsCode::KEY_F15),VK_F16	=> Some(OsCode::KEY_F16),VK_F17	=> Some(OsCode::KEY_F17),VK_F18	=> Some(OsCode::KEY_F18),VK_F19	=> Some(OsCode::KEY_F19),VK_F20	=> Some(OsCode::KEY_F20),
-      VK_F21                	=> Some(OsCode::KEY_F21),VK_F22	=> Some(OsCode::KEY_F22),VK_F23	=> Some(OsCode::KEY_F23),VK_F24	=> Some(OsCode::KEY_F24),
+      0x31                  	=> Some(OsCode::KEY_1),0x32           	=> Some(OsCode::KEY_2),0x33       	=> Some(OsCode::KEY_3),0x34       	=> Some(OsCode::KEY_4),0x35           	=> Some(OsCode::KEY_5),0x36           	=> Some(OsCode::KEY_6),0x37	=> Some(OsCode::KEY_7),0x38	=> Some(OsCode::KEY_8),0x39	=> Some(OsCode::KEY_9),
+      0x41                  	=> Some(OsCode::KEY_A),0x42           	=> Some(OsCode::KEY_B),0x43       	=> Some(OsCode::KEY_C),0x44       	=> Some(OsCode::KEY_D),0x45           	=> Some(OsCode::KEY_E),0x46           	=> Some(OsCode::KEY_F),0x47	=> Some(OsCode::KEY_G),0x48	=> Some(OsCode::KEY_H),0x49	=> Some(OsCode::KEY_I),0x4A	=> Some(OsCode::KEY_J),
+      0x4B                  	=> Some(OsCode::KEY_K),0x4C           	=> Some(OsCode::KEY_L),0x4D       	=> Some(OsCode::KEY_M),0x4E       	=> Some(OsCode::KEY_N),0x4F           	=> Some(OsCode::KEY_O),0x50           	=> Some(OsCode::KEY_P),0x51	=> Some(OsCode::KEY_Q),0x52	=> Some(OsCode::KEY_R),0x53	=> Some(OsCode::KEY_S),0x54	=> Some(OsCode::KEY_T),
+      0x55                  	=> Some(OsCode::KEY_U),0x56           	=> Some(OsCode::KEY_V),0x57       	=> Some(OsCode::KEY_W),0x58       	=> Some(OsCode::KEY_X),0x59           	=> Some(OsCode::KEY_Y),0x5A           	=> Some(OsCode::KEY_Z),
+      vk_oem1               	=> Some(OsCode::KEY_SEMICOLON),vk_oem2	=> Some(OsCode::KEY_SLASH),vk_oem3	=> Some(OsCode::KEY_GRAVE),vk_oem4	=> Some(OsCode::KEY_LEFTBRACE),vk_oem5	=> Some(OsCode::KEY_BACKSLASH),vk_oem6	=> Some(OsCode::KEY_RIGHTBRACE),vk_oem7	=> Some(OsCode::KEY_APOSTROPHE),
+      vk_oem_minus          	=> Some(OsCode::KEY_MINUS),
+      vk_oem_period         	=> Some(OsCode::KEY_DOT),
+      vk_oem_plus           	=> Some(OsCode::KEY_EQUAL),
+      vk_back               	=> Some(OsCode::KEY_BACKSPACE),
+      vk_escape             	=> Some(OsCode::KEY_ESC),
+      vk_tab                	=> Some(OsCode::KEY_TAB),
+      vk_return             	=> Some(OsCode::KEY_ENTER),
+      vk_lcontrol           	=> Some(OsCode::KEY_LEFTCTRL),vk_rcontrol	=> Some(OsCode::KEY_RIGHTCTRL),
+      vk_lshift             	=> Some(OsCode::KEY_LEFTSHIFT),vk_rshift 	=> Some(OsCode::KEY_RIGHTSHIFT),
+      vk_hangeul            	=> Some(OsCode::KEY_HANGEUL),
+      vk_hanja              	=> Some(OsCode::KEY_HANJA),
+      vk_oem_comma          	=> Some(OsCode::KEY_COMMA),
+      vk_multiply           	=> Some(OsCode::KEY_KPASTERISK),
+      vk_lmenu              	=> Some(OsCode::KEY_LEFTALT),
+      vk_space              	=> Some(OsCode::KEY_SPACE),
+      vk_capital            	=> Some(OsCode::KEY_CAPSLOCK),
+      vk_numlock            	=> Some(OsCode::KEY_NUMLOCK),
+      vk_clear              	=> Some(OsCode::KEY_CLEAR),
+      vk_scroll             	=> Some(OsCode::KEY_SCROLLLOCK),
+      vk_numpad0            	=> Some(OsCode::KEY_KP0),
+      vk_numpad1            	=> Some(OsCode::KEY_KP1),vk_numpad2	=> Some(OsCode::KEY_KP2),vk_numpad3	=> Some(OsCode::KEY_KP3),vk_numpad4	=> Some(OsCode::KEY_KP4),vk_numpad5	=> Some(OsCode::KEY_KP5),vk_numpad6	=> Some(OsCode::KEY_KP6),vk_numpad7	=> Some(OsCode::KEY_KP7),vk_numpad8	=> Some(OsCode::KEY_KP8),vk_numpad9	=> Some(OsCode::KEY_KP9),
+      vk_subtract           	=> Some(OsCode::KEY_KPMINUS),
+      vk_add                	=> Some(OsCode::KEY_KPPLUS),
+      vk_decimal            	=> Some(OsCode::KEY_KPDOT),
+      vk_kpenter_fake       	=> Some(OsCode::KEY_KPENTER),
+      vk_divide             	=> Some(OsCode::KEY_KPSLASH),
+      vk_rmenu              	=> Some(OsCode::KEY_RIGHTALT),
+      vk_home               	=> Some(OsCode::KEY_HOME),
+      vk_up                 	=> Some(OsCode::KEY_UP),
+      vk_prior              	=> Some(OsCode::KEY_PAGEUP),
+      vk_left               	=> Some(OsCode::KEY_LEFT),
+      vk_right              	=> Some(OsCode::KEY_RIGHT),
+      vk_end                	=> Some(OsCode::KEY_END),
+      vk_down               	=> Some(OsCode::KEY_DOWN),
+      vk_next               	=> Some(OsCode::KEY_PAGEDOWN),
+      vk_insert             	=> Some(OsCode::KEY_INSERT),
+      vk_delete             	=> Some(OsCode::KEY_DELETE),
+      vk_volume_mute        	=> Some(OsCode::KEY_MUTE),
+      vk_volume_down        	=> Some(OsCode::KEY_VOLUMEDOWN),
+      vk_volume_up          	=> Some(OsCode::KEY_VOLUMEUP),
+      vk_pause              	=> Some(OsCode::KEY_PAUSE),
+      vk_lwin               	=> Some(OsCode::KEY_LEFTMETA),
+      vk_rwin               	=> Some(OsCode::KEY_RIGHTMETA),
+      vk_apps               	=> Some(OsCode::KEY_COMPOSE),
+      vk_browser_back       	=> Some(OsCode::KEY_BACK),
+      vk_browser_forward    	=> Some(OsCode::KEY_FORWARD),
+      vk_media_next_track   	=> Some(OsCode::KEY_NEXTSONG),
+      vk_media_play_pause   	=> Some(OsCode::KEY_PLAYPAUSE),
+      vk_media_prev_track   	=> Some(OsCode::KEY_PREVIOUSSONG),
+      vk_media_stop         	=> Some(OsCode::KEY_STOP),
+      vk_browser_home       	=> Some(OsCode::KEY_HOMEPAGE),
+      vk_launch_mail        	=> Some(OsCode::KEY_MAIL),
+      vk_launch_media_select	=> Some(OsCode::KEY_MEDIA),
+      vk_browser_refresh    	=> Some(OsCode::KEY_REFRESH),
+      vk_f1                 	=> Some(OsCode::KEY_F1),vk_f2  	=> Some(OsCode::KEY_F2),vk_f3  	=> Some(OsCode::KEY_F3),vk_f4  	=> Some(OsCode::KEY_F4),vk_f5  	=> Some(OsCode::KEY_F5),vk_f6  	=> Some(OsCode::KEY_F6),vk_f7  	=> Some(OsCode::KEY_F7),vk_f8  	=> Some(OsCode::KEY_F8),vk_f9  	=> Some(OsCode::KEY_F9),vk_f10 	=> Some(OsCode::KEY_F10),
+      vk_f11                	=> Some(OsCode::KEY_F11),vk_f12	=> Some(OsCode::KEY_F12),vk_f13	=> Some(OsCode::KEY_F13),vk_f14	=> Some(OsCode::KEY_F14),vk_f15	=> Some(OsCode::KEY_F15),vk_f16	=> Some(OsCode::KEY_F16),vk_f17	=> Some(OsCode::KEY_F17),vk_f18	=> Some(OsCode::KEY_F18),vk_f19	=> Some(OsCode::KEY_F19),vk_f20	=> Some(OsCode::KEY_F20),
+      vk_f21                	=> Some(OsCode::KEY_F21),vk_f22	=> Some(OsCode::KEY_F22),vk_f23	=> Some(OsCode::KEY_F23),vk_f24	=> Some(OsCode::KEY_F24),
       // KEY_252 is nonsensical, but just use it anyway. No idea what Linux OsCode this is.
       // As long as it's not an existing key and the mapping round-trips, this works fine.
-      VK_OEM_8            	=> Some(OsCode::KEY_252),
-      VK_OEM_102          	=> Some(OsCode::KEY_102ND),
-      VK_PLAY             	=> Some(OsCode::KEY_PLAY),
-      VK_SNAPSHOT         	=> Some(OsCode::KEY_PRINT),
-      VK_BROWSER_SEARCH   	=> Some(OsCode::KEY_SEARCH),
-      VK_BROWSER_FAVORITES	=> Some(OsCode::KEY_FAVORITES),
+      vk_oem8             	=> Some(OsCode::KEY_252),
+      vk_oem102           	=> Some(OsCode::KEY_102ND),
+      vk_play             	=> Some(OsCode::KEY_PLAY),
+      vk_snapshot         	=> Some(OsCode::KEY_PRINT),
+      vk_browser_search   	=> Some(OsCode::KEY_SEARCH),
+      vk_browser_favorites	=> Some(OsCode::KEY_FAVORITES),
       0xC1                	=> Some(OsCode::KEY_RO),
-      VK_CONVERT          	=> Some(OsCode::KEY_HENKAN),
-      VK_NONCONVERT       	=> Some(OsCode::KEY_MUHENKAN),
+      vk_convert          	=> Some(OsCode::KEY_HENKAN),
+      vk_nonconvert       	=> Some(OsCode::KEY_MUHENKAN),
       256                 	=> Some(OsCode::BTN_0),
       257                 	=> Some(OsCode::BTN_1),258	=> Some(OsCode::BTN_2),259	=> Some(OsCode::BTN_3),260	=> Some(OsCode::BTN_4),261	=> Some(OsCode::BTN_5),262	=> Some(OsCode::BTN_6),263	=> Some(OsCode::BTN_7),264	=> Some(OsCode::BTN_8),265	=> Some(OsCode::BTN_9),
       266                 	=> Some(OsCode::KEY_266),
@@ -580,92 +589,92 @@ impl OsCode {
       OsCode::KEY_A           	=> 0x41,OsCode::KEY_B	=> 0x42,OsCode::KEY_C	=> 0x43,OsCode::KEY_D	=> 0x44,OsCode::KEY_E	=> 0x45,OsCode::KEY_F	=> 0x46,OsCode::KEY_G	=> 0x47,OsCode::KEY_H	=> 0x48,OsCode::KEY_I	=> 0x49,OsCode::KEY_J	=> 0x4A,
       OsCode::KEY_K           	=> 0x4B,OsCode::KEY_L	=> 0x4C,OsCode::KEY_M	=> 0x4D,OsCode::KEY_N	=> 0x4E,OsCode::KEY_O	=> 0x4F,OsCode::KEY_P	=> 0x50,OsCode::KEY_Q	=> 0x51,OsCode::KEY_R	=> 0x52,OsCode::KEY_S	=> 0x53,OsCode::KEY_T	=> 0x54,
       OsCode::KEY_U           	=> 0x55,OsCode::KEY_V	=> 0x56,OsCode::KEY_W	=> 0x57,OsCode::KEY_X	=> 0x58,OsCode::KEY_Y	=> 0x59,OsCode::KEY_Z	=> 0x5A,
-      OsCode::KEY_SEMICOLON   	=> VK_OEM_1,
-      OsCode::KEY_SLASH       	=> VK_OEM_2,
-      OsCode::KEY_GRAVE       	=> VK_OEM_3,
-      OsCode::KEY_LEFTBRACE   	=> VK_OEM_4,
-      OsCode::KEY_BACKSLASH   	=> VK_OEM_5,
-      OsCode::KEY_RIGHTBRACE  	=> VK_OEM_6,
-      OsCode::KEY_APOSTROPHE  	=> VK_OEM_7,
-      OsCode::KEY_MINUS       	=> VK_OEM_MINUS,
-      OsCode::KEY_DOT         	=> VK_OEM_PERIOD,
-      OsCode::KEY_EQUAL       	=> VK_OEM_PLUS,
-      OsCode::KEY_BACKSPACE   	=> VK_BACK,
-      OsCode::KEY_ESC         	=> VK_ESCAPE,
-      OsCode::KEY_TAB         	=> VK_TAB,
-      OsCode::KEY_ENTER       	=> VK_RETURN,
-      OsCode::KEY_LEFTCTRL    	=> VK_LCONTROL,OsCode::KEY_RIGHTCTRL	=> VK_RCONTROL,
-      OsCode::KEY_LEFTSHIFT   	=> VK_LSHIFT,OsCode::KEY_RIGHTSHIFT 	=> VK_RSHIFT,
-      OsCode::KEY_COMMA       	=> VK_OEM_COMMA,
-      OsCode::KEY_KPASTERISK  	=> VK_MULTIPLY,
-      OsCode::KEY_LEFTALT     	=> VK_LMENU,
-      OsCode::KEY_SPACE       	=> VK_SPACE,
-      OsCode::KEY_CAPSLOCK    	=> VK_CAPITAL,
-      OsCode::KEY_F1          	=> VK_F1,OsCode::KEY_F2  	=> VK_F2,OsCode::KEY_F3	=> VK_F3,OsCode::KEY_F4	=> VK_F4,OsCode::KEY_F5	=> VK_F5,OsCode::KEY_F6	=> VK_F6,OsCode::KEY_F7	=> VK_F7,OsCode::KEY_F8	=> VK_F8,OsCode::KEY_F9	=> VK_F9,OsCode::KEY_F10	=> VK_F10,
-      OsCode::KEY_F11         	=> VK_F11,OsCode::KEY_F12	=> VK_F12,
-      OsCode::KEY_NUMLOCK     	=> VK_NUMLOCK,
-      OsCode::KEY_CLEAR       	=> VK_CLEAR,
-      OsCode::KEY_SCROLLLOCK  	=> VK_SCROLL,
-      OsCode::KEY_KP0         	=> VK_NUMPAD0,
-      OsCode::KEY_KP1         	=> VK_NUMPAD1,OsCode::KEY_KP2	=> VK_NUMPAD2,OsCode::KEY_KP3	=> VK_NUMPAD3,OsCode::KEY_KP4	=> VK_NUMPAD4,OsCode::KEY_KP5	=> VK_NUMPAD5,OsCode::KEY_KP6	=> VK_NUMPAD6,OsCode::KEY_KP7	=> VK_NUMPAD7,OsCode::KEY_KP8	=> VK_NUMPAD8,OsCode::KEY_KP9	=> VK_NUMPAD9,
-      OsCode::KEY_KPMINUS     	=> VK_SUBTRACT,
-      OsCode::KEY_KPPLUS      	=> VK_ADD,
-      OsCode::KEY_KPDOT       	=> VK_DECIMAL,
-      OsCode::KEY_KPENTER     	=> VK_KPENTER_FAKE,
-      OsCode::KEY_KPSLASH     	=> VK_DIVIDE,
-      OsCode::KEY_RIGHTALT    	=> VK_RMENU,
-      OsCode::KEY_HOME        	=> VK_HOME,
-      OsCode::KEY_PAGEUP      	=> VK_PRIOR,
-      OsCode::KEY_END         	=> VK_END,
-      OsCode::KEY_DOWN        	=> VK_DOWN,OsCode::KEY_UP	=> VK_UP,OsCode::KEY_LEFT	=> VK_LEFT,OsCode::KEY_RIGHT	=> VK_RIGHT,
-      OsCode::KEY_PAGEDOWN    	=> VK_NEXT,
-      OsCode::KEY_INSERT      	=> VK_INSERT,
-      OsCode::KEY_DELETE      	=> VK_DELETE,
-      OsCode::KEY_MUTE        	=> VK_VOLUME_MUTE,
-      OsCode::KEY_VOLUMEDOWN  	=> VK_VOLUME_DOWN,
-      OsCode::KEY_VOLUMEUP    	=> VK_VOLUME_UP,
-      OsCode::KEY_PAUSE       	=> VK_PAUSE,
-      OsCode::KEY_LEFTMETA    	=> VK_LWIN,
-      OsCode::KEY_RIGHTMETA   	=> VK_RWIN,
-      OsCode::KEY_COMPOSE     	=> VK_APPS,
-      OsCode::KEY_BACK        	=> VK_BROWSER_BACK,
-      OsCode::KEY_FORWARD     	=> VK_BROWSER_FORWARD,
-      OsCode::KEY_NEXTSONG    	=> VK_MEDIA_NEXT_TRACK,
-      OsCode::KEY_PLAYPAUSE   	=> VK_MEDIA_PLAY_PAUSE,
-      OsCode::KEY_PREVIOUSSONG	=> VK_MEDIA_PREV_TRACK,
-      OsCode::KEY_STOP        	=> VK_MEDIA_STOP,
-      OsCode::KEY_HOMEPAGE    	=> VK_BROWSER_HOME,
-      OsCode::KEY_MAIL        	=> VK_LAUNCH_MAIL,
-      OsCode::KEY_MEDIA       	=> VK_LAUNCH_MEDIA_SELECT,
-      OsCode::KEY_REFRESH     	=> VK_BROWSER_REFRESH,
-      OsCode::KEY_F13         	=> VK_F13,
-      OsCode::KEY_F14         	=> VK_F14,
-      OsCode::KEY_F15         	=> VK_F15,
-      OsCode::KEY_F16         	=> VK_F16,
-      OsCode::KEY_F17         	=> VK_F17,
-      OsCode::KEY_F18         	=> VK_F18,
-      OsCode::KEY_F19         	=> VK_F19,
-      OsCode::KEY_F20         	=> VK_F20,
-      OsCode::KEY_F21         	=> VK_F21,
-      OsCode::KEY_F22         	=> VK_F22,
-      OsCode::KEY_F23         	=> VK_F23,
-      OsCode::KEY_F24         	=> VK_F24,
-      OsCode::KEY_HANGEUL     	=> VK_HANGEUL,
-      OsCode::KEY_HANJA       	=> VK_HANJA,
-      OsCode::KEY_252         	=> VK_OEM_8,
-      OsCode::KEY_102ND       	=> VK_OEM_102,
-      OsCode::KEY_PLAY        	=> VK_PLAY,
-      OsCode::KEY_PRINT       	=> VK_SNAPSHOT,
-      OsCode::KEY_SEARCH      	=> VK_BROWSER_SEARCH,
-      OsCode::KEY_FAVORITES   	=> VK_BROWSER_FAVORITES,
+      OsCode::KEY_SEMICOLON   	=> vk_oem1,
+      OsCode::KEY_SLASH       	=> vk_oem2,
+      OsCode::KEY_GRAVE       	=> vk_oem3,
+      OsCode::KEY_LEFTBRACE   	=> vk_oem4,
+      OsCode::KEY_BACKSLASH   	=> vk_oem5,
+      OsCode::KEY_RIGHTBRACE  	=> vk_oem6,
+      OsCode::KEY_APOSTROPHE  	=> vk_oem7,
+      OsCode::KEY_MINUS       	=> vk_oem_minus,
+      OsCode::KEY_DOT         	=> vk_oem_period,
+      OsCode::KEY_EQUAL       	=> vk_oem_plus,
+      OsCode::KEY_BACKSPACE   	=> vk_back,
+      OsCode::KEY_ESC         	=> vk_escape,
+      OsCode::KEY_TAB         	=> vk_tab,
+      OsCode::KEY_ENTER       	=> vk_return,
+      OsCode::KEY_LEFTCTRL    	=> vk_lcontrol,OsCode::KEY_RIGHTCTRL	=> vk_rcontrol,
+      OsCode::KEY_LEFTSHIFT   	=> vk_lshift,OsCode::KEY_RIGHTSHIFT 	=> vk_rshift,
+      OsCode::KEY_COMMA       	=> vk_oem_comma,
+      OsCode::KEY_KPASTERISK  	=> vk_multiply,
+      OsCode::KEY_LEFTALT     	=> vk_lmenu,
+      OsCode::KEY_SPACE       	=> vk_space,
+      OsCode::KEY_CAPSLOCK    	=> vk_capital,
+      OsCode::KEY_F1          	=> vk_f1,OsCode::KEY_F2  	=> vk_f2,OsCode::KEY_F3	=> vk_f3,OsCode::KEY_F4	=> vk_f4,OsCode::KEY_F5	=> vk_f5,OsCode::KEY_F6	=> vk_f6,OsCode::KEY_F7	=> vk_f7,OsCode::KEY_F8	=> vk_f8,OsCode::KEY_F9	=> vk_f9,OsCode::KEY_F10	=> vk_f10,
+      OsCode::KEY_F11         	=> vk_f11,OsCode::KEY_F12	=> vk_f12,
+      OsCode::KEY_NUMLOCK     	=> vk_numlock,
+      OsCode::KEY_CLEAR       	=> vk_clear,
+      OsCode::KEY_SCROLLLOCK  	=> vk_scroll,
+      OsCode::KEY_KP0         	=> vk_numpad0,
+      OsCode::KEY_KP1         	=> vk_numpad1,OsCode::KEY_KP2	=> vk_numpad2,OsCode::KEY_KP3	=> vk_numpad3,OsCode::KEY_KP4	=> vk_numpad4,OsCode::KEY_KP5	=> vk_numpad5,OsCode::KEY_KP6	=> vk_numpad6,OsCode::KEY_KP7	=> vk_numpad7,OsCode::KEY_KP8	=> vk_numpad8,OsCode::KEY_KP9	=> vk_numpad9,
+      OsCode::KEY_KPMINUS     	=> vk_subtract,
+      OsCode::KEY_KPPLUS      	=> vk_add,
+      OsCode::KEY_KPDOT       	=> vk_decimal,
+      OsCode::KEY_KPENTER     	=> vk_kpenter_fake,
+      OsCode::KEY_KPSLASH     	=> vk_divide,
+      OsCode::KEY_RIGHTALT    	=> vk_rmenu,
+      OsCode::KEY_HOME        	=> vk_home,
+      OsCode::KEY_PAGEUP      	=> vk_prior,
+      OsCode::KEY_END         	=> vk_end,
+      OsCode::KEY_DOWN        	=> vk_down,OsCode::KEY_UP	=> vk_up,OsCode::KEY_LEFT	=> vk_left,OsCode::KEY_RIGHT	=> vk_right,
+      OsCode::KEY_PAGEDOWN    	=> vk_next,
+      OsCode::KEY_INSERT      	=> vk_insert,
+      OsCode::KEY_DELETE      	=> vk_delete,
+      OsCode::KEY_MUTE        	=> vk_volume_mute,
+      OsCode::KEY_VOLUMEDOWN  	=> vk_volume_down,
+      OsCode::KEY_VOLUMEUP    	=> vk_volume_up,
+      OsCode::KEY_PAUSE       	=> vk_pause,
+      OsCode::KEY_LEFTMETA    	=> vk_lwin,
+      OsCode::KEY_RIGHTMETA   	=> vk_rwin,
+      OsCode::KEY_COMPOSE     	=> vk_apps,
+      OsCode::KEY_BACK        	=> vk_browser_back,
+      OsCode::KEY_FORWARD     	=> vk_browser_forward,
+      OsCode::KEY_NEXTSONG    	=> vk_media_next_track,
+      OsCode::KEY_PLAYPAUSE   	=> vk_media_play_pause,
+      OsCode::KEY_PREVIOUSSONG	=> vk_media_prev_track,
+      OsCode::KEY_STOP        	=> vk_media_stop,
+      OsCode::KEY_HOMEPAGE    	=> vk_browser_home,
+      OsCode::KEY_MAIL        	=> vk_launch_mail,
+      OsCode::KEY_MEDIA       	=> vk_launch_media_select,
+      OsCode::KEY_REFRESH     	=> vk_browser_refresh,
+      OsCode::KEY_F13         	=> vk_f13,
+      OsCode::KEY_F14         	=> vk_f14,
+      OsCode::KEY_F15         	=> vk_f15,
+      OsCode::KEY_F16         	=> vk_f16,
+      OsCode::KEY_F17         	=> vk_f17,
+      OsCode::KEY_F18         	=> vk_f18,
+      OsCode::KEY_F19         	=> vk_f19,
+      OsCode::KEY_F20         	=> vk_f20,
+      OsCode::KEY_F21         	=> vk_f21,
+      OsCode::KEY_F22         	=> vk_f22,
+      OsCode::KEY_F23         	=> vk_f23,
+      OsCode::KEY_F24         	=> vk_f24,
+      OsCode::KEY_HANGEUL     	=> vk_hangeul,
+      OsCode::KEY_HANJA       	=> vk_hanja,
+      OsCode::KEY_252         	=> vk_oem8,
+      OsCode::KEY_102ND       	=> vk_oem102,
+      OsCode::KEY_PLAY        	=> vk_play,
+      OsCode::KEY_PRINT       	=> vk_snapshot,
+      OsCode::KEY_SEARCH      	=> vk_browser_search,
+      OsCode::KEY_FAVORITES   	=> vk_browser_favorites,
       OsCode::KEY_RO          	=> 0xC1,
-      OsCode::KEY_HENKAN      	=> VK_CONVERT,
-      OsCode::KEY_MUHENKAN    	=> VK_NONCONVERT,
-      OsCode::BTN_LEFT        	=> VK_LBUTTON,
-      OsCode::BTN_RIGHT       	=> VK_RBUTTON,
-      OsCode::BTN_MIDDLE      	=> VK_MBUTTON,
-      OsCode::BTN_SIDE        	=> VK_XBUTTON1,
-      OsCode::BTN_EXTRA       	=> VK_XBUTTON2,
+      OsCode::KEY_HENKAN      	=> vk_convert,
+      OsCode::KEY_MUHENKAN    	=> vk_nonconvert,
+      OsCode::BTN_LEFT        	=> vk_lbutton,
+      OsCode::BTN_RIGHT       	=> vk_rbutton,
+      OsCode::BTN_MIDDLE      	=> vk_mbutton,
+      OsCode::BTN_SIDE        	=> vk_xbutton1,
+      OsCode::BTN_EXTRA       	=> vk_xbutton2,
       osc                     	=> osc as u16,
     }
   }

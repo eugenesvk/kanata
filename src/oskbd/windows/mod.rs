@@ -43,8 +43,8 @@ fn send_key_sendinput(code: u16, is_key_up: bool) {
     let mut kb_input: KEYBDINPUT = mem::zeroed();
     if is_key_up {kb_input.dwFlags |= KEYEVENTF_KEYUP;}
     #[cfg(feature="win_sendinput_send_scancodes")] { // GUI/Windows keys don't seem to like SCANCODE events so don't transform those.
-      if   i32::from(code) == VK_RWIN
-        || i32::from(code) == VK_LWIN {kb_input.wVk = code;
+      if   i32::from(code) == vk_rwin
+        || i32::from(code) == vk_lwin {kb_input.wVk = code;
       } else {
         let code_u32 = code as u32;
         kb_input.dwFlags |= KEYEVENTF_SCANCODE;
