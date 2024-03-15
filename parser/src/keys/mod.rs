@@ -5,71 +5,44 @@ use once_cell::sync::Lazy;
 use parking_lot::Mutex;
 use rustc_hash::FxHashMap as HashMap;
 
-#[cfg(any(target_os = "linux", target_os = "unknown"))]
-mod linux;
-#[cfg(any(target_os = "macos", target_os = "unknown"))]
-mod macos;
-#[cfg(any(target_os = "windows", target_os = "unknown"))]
-mod windows;
-#[cfg(any(target_os = "macos", target_os = "unknown"))]
-pub use macos::PageCode;
+#[cfg(any(target_os="linux"  ,target_os="unknown"))	] mod linux;
+#[cfg(any(target_os="macos"  ,target_os="unknown"))	] mod macos;
+#[cfg(any(target_os="windows",target_os="unknown"))	] mod windows;
+#[cfg(any(target_os="macos"  ,target_os="unknown"))	] pub use macos::PageCode;
 
 mod mappings;
 
-#[cfg(target_os = "unknown")]
-#[derive(Clone, Copy)]
-pub enum Platform {
-    Win,
-    Linux,
-    Macos,
-}
-
-#[cfg(target_os = "unknown")]
-pub static OSCODE_MAPPING_VARIANT: Mutex<Platform> = Mutex::new(Platform::Linux);
+#[cfg(target_os="unknown")] #[derive(Clone,Copy)] pub enum Platform {Win,Linux,Macos,}
+#[cfg(target_os="unknown")] pub static OSCODE_MAPPING_VARIANT: Mutex<Platform> = Mutex::new(Platform::Linux);
 
 impl OsCode {
-    pub fn as_u16(self) -> u16 {
-        #[cfg(target_os = "unknown")]
-        return match *OSCODE_MAPPING_VARIANT.lock() {
-            Platform::Win => self.as_u16_windows(),
-            Platform::Linux => self.as_u16_linux(),
-            Platform::Macos => self.as_u16_macos(),
-        };
+  pub fn as_u16(self) -> u16 {
+    #[cfg(target_os="unknown")] return match *OSCODE_MAPPING_VARIANT.lock() {
+      Platform::Win   => self.as_u16_windows(),
+      Platform::Linux => self.as_u16_linux(),
+      Platform::Macos => self.as_u16_macos(),
+    };
+    #[cfg(target_os="linux")  	] return self.as_u16_linux();
+    #[cfg(target_os="windows")	] return self.as_u16_windows();
+    #[cfg(target_os="macos")  	] return self.as_u16_macos();
+  }
 
-        #[cfg(target_os = "linux")]
-        return self.as_u16_linux();
-
-        #[cfg(target_os = "windows")]
-        return self.as_u16_windows();
-
-        #[cfg(target_os = "macos")]
-        return self.as_u16_macos();
-    }
-
-    pub fn from_u16(code: u16) -> Option<Self> {
-        #[cfg(target_os = "unknown")]
-        return match *OSCODE_MAPPING_VARIANT.lock() {
-            Platform::Win => OsCode::from_u16_windows(code),
-            Platform::Linux => OsCode::from_u16_linux(code),
-            Platform::Macos => OsCode::from_u16_macos(code),
-        };
-
-        #[cfg(target_os = "linux")]
-        return OsCode::from_u16_linux(code);
-
-        #[cfg(target_os = "windows")]
-        return OsCode::from_u16_windows(code);
-
-        #[cfg(target_os = "macos")]
-        return OsCode::from_u16_macos(code);
-    }
+  pub fn from_u16(code: u16) -> Option<Self> {
+    #[cfg(target_os="unknown")] return match *OSCODE_MAPPING_VARIANT.lock() {
+      Platform::Win   => OsCode::from_u16_windows(code),
+      Platform::Linux => OsCode::from_u16_linux(code),
+      Platform::Macos => OsCode::from_u16_macos(code),
+    };
+    #[cfg(target_os="linux"  	)] return OsCode::from_u16_linux(code);
+    #[cfg(target_os="windows"	)] return OsCode::from_u16_windows(code);
+    #[cfg(target_os="macos"  	)] return OsCode::from_u16_macos(code);  }
 }
 
 static CUSTOM_STRS_TO_OSCODES: Lazy<Mutex<HashMap<String, OsCode>>> = Lazy::new(|| {
-    let mut mappings = HashMap::default();
-    add_default_str_osc_mappings(&mut mappings);
-    mappings.shrink_to_fit();
-    Mutex::new(mappings)
+  let mut mappings = HashMap::default();
+  add_default_str_osc_mappings(&mut mappings);
+  mappings.shrink_to_fit();
+  Mutex::new(mappings)
 });
 
 /// Replaces the stateful custom `String` to `OsCode` mapping in this module with the input
@@ -81,18 +54,18 @@ static CUSTOM_STRS_TO_OSCODES: Lazy<Mutex<HashMap<String, OsCode>>> = Lazy::new(
 /// should not be a problem. A potential immediate issue that comes to mind is concurrent tests
 /// that have `defcustomkeys`.
 pub fn replace_custom_str_oscode_mapping(mapping: &HashMap<String, OsCode>) {
-    let mut local_mapping = CUSTOM_STRS_TO_OSCODES.lock();
-    local_mapping.clear();
-    local_mapping.extend(mapping.iter().map(|kv| (kv.0.clone(), *kv.1)));
-    add_default_str_osc_mappings(&mut local_mapping);
-    local_mapping.shrink_to_fit();
+  let mut local_mapping = CUSTOM_STRS_TO_OSCODES.lock();
+  local_mapping.clear();
+  local_mapping.extend(mapping.iter().map(|kv| (kv.0.clone(), *kv.1)));
+  add_default_str_osc_mappings(&mut local_mapping);
+  local_mapping.shrink_to_fit();
 }
 
 /// Clears the stateful custom `String` to `OsCode` mapping in this module.
 pub fn clear_custom_str_oscode_mapping() {
-    let mut local_mapping = CUSTOM_STRS_TO_OSCODES.lock();
-    local_mapping.clear();
-    local_mapping.shrink_to_fit();
+  let mut local_mapping = CUSTOM_STRS_TO_OSCODES.lock();
+  local_mapping.clear();
+  local_mapping.shrink_to_fit();
 }
 
 /// Used for backwards compatibility. If there is hardcoded key name in `str_to_oscode` that would be useful to remap via `defcustomkeys`, then it should be moved into here. This is so that the key name can be remapped while also working for older configurations that already use it.
@@ -622,57 +595,21 @@ pub enum OsCode {
 }
 
 #[test]
-fn parser_key_max_lt_keyberon_key_max() {
-    assert!(u16::from(OsCode::KEY_MAX) < KEY_MAX);
-}
+fn parser_key_max_lt_keyberon_key_max() {assert!(u16::from(OsCode::KEY_MAX) < KEY_MAX);}
 
 impl TryFrom<usize> for OsCode {
-    type Error = ();
-    fn try_from(item: usize) -> Result<Self, Self::Error> {
-        match Self::from_u16(item as u16) {
-            Some(kc) => Ok(kc),
-            _ => Err(()),
-        }
-    }
+  type Error = ();
+  fn try_from(item: usize) -> Result<Self, Self::Error> {
+    match Self::from_u16(item as u16) {
+      Some(kc) => Ok(kc),
+      _        => Err(()),}
+  }
 }
 
-impl From<u32> for OsCode {
-    fn from(item: u32) -> Self {
-        Self::from_u16(item as u16).unwrap_or_else(|| panic!("Invalid KeyCode: {item}"))
-    }
-}
-
-impl From<u16> for OsCode {
-    fn from(item: u16) -> Self {
-        Self::from_u16(item).unwrap_or_else(|| panic!("Invalid KeyCode: {item}"))
-    }
-}
-
-impl From<OsCode> for usize {
-    fn from(item: OsCode) -> Self {
-        item.as_u16() as usize
-    }
-}
-
-impl From<OsCode> for u32 {
-    fn from(item: OsCode) -> Self {
-        item.as_u16() as u32
-    }
-}
-
-impl From<OsCode> for u16 {
-    fn from(item: OsCode) -> Self {
-        item.as_u16()
-    }
-}
-
-impl From<&OsCode> for KeyCode {
-    fn from(item: &OsCode) -> KeyCode {
-        (*item).into()
-    }
-}
-impl From<&KeyCode> for OsCode {
-    fn from(item: &KeyCode) -> Self {
-        (*item).into()
-    }
-}
+impl From< u32    	> for OsCode 	{fn from(item:  u32    	) -> Self    {Self::from_u16(item as u16).unwrap_or_else(|| panic!("Invalid KeyCode: {item}"))}}
+impl From< u16    	> for OsCode 	{fn from(item:  u16    	) -> Self    {Self::from_u16(item       ).unwrap_or_else(|| panic!("Invalid KeyCode: {item}"))}}
+impl From< OsCode 	> for usize  	{fn from(item:  OsCode 	) -> Self    {  item.as_u16() as usize}}
+impl From< OsCode 	> for u32    	{fn from(item:  OsCode 	) -> Self    {  item.as_u16() as u32  }}
+impl From< OsCode 	> for u16    	{fn from(item:  OsCode 	) -> Self    {  item.as_u16()         }}
+impl From<&OsCode 	> for KeyCode	{fn from(item: &OsCode 	) -> KeyCode {(*item).into()        }}
+impl From<&KeyCode	> for OsCode 	{fn from(item: &KeyCode	) -> Self    {(*item).into()        }}
