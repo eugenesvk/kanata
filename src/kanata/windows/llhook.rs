@@ -35,7 +35,11 @@ impl Kanata {
           } else                                    {       pressed_keys.insert( key_event.code);}}
         _                 => {}
       }
-      try_send_panic(&preprocess_tx, key_event); // Send input_events to the preprocessing loop. Panic if channel somehow gets full or if channel disconnects. Typing input should never trigger a panic based on the channel getting full, assuming regular operation of the program and some other bug isn't the problem. I've tried to crash the program by pressing as many keys on my keyboard at the same time as I could, but was unable to.
+      if key_event.code == OsCode::KEY_0 {
+        log::debug!("event loop: ✗BLOCKING {:?}", key_event);
+      } else {
+        try_send_panic(&preprocess_tx, key_event); // Send input_events to the preprocessing loop. Panic if channel somehow gets full or if channel disconnects. Typing input should never trigger a panic based on the channel getting full, assuming regular operation of the program and some other bug isn't the problem. I've tried to crash the program by pressing as many keys on my keyboard at the same time as I could, but was unable to.
+      }
       true
     });
     native_windows_gui::dispatch_thread_events(); // The event loop is also required for the low-level keyboard hook to work.
