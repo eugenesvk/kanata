@@ -2,7 +2,14 @@
 use super::OsCode;
 
 #[allow(unused)] mod keys { // modified from github.com/microsoft/windows-rs/blob/0.55.0/crates/libs/sys/src/Windows/Win32/UI/Input/KeyboardAndMouse/mod.rs
+  // Category             Count  List
+  // Reserved             #  6   7 10 11                            94                                     184 185
+  // Unassigned/undefined # 19           14 15 58 59 60 61 62 63 64    151 152 153 154 155 156 157 158 159         232
+  // Assigned             #230
+  // Total                #255
+  // 232 unassigned used as a `VK_KPENTER_FAKE`
   pub type VirtualKey = u16; // 247 from previous 197
+  pub const vk_kpenter_fake	: VirtualKey = 232u16; // unassigned VK used to enable Interception use
   // Modifiers and sp
   pub const vk_lcontrol	:VirtualKey = 162u16;pub const vk_rcontrol	:VirtualKey = 163u16;pub const vk_control	:VirtualKey =  17u16;
   pub const vk_lshift  	:VirtualKey = 160u16;pub const vk_rshift  	:VirtualKey = 161u16;pub const vk_shift  	:VirtualKey =  16u16;
