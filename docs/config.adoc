@@ -2870,3 +2870,14 @@ doesn't make full use of the power of this functionality.
 
 For more context, you can read the
 https://github.com/jtroo/kanata/issues/128[motivation for custom tap-hold behaviour].
+
+
+[[fancy-key-symbols]]
+=== Fancy key symbols
+<<table-of-contents,Back to ToC>>
+
+Instead of using the same `+a-z+` letters for special keys, e.g., `+lsft+` for `+LeftShift+`
+you can use much shorter, yet more visible, key symbols like `+‹⇧+`.
+
+For more details see
+https://github.com/jtroo/kanata/blob/main/docs/key_symbols.md[fancy key symbol list].
