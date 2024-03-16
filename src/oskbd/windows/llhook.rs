@@ -3,6 +3,7 @@
 // This file is taken from kbremap with minor modifications.
 // https://github.com/timokroeger/kbremap
 
+use core::fmt;
 use std::cell::Cell;
 #[cfg(not(feature = "simulated_output"))]
 use std::io;
@@ -21,6 +22,7 @@ use crate::oskbd::{KeyEvent, KeyValue};
 #[cfg(not(feature = "simulated_output"))]
 use kanata_parser::custom_action::*;
 use kanata_parser::keys::*;
+use kanata_keyberon::key_code::KeyCode;
 
 pub const LLHOOK_IDLE_TIME_CLEAR_INPUTS: u64 = 60;
 
@@ -76,6 +78,14 @@ pub struct InputEvent {
 
     /// Key was released
     pub up: bool,
+}
+
+impl fmt::Display for InputEvent {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let direction = if self.up { "↑" } else { "↓" };
+        let key_name = KeyCode::from(OsCode::from(self.code));
+        write!(f, "{}{:?}", direction, key_name)
+    }
 }
 
 impl InputEvent {
