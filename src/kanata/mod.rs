@@ -334,7 +334,8 @@ impl Kanata {
     self.tick_ms(ms_elapsed)?;
 
     self.last_tick = match ms_elapsed {
-      0..=10 => now, // If too many ms elapsed, probably doing a tight loop of something that's quite expensive, e.g. click spamming. To avoid a growing ms_elapsed due to trying and failing to catch up, reset last_tick to the "actual now" instead the "past now" even though that means ticks will be missed - meaning there will be fewer than 1000 ticks in 1ms on average. In practice, there will already be fewer than 1000 ticks in 1ms when running expensive operations, this just avoids having tens to thousands of ticks all happening as soon as the expensive operations end.
+      0      => self.last_tick,
+      1..=10 => now, // If too many ms elapsed, probably doing a tight loop of something that's quite expensive, e.g. click spamming. To avoid a growing ms_elapsed due to trying and failing to catch up, reset last_tick to the "actual now" instead the "past now" even though that means ticks will be missed - meaning there will be fewer than 1000 ticks in 1ms on average. In practice, there will already be fewer than 1000 ticks in 1ms when running expensive operations, this just avoids having tens to thousands of ticks all happening as soon as the expensive operations end.
       _      => time::Instant::now()};
 
     self.check_handle_layer_change(tx);
@@ -1533,11 +1534,9 @@ fn check_for_exit(event: &KeyEvent) {
 }
 
 fn update_kbd_out(_cfg: &CfgOptions, _kbd_out: &KbdOut) -> Result<()> {
-  #[cfg(target_os="linux")]
-  {
+  #[cfg(all(not(feature="simulated_output"), target_os="linux"))] {
     _kbd_out.update_unicode_termination(_cfg.linux_unicode_termination);
-    _kbd_out.update_unicode_u_code(_cfg.linux_unicode_u_code);
-  }
+    _kbd_out.update_unicode_u_code     (_cfg.linux_unicode_u_code     );}
   Ok(())
 }
 

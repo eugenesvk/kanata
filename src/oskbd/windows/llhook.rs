@@ -49,7 +49,7 @@ impl InputEvent {
   fn from_hook_pinfo(pInfo:&KBDLLHOOKSTRUCT   ) -> Self { Self {
     code: pInfo.vkCode,
     up  :(pInfo.flags & LLKHF_UP) != 0,}}
-  fn from_oscode    (code:OsCode, val:KeyValue) -> Self { Self {
+  pub fn from_oscode    (code:OsCode, val:KeyValue) -> Self { Self {
     code: code.into(),
     up  : val .into(),}}
 }
@@ -114,10 +114,9 @@ unsafe extern "system" fn hook_proc(code:c_int, msgID:WPARAM, pInfo:LPARAM) -> L
   } else    	{                 CallNextHookEx(ptr::null_mut(), code, msgID, pInfo)}
 }
 
-/// Handle for writing keys to the OS.
-pub struct KbdOut {}
-
-impl KbdOut {
+/// Handle for writing keys to the OS
+#[cfg(not(feature="simulated_output"))] pub struct KbdOut {}
+#[cfg(not(feature="simulated_output"))] impl       KbdOut {
   pub fn new        	(                                        	) -> Result<Self,io::Error> {Ok(Self {})}
   pub fn write      	(&mut self, event: InputEvent            	) -> Result<()  ,io::Error> {super::send_key_sendinput(event.code as u16, event.up);Ok(())}
   pub fn write_key  	(&mut self, key  : OsCode, value:KeyValue	) -> Result<()  ,io::Error> {let event = InputEvent::from_oscode(key, value);self.write(event)}
