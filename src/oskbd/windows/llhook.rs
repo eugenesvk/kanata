@@ -1,6 +1,7 @@
 //! Safe abstraction over the low-level windows keyboard hook API.
 
 // This file is taken from kbremap with minor modifications github.com/timokroeger/kbremap
+use core::fmt;
 use std::cell::Cell;
 use std::io;
 use std::{mem, ptr};
@@ -14,6 +15,7 @@ use crate::kanata::CalculatedMouseMove;
 use crate::oskbd::{KeyEvent, KeyValue};
 use kanata_parser::custom_action::*;
 use kanata_parser::keys::*;
+use kanata_keyberon::key_code::KeyCode;
 
 pub const LLHOOK_IDLE_TIME_CLEAR_INPUTS: u64 = 60;
 
@@ -44,6 +46,13 @@ impl Drop for KeyboardHook {
 #[derive(Debug, Clone, Copy)] pub struct InputEvent { // Key event received by the low level keyboard hook.
   pub code: u32,
   pub up  : bool, // Key was released
+}
+impl fmt::Display for InputEvent {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let direction = if self.up {"↑"} else {"↓"};
+        let key_name = KeyCode::from(OsCode::from(self.code));
+        write!(f, "{}{:?}", direction, key_name)
+    }
 }
 impl InputEvent {
   fn from_hook_pinfo(pInfo:&KBDLLHOOKSTRUCT   ) -> Self { Self {
