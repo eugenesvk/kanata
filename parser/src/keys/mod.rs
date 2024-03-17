@@ -111,7 +111,7 @@ pub fn str_to_oscode(s: &str) -> Option<OsCode> {
     "bspc"|"bks"|"␈"|"⌫"  	=> OsCode::KEY_BACKSPACE,
     "tab"|"⭾"|"↹"         	=> OsCode::KEY_TAB,
     "apo"|"apos"          	=> OsCode::KEY_APOSTROPHE,
-    "kp="|"clr"	=> OsCode::KEY_CLEAR,
+    "kp="|"clr"           	=> OsCode::KEY_CLEAR,
     "ret"|"return"|"ent"|"enter"|"⏎"|"↩"|"⌤"|"␤"=> OsCode::KEY_ENTER,
     "scln"|"︔"=>OsCode::KEY_SEMICOLON,"comm"|"⸴"=>OsCode::KEY_COMMA,"．"=>OsCode::KEY_DOT,
     "⁄"=>OsCode::KEY_SLASH,"bksl"|"⧵"|"＼"=>OsCode::KEY_BACKSLASH,
