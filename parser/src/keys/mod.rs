@@ -116,11 +116,11 @@ pub fn str_to_oscode(s: &str) -> Option<OsCode> {
     "comm"                              	=> OsCode::KEY_COMMA,
     "kp="|"clr"                         	=> OsCode::KEY_CLEAR,
     // Modifiers
-    "caps"                              	=> OsCode::KEY_CAPSLOCK,
-    "lshift"|"lshft"|"lsft"|"shft"|"sft"	=> OsCode::KEY_LEFTSHIFT,"rshift"|"rshft"|"rsft"	=> OsCode::KEY_RIGHTSHIFT,
-    "lctrl"|"lctl"|"ctl"                	=> OsCode::KEY_LEFTCTRL ,"rctrl"|"rctl"         	=> OsCode::KEY_RIGHTCTRL,
-    "lmeta"|"lmet"|"met"                	=> OsCode::KEY_LEFTMETA ,"rmeta"|"rmet"         	=> OsCode::KEY_RIGHTMETA,     // Also known as Windows, GUI, Comand, Super
-    "lalt"|"alt"                        	=> OsCode::KEY_LEFTALT  ,"ralt"                 	=> OsCode::KEY_RIGHTALT,
+    "caps"                                   	=> OsCode::KEY_CAPSLOCK,
+    "lshift"|"lshft"|"lsft"|"shft"|"sft"|"‹⇧"	=> OsCode::KEY_LEFTSHIFT,"rshift"|"rshft"|"rsft"|"⇧›" 	=> OsCode::KEY_RIGHTSHIFT,
+    "lctrl"|"lctl"|"ctl"|"‹⎈"|"‹⌃"           	=> OsCode::KEY_LEFTCTRL ,"rctrl"|"rctl"|"⎈›"|"⌃›"     	=> OsCode::KEY_RIGHTCTRL,
+    "lmeta"|"lmet"|"met"|"‹◆"|"‹⌘"|"‹❖"      	=> OsCode::KEY_LEFTMETA ,"rmeta"|"rmet"|"◆›"|"⌘›"|"❖›"	=> OsCode::KEY_RIGHTMETA,     // Also known as Windows, GUI, Comand, Super
+    "lalt"|"alt"|"‹⎇"|"‹⌥"                   	=> OsCode::KEY_LEFTALT,"ralt"|"⎇›"|"⌥›"               	=> OsCode::KEY_RIGHTALT,
     // The kp<etc> keys are also known as the numpad keys. E.g. below is numpad enter.
     "kp0"                             	=> OsCode::KEY_KP0,"kp1"	=> OsCode::KEY_KP1,"kp2"	=> OsCode::KEY_KP2,"kp3"	=> OsCode::KEY_KP3,"kp4"	=> OsCode::KEY_KP4,"kp5"	=> OsCode::KEY_KP5,"kp6"	=> OsCode::KEY_KP6,"kp7"	=> OsCode::KEY_KP7,"kp8"	=> OsCode::KEY_KP8,"kp9"	=> OsCode::KEY_KP9,
     "kprt"                            	=> OsCode::KEY_KPENTER,
