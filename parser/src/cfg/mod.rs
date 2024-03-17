@@ -1106,7 +1106,7 @@ fn parse_action_atom(ac_span: &Spanned<String>, s: &ParsedState) -> Result<&'sta
   let ac = &*ac_span.t;
   if is_list_action(ac) {bail_span!(ac_span,"This is a list action and must be in parentheses: ({ac} ...)");}
   match ac {
-    "_"                        	=>  return Ok(s.a.sref(Action::Trans)),
+    "_"|"‗"|"≝"                	=>  return Ok(s.a.sref(Action::Trans)),
     "XX"|"✗"|"∅"|"‿"           	=>  return Ok(s.a.sref(Action::NoOp)),
     "lrld"                     	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::LiveReload)),)))}
     "lrld-next"|"lrnx"         	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::LiveReloadNext)),)))}
