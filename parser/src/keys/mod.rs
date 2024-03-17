@@ -126,6 +126,7 @@ pub fn str_to_oscode(s: &str) -> Option<OsCode> {
     "kp0"|"🔢₀"=>OsCode::KEY_KP0,"kp1"|"🔢₁"=>OsCode::KEY_KP1,"kp2"|"🔢₂"=>OsCode::KEY_KP2,"kp3"|"🔢₃"=>OsCode::KEY_KP3,"kp4"|"🔢₄"=>OsCode::KEY_KP4,"kp5"|"🔢₅"=>OsCode::KEY_KP5,"kp6"|"🔢₆"=>OsCode::KEY_KP6,"kp7"|"🔢₇"=>OsCode::KEY_KP7,"kp8"|"🔢₈"=>OsCode::KEY_KP8,"kp9"|"🔢₉"=>OsCode::KEY_KP9,
     "kp-"|"🔢₋"=>OsCode::KEY_KPMINUS,"kp+"|"🔢₊"=>OsCode::KEY_KPPLUS,"🔢₌"=>OsCode::KEY_KPEQUAL,"kp/"|"🔢⁄"=>OsCode::KEY_KPSLASH,"kp*"|"🔢∗"=>OsCode::KEY_KPASTERISK,
     "kp."|"🔢．"=>OsCode::KEY_KPDOT,"kprt"|"🔢⏎"|"🔢↩"|"🔢⌤"|"🔢␤"=>OsCode::KEY_KPENTER,
+    "kp,"|"🔢⸴"=>OsCode::KEY_KPCOMMA,
     //
     "esc"|"⎋"                                    	=> OsCode::KEY_ESC,
     "spc"|"␠"|"␣"                                	=> OsCode::KEY_SPACE,
