@@ -1086,19 +1086,11 @@ fn read_alias_name_action_pairs<'a>(
 
 /// Parse a `kanata_keyberon::action::Action` from a `SExpr`.
 fn parse_action(expr: &SExpr, s: &ParsedState) -> Result<&'static KanataAction> {
-  expr.atom(s.vars())
-    .map(|a| parse_action_atom(&Spanned::new(a.into(), expr.span()), s))
-    .unwrap_or_else(|| {
-      expr.list(s.vars())
-        .map(|l| parse_action_list(l, s))
-        .expect("must be atom or list")
-    })
+  expr.atom  (s.vars()).map(|a| parse_action_atom(&Spanned::new(a.into(), expr.span()), s)).unwrap_or_else(|| {
+    expr.list(s.vars()).map(|l| parse_action_list(l, s)).expect("must be atom or list") })
     .map_err(|mut e| {
-      if e.span.is_none() {
-        e.span = Some(expr.span())
-      };
-      e
-    })
+      if e.span.is_none() {e.span = Some(expr.span())};
+      e})
 }
 
 /// Parse a `kanata_keyberon::action::Action` from a string.
