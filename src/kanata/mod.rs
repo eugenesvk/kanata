@@ -359,15 +359,11 @@ impl Kanata {
         ,                                         self.dynamic_macro_replay_behaviour) {
         self.layout.bm().event(event.key_event());
         extra_ticks = extra_ticks.saturating_add(event.delay());
-        log::debug!("dyn macro extra ticks: {extra_ticks}, ms_elapsed: {ms_elapsed}");
-      }
-    }
+        log::debug!("dyn macro extra ticks: {extra_ticks}, ms_elapsed: {ms_elapsed}");}   }
     for i in 0..(extra_ticks.saturating_sub(ms_elapsed as u16)) {
       self.tick_states()?;
       if tick_replay_state(&mut self.dynamic_macro_replay_state
-        ,                       self.dynamic_macro_replay_behaviour).is_some() {
-        log::error!("overshot to next event at iteration #{i}, the code is broken!");break;}
-    }
+        ,                       self.dynamic_macro_replay_behaviour).is_some() {log::error!("overshot to next event at iteration #{i}, the code is broken!");break;}  }
     Ok(())
   }
 
@@ -695,8 +691,7 @@ impl Kanata {
       }
     }
 
-    // Handle custom events. This used to be in a separate function but lifetime issues cause it to now be here.
-    match custom_event {
+    match custom_event { // Handle custom events. This used to be in a separate function but lifetime issues cause it to now be here.
       CustomEvent::Press(custacts) => {
         #[cfg(feature="cmd")]
         let mut cmds = vec![];
@@ -727,7 +722,7 @@ impl Kanata {
                   live_reload_requested = true;
                   self.cur_cfg_idx = index;}
                 None => {log::error!("Requested live reload of file with path {}, but no such path was passed as an argument to Kanata", path.display());}}}
-            CustomAction::Mouse(btn) => {log::debug!("click     {:?}", btn);
+            CustomAction::Mouse   (btn) => {log::debug!("click     {:?}", btn);
               if let Some(pbtn) = prev_mouse_btn {log::debug!("unclick   {:?}", pbtn);self.kbd_out.release_btn(pbtn)?;}
               self.kbd_out.click_btn(*btn)?;
               prev_mouse_btn = Some(*btn);}
@@ -796,11 +791,10 @@ impl Kanata {
                     distance              	: *min_distance,
                     ticks_until_move      	: 0,
                     interval              	: *interval,
-                    move_mouse_accel_state	: Some(move_mouse_accel_state),})}  }
-            }
+                    move_mouse_accel_state	: Some(move_mouse_accel_state),})}  }}
             CustomAction::MoveMouseSpeed { speed } => {
               self.move_mouse_speed_modifiers.push(*speed);log::debug!("movemousespeed modifiers: {:?}",self.move_mouse_speed_modifiers);}
-            CustomAction::Cmd(_cmd) => {#[cfg(feature="cmd")]cmds.push(_cmd.clone());}
+            CustomAction::Cmd          (_cmd) => {#[cfg(feature="cmd")]cmds.push(_cmd.clone());}
             CustomAction::CmdOutputKeys(_cmd) => {#[cfg(feature="cmd")] {
               for (key_action, osc) in keys_for_cmd_output(_cmd) {
                 match key_action {
@@ -818,8 +812,7 @@ impl Kanata {
                 let state = self.sequence_state.as_ref().unwrap();
                 cancel_sequence(state, &mut self.kbd_out)?;
                 self.sequence_state = None;
-              }
-            }
+              }}
             CustomAction::SequenceLeader(timeout, input_mode) => {
               if   self.sequence_state.is_none()
                 || self.sequence_state.as_ref().unwrap().sequence_input_mode == SequenceInputMode::HiddenSuppressed {log::debug!("entering sequence mode");
@@ -848,8 +841,7 @@ impl Kanata {
               self.kbd_out.release_key(osc)?;
               self.kbd_out.press_key  (osc)?;
               self.kbd_out.release_key(osc)?;
-              if do_caps_word {self.kbd_out.release_key(OsCode::KEY_LEFTSHIFT)?;}
-            }
+              if do_caps_word {self.kbd_out.release_key(OsCode::KEY_LEFTSHIFT)?;}}
             CustomAction::DynamicMacroRecord(macro_id) => {
               if let Some((macro_id, prev_recorded_macro)) =
                 begin_record_macro(*macro_id, &mut self.dynamic_macro_record_state
