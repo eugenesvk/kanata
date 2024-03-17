@@ -1,4 +1,5 @@
 //! Safe abstraction over the low-level windows keyboard hook API.
+#![cfg_attr(feature="simulated_output",allow(dead_code,unused_imports,unused_variables,unused_mut))]
 
 // This file is taken from kbremap with minor modifications github.com/timokroeger/kbremap
 use core::fmt;
