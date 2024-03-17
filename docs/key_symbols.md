@@ -1,26 +1,26 @@
 ### Supported key symbols
 
-  |Symbol(s)[^1] 	|Key `name`                                	|
-  |---------     	|--------                                  	|
-  |‹x x›         	| Left/Right modifiers (e.g., ‹⎈ LCtrl)    	|
-  |⇧             	| Shift                                    	|
-  |⎈ ⌃           	| Control                                  	|
-  |⌘ ◆ ❖         	| Windows/Command                          	|
-  |⎇ ⌥           	| Alt                                      	|
-  |⇪             	| capslock                                 	|
-  |⎋             	|`escape`                                  	|
-  |⭾ ↹           	|`tab`                                     	|
-  |␠ ␣           	|`spacebar`                                	|
-  |␈ ⌫           	|`delete_or_backspace`                     	|
-  |␡ ⌦           	|`delete_forward`                          	|
-  |⏎ ↩ ⌤ ␤       	|`return_or_enter`                         	|
-  |︔ ⸴ ．⁄        	|`semicolon` / `comma` / `period` / `slash`	|
-  |⧵ ＼           	|`backslash`                               	|
-  |﹨             	|`non_us_backslash`                        	|
-  |【 「 〔 ⎡       	|`open_bracket`                            	|
-  |】 」 〕 ⎣       	|`close_bracket`                           	|
-  |ˋ ˜           	|`grave_accent_and_tilde`                  	|
-  |‐ ₌           	|`hyphen` `equal_sign`                     	|
+  |Symbol(s)[^1] 	|Key `name` (current alias)            	|
+  |---------     	|--------                              	|
+  |‹x x›         	| Left/Right modifiers (e.g., ‹⎈ LCtrl)	|
+  |⇧             	| Shift                                	|
+  |⎈ ⌃           	| Control                              	|
+  |⌘ ◆ ❖         	| Windows/Command                      	|
+  |⎇ ⌥           	| Alt                                  	|
+  |⇪             	| capslock                             	|
+  |⎋             	|`esc`                                 	|
+  |⭾ ↹           	|`tab`                                 	|
+  |␠ ␣           	|`spc`                                 	|
+  |␈ ⌫           	|`spc`                                 	|
+  |␡ ⌦           	|`del`                                 	|
+  |⏎ ↩ ⌤ ␤       	|`return`                              	|
+  |︔ ⸴ ．⁄        	|`scln` / `scln` / `.` / `/`           	|
+  |⧵ ＼           	|`\`                                   	|
+  |﹨             	|`nonusbslash`                         	|
+  |【 「 〔 ⎡       	|`lbrc`                                	|
+  |】 」 〕 ⎣       	|`rbrc`                                	|
+  |ˋ ˜           	|`grv`                                 	|
+  |‐ ₌           	|`min` `eql`                    	|
   |▲ ▼ ◀ ▶       	|`up`/`down`/`left`/`right` `_arrow`
   |⇞ ⇟           	|`page_` `up`/`down`                    	|
   |⎀             	|`insert`                               	|
