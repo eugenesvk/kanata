@@ -1127,7 +1127,11 @@ fn parse_action_atom(ac_span: &Spanned<String>, s: &ParsedState) -> Result<&'sta
     return match s.aliases.get(alias) {
       Some(ac) => Ok(*ac),
       None     => bail!("Referenced unknown alias {}. Note that order of declarations matter.",alias),
-    };
+    }; }
+  if let Some(unisym) = ac.strip_prefix('🔣') {
+    return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(
+        CustomAction::Unicode(unisym.chars().next().expect("1 char")),
+      )))))
   }
 
   // Parse a sequence like `C-S-v` or `C-A-del`
