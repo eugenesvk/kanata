@@ -340,23 +340,15 @@ impl Kanata {
 
     self.check_handle_layer_change(tx);
 
-    if self.live_reload_requested
-      && ((self.prev_keys.is_empty() && self.cur_keys.is_empty())
-        || self.ticks_since_idle > 1000)
-    {
-      // Note regarding the ticks_since_idle check above: After 1 second if live reload is still not done, there might be a key in a stuck state. One known instance where this happens is Win+L to lock the screen in Windows with the LLHOOK mechanism. The release of Win and L keys will not be caught by the kanata process when on the lock screen. However, the OS knows that these keys have released - only the kanata state is wrong. And since kanata has a key in a stuck state, without this 1s fallback, live reload would never activate. Having this fallback allows live reload to happen which resets the kanata states.
-      self.live_reload_requested = false;
-      if let Err(e) = self.do_live_reload(tx) {
-        log::error!("live reload failed {e}");
-      }
+    if       self.live_reload_requested
+      && ((  self.prev_keys.is_empty()
+        &&   self.cur_keys .is_empty())
+          || self.ticks_since_idle > 1000) { // After 1s if live reload is still not done, there might be a key in a stuck state, eg, ❖l to lock the screen in Windows with LLHOOK: release ❖ L will not be caught by kanata process @ lock screen. However, the OS knows that these keys have released - only the kanata state is wrong. And since kanata has a key in a stuck state, without this 1s fallback, live reload would never activate. This fallback allows live reload to happen which resets the kanata states.
+      self.live_reload_requested = false; if let Err(e) = self.do_live_reload(tx) {log::error!("live reload failed {e}");}
     }
 
-    #[cfg(feature="perf_logging")]
-    log::info!("ms elapsed: {ms_elapsed}");
-    // Note regarding `as` casting. It doesn't really matter if the result would truncate and
-    // end up being wrong. Prefer to do the cheaper operation, as compared to doing the min of
-    // u16::MAX and ms_elapsed.
-    Ok(ms_elapsed as u16)
+    #[cfg(feature="perf_logging")] log::info!("ms elapsed: {ms_elapsed}");
+    Ok(ms_elapsed as u16) // `as` casting: cheaper vs doing the min of u16::MAX and ms_elapsed, doesn't matter if result truncates and wrong
   }
 
   pub fn tick_ms(&mut self, ms_elapsed: u128) -> Result<()> {
@@ -540,24 +532,18 @@ impl Kanata {
     })
   }
 
-  /// Sends OS key events according to the change in key state between the current and the
-  /// previous keyberon keystate. Also processes any custom actions.
-  ///
+  /// Sends OS key events according to the change in key state between the current and the previous keyberon keystate. Also processes any custom actions.
   /// Updates self.cur_keys.
-  ///
   /// Returns whether live reload was requested.
   fn handle_keystate_changes(&mut self) -> Result<bool> {
-    let layout = self.layout.bm();
-    let custom_event = layout.tick();
-    let mut live_reload_requested = false;
-    let cur_keys = &mut self.cur_keys;
+    let     layout               	= self.layout.bm();
+    let     custom_event         	= layout.tick();
+    let mut live_reload_requested	= false;
+    let     cur_keys             	= &mut self.cur_keys;
     cur_keys.extend(layout.keycodes());
     self.overrides.override_keys(cur_keys, &mut self.override_states);
     if let Some(caps_word) = &mut self.caps_word {
-      if caps_word.maybe_add_lsft(cur_keys) == CapsWordNextState::End {
-        self.caps_word = None;
-      }
-    }
+      if caps_word.maybe_add_lsft(cur_keys) == CapsWordNextState::End {self.caps_word = None;}}
 
     match custom_event { // Deal with unmodded. Unlike other custom actions, this should come before key presses and releases. I don't quite remember why custom actions come after the key processing, but I remember that it is intentional. However, since unmodded needs to modify the key lists, it should come before.
       CustomEvent::Press(custacts) => {
@@ -709,8 +695,7 @@ impl Kanata {
       }
     }
 
-    // Handle custom events. This used to be in a separate function but lifetime issues cause
-    // it to now be here.
+    // Handle custom events. This used to be in a separate function but lifetime issues cause it to now be here.
     match custom_event {
       CustomEvent::Press(custacts) => {
         #[cfg(feature="cmd")]
@@ -718,241 +703,115 @@ impl Kanata {
         let mut prev_mouse_btn = None;
         for custact in custacts.iter() {
           match custact {
-            // For unicode, only send on the press. No repeat action is supported for this for
-            // now.
-            CustomAction::Unicode(c) => self.kbd_out.send_unicode(*c)?,
-            CustomAction::LiveReload => {
-              live_reload_requested = true;
-              log::info!(
-                "Requested live reload of file: {}",
-                self.cfg_paths[self.cur_cfg_idx].display()
-              );
-            }
-            CustomAction::LiveReloadNext => {
-              live_reload_requested = true;
-              self.cur_cfg_idx = if self.cur_cfg_idx == self.cfg_paths.len() - 1 {
-                0
-              } else {
-                self.cur_cfg_idx + 1
-              };
-              log::info!(
-                "Requested live reload of next file: {}",
-                self.cfg_paths[self.cur_cfg_idx].display()
-              );
-            }
-            CustomAction::LiveReloadPrev => {
-              live_reload_requested = true;
+            CustomAction::Unicode(c)     => self.kbd_out.send_unicode(*c)?, // For unicode, only send on the press. No repeat action is supported for this for now.
+            CustomAction::LiveReload     => {live_reload_requested = true; log::info!("Requested live reload of file: {}",self.cfg_paths[self.cur_cfg_idx].display());}
+            CustomAction::LiveReloadNext => {live_reload_requested = true;
+              self.cur_cfg_idx = if self.cur_cfg_idx == self.cfg_paths.len() - 1 { 0
+              } else               {self.cur_cfg_idx + 1}; log::info!("Requested live reload of next file: {}",self.cfg_paths[self.cur_cfg_idx].display());}
+            CustomAction::LiveReloadPrev => {live_reload_requested = true;
               self.cur_cfg_idx = match self.cur_cfg_idx {
                 0 => self.cfg_paths.len() - 1,
-                i => i - 1,
-              };
-              log::info!(
-                "Requested live reload of prev file: {}",
-                self.cfg_paths[self.cur_cfg_idx].display()
-              );
-            }
+                i => i - 1,}; log::info!("Requested live reload of prev file: {}",self.cfg_paths[self.cur_cfg_idx].display());}
             CustomAction::LiveReloadNum(n) => {
               let n = usize::from(*n);
               live_reload_requested = true;
               match self.cfg_paths.get(n) {
-                Some(path) => {
-                  self.cur_cfg_idx = n;
-                  log::info!("Requested live reload of file: {}", path.display(),);
-                }
-                None => {
-                  log::error!("Requested live reload of config file number {}, but only {} config files were passed", n+1, self.cfg_paths.len());
-                }
-              }
-            }
+                Some(path) => {self.cur_cfg_idx = n;log::info!("Requested live reload of file: {}", path.display(),);}
+                None       => {log::error!("Requested live reload of config file number {}, but only {} config files were passed", n+1, self.cfg_paths.len());}} }
             CustomAction::LiveReloadFile(path) => {
               let path = PathBuf::from(path);
-
-              let result = self
-                .cfg_paths
-                .iter()
-                .enumerate()
-                .find(|(_idx, fpath)| **fpath == path);
-
+              let result = self.cfg_paths.iter().enumerate().find(|(_idx, fpath)| **fpath == path);
               match result {
                 Some((index, _path)) => {
-                  log::info!(
-                    "Requested live reload of file with path: {}",
-                    path.display(),
-                  );
+                  log::info!("Requested live reload of file with path: {}",path.display(),);
                   live_reload_requested = true;
-                  self.cur_cfg_idx = index;
-                }
-                None => {
-                  log::error!("Requested live reload of file with path {}, but no such path was passed as an argument to Kanata", path.display());
-                }
-              }
-            }
-            CustomAction::Mouse(btn) => {
-              log::debug!("click     {:?}", btn);
-              if let Some(pbtn) = prev_mouse_btn {
-                log::debug!("unclick   {:?}", pbtn);
-                self.kbd_out.release_btn(pbtn)?;
-              }
+                  self.cur_cfg_idx = index;}
+                None => {log::error!("Requested live reload of file with path {}, but no such path was passed as an argument to Kanata", path.display());}}}
+            CustomAction::Mouse(btn) => {log::debug!("click     {:?}", btn);
+              if let Some(pbtn) = prev_mouse_btn {log::debug!("unclick   {:?}", pbtn);self.kbd_out.release_btn(pbtn)?;}
               self.kbd_out.click_btn(*btn)?;
-              prev_mouse_btn = Some(*btn);
-            }
-            CustomAction::MouseTap(btn) => {
-              log::debug!("click     {:?}", btn);
-              self.kbd_out.click_btn(*btn)?;
-              log::debug!("unclick   {:?}", btn);
-              self.kbd_out.release_btn(*btn)?;
-            }
-            CustomAction::MWheel {
-              direction,
-              interval,
-              distance,
-            } => match direction {
+              prev_mouse_btn = Some(*btn);}
+            CustomAction::MouseTap(btn) => {log::debug!("click     {:?}", btn);
+              self.kbd_out.click_btn  (*btn)?;log::debug!("unclick   {:?}", btn);
+              self.kbd_out.release_btn(*btn)?;}
+            CustomAction::MWheel {direction,interval,distance,} => match direction {
               MWheelDirection::Up | MWheelDirection::Down => {
                 self.scroll_state = Some(ScrollState {
-                  direction: *direction,
-                  distance: *distance,
-                  ticks_until_scroll: 0,
-                  interval: *interval,
-                })
-              }
+                  direction         	: *direction,
+                  distance          	: *distance,
+                  ticks_until_scroll	: 0,
+                  interval          	: *interval,})}
               MWheelDirection::Left | MWheelDirection::Right => {
                 self.hscroll_state = Some(ScrollState {
-                  direction: *direction,
-                  distance: *distance,
-                  ticks_until_scroll: 0,
-                  interval: *interval,
-                })
-              }
-            },
-            CustomAction::MWheelNotch { direction } => {
-              self.kbd_out
-                .scroll(*direction, HI_RES_SCROLL_UNITS_IN_LO_RES)?;
-            }
-            CustomAction::MoveMouse {
-              direction,
-              interval,
-              distance,
-            } => match direction {
+                  direction         	: *direction,
+                  distance          	: *distance,
+                  ticks_until_scroll	: 0,
+                  interval          	: *interval,})} },
+            CustomAction::MWheelNotch { direction } => {self.kbd_out.scroll(*direction, HI_RES_SCROLL_UNITS_IN_LO_RES)?;}
+            CustomAction::MoveMouse {direction,interval,distance,} => match direction {
               MoveDirection::Up | MoveDirection::Down => {
                 self.move_mouse_state_vertical = Some(MoveMouseState {
-                  direction: *direction,
-                  distance: *distance,
-                  ticks_until_move: 0,
-                  interval: *interval,
-                  move_mouse_accel_state: None,
-                })
-              }
+                  direction             	: *direction,
+                  distance              	: *distance,
+                  ticks_until_move      	: 0,
+                  interval              	: *interval,
+                  move_mouse_accel_state	: None,})}
               MoveDirection::Left | MoveDirection::Right => {
                 self.move_mouse_state_horizontal = Some(MoveMouseState {
-                  direction: *direction,
-                  distance: *distance,
-                  ticks_until_move: 0,
-                  interval: *interval,
-                  move_mouse_accel_state: None,
-                })
-              }
-            },
-            CustomAction::MoveMouseAccel {
-              direction,
-              interval,
-              accel_time,
-              min_distance,
-              max_distance,
-            } => {
+                  direction             	: *direction,
+                  distance              	: *distance,
+                  ticks_until_move      	: 0,
+                  interval              	: *interval,
+                  move_mouse_accel_state	: None,})}   },
+            CustomAction::MoveMouseAccel {direction,interval,accel_time,min_distance,max_distance,} => {
               let move_mouse_accel_state = match (
-                self.movemouse_inherit_accel_state,
+                 self.movemouse_inherit_accel_state,
                 &self.move_mouse_state_horizontal,
-                &self.move_mouse_state_vertical,
-              ) {
-                (
-                  true,
-                  Some(MoveMouseState {
-                    move_mouse_accel_state: Some(s),
-                    ..
-                  }),
-                  _,
-                )
-                | (
-                  true,
-                  _,
-                  Some(MoveMouseState {
-                    move_mouse_accel_state: Some(s),
-                    ..
-                  }),
-                ) => *s,
+                &self.move_mouse_state_vertical,) {
+                ( true,  Some(MoveMouseState {move_mouse_accel_state: Some(s),..}),_,)
+                |(true,_,Some(MoveMouseState {move_mouse_accel_state: Some(s),..})  ,)
+                  => *s,
                 _ => {
                   let f_max_distance: f64 = *max_distance as f64;
                   let f_min_distance: f64 = *min_distance as f64;
                   let f_accel_time: f64 = *accel_time as f64;
-                  let increment =
-                    (f_max_distance - f_min_distance) / f_accel_time;
-
+                  let increment = (f_max_distance - f_min_distance) / f_accel_time;
                   MoveMouseAccelState {
                     accel_ticks_from_min: 0,
                     accel_ticks_until_max: *accel_time,
                     accel_increment: increment,
                     min_distance: *min_distance,
-                    max_distance: *max_distance,
-                  }
-                }
-              };
-
+                    max_distance: *max_distance,}}   };
               match direction {
                 MoveDirection::Up | MoveDirection::Down => {
                   self.move_mouse_state_vertical = Some(MoveMouseState {
-                    direction: *direction,
-                    distance: *min_distance,
-                    ticks_until_move: 0,
-                    interval: *interval,
-                    move_mouse_accel_state: Some(move_mouse_accel_state),
-                  })
-                }
+                    direction             	: *direction,
+                    distance              	: *min_distance,
+                    ticks_until_move      	: 0,
+                    interval              	: *interval,
+                    move_mouse_accel_state	: Some(move_mouse_accel_state),})}
                 MoveDirection::Left | MoveDirection::Right => {
                   self.move_mouse_state_horizontal = Some(MoveMouseState {
-                    direction: *direction,
-                    distance: *min_distance,
-                    ticks_until_move: 0,
-                    interval: *interval,
-                    move_mouse_accel_state: Some(move_mouse_accel_state),
-                  })
-                }
-              }
+                    direction             	: *direction,
+                    distance              	: *min_distance,
+                    ticks_until_move      	: 0,
+                    interval              	: *interval,
+                    move_mouse_accel_state	: Some(move_mouse_accel_state),})}  }
             }
             CustomAction::MoveMouseSpeed { speed } => {
-              self.move_mouse_speed_modifiers.push(*speed);
-              log::debug!(
-                "movemousespeed modifiers: {:?}",
-                self.move_mouse_speed_modifiers
-              );
-            }
-            CustomAction::Cmd(_cmd) => {
-              #[cfg(feature="cmd")]
-              cmds.push(_cmd.clone());
-            }
-            CustomAction::CmdOutputKeys(_cmd) => {
-              #[cfg(feature="cmd")]
-              {
-                for (key_action, osc) in keys_for_cmd_output(_cmd) {
-                  match key_action {
-                    KeyAction::Press => self.kbd_out.press_key(osc)?,
-                    KeyAction::Release => self.kbd_out.release_key(osc)?,
-                  }
-                }
-              }
-            }
+              self.move_mouse_speed_modifiers.push(*speed);log::debug!("movemousespeed modifiers: {:?}",self.move_mouse_speed_modifiers);}
+            CustomAction::Cmd(_cmd) => {#[cfg(feature="cmd")]cmds.push(_cmd.clone());}
+            CustomAction::CmdOutputKeys(_cmd) => {#[cfg(feature="cmd")] {
+              for (key_action, osc) in keys_for_cmd_output(_cmd) {
+                match key_action {
+                  KeyAction::Press   => self.kbd_out.press_key  (osc)?,
+                  KeyAction::Release => self.kbd_out.release_key(osc)?,}}  }   }
             CustomAction::FakeKey { coord, action } => {
               let (x, y) = (coord.x, coord.y);
-              log::debug!(
-                "fake key on press   {action:?} {:?},{x:?},{y:?} {:?}",
-                layout.default_layer,
-                layout.layers[layout.default_layer][x as usize][y as usize]
-              );
-              handle_fakekey_action(*action, layout, x, y);
-            }
-            CustomAction::Delay(delay) => {
-              log::debug!("on-press: sleeping for {delay} ms");
-              std::thread::sleep(std::time::Duration::from_millis((*delay).into()));
-            }
+              log::debug!("fake key on press   {action:?} {:?},{x:?},{y:?} {:?}",layout.default_layer,layout.layers[layout.default_layer][x as usize][y as usize]);
+              handle_fakekey_action(*action, layout, x, y);  }
+            CustomAction::Delay(delay) => {log::debug!("on-press: sleeping for {delay} ms");
+              std::thread::sleep(std::time::Duration::from_millis((*delay).into()));  }
             CustomAction::SequenceCancel => {
               if self.sequence_state.is_some() {
                 log::debug!("exiting sequence");
@@ -962,19 +821,13 @@ impl Kanata {
               }
             }
             CustomAction::SequenceLeader(timeout, input_mode) => {
-              if self.sequence_state.is_none()
-                || self.sequence_state.as_ref().unwrap().sequence_input_mode
-                  == SequenceInputMode::HiddenSuppressed
-              {
-                log::debug!("entering sequence mode");
+              if   self.sequence_state.is_none()
+                || self.sequence_state.as_ref().unwrap().sequence_input_mode == SequenceInputMode::HiddenSuppressed {log::debug!("entering sequence mode");
                 self.sequence_state = Some(SequenceState {
-                  sequence: vec![],
-                  sequence_input_mode: *input_mode,
-                  ticks_until_timeout: *timeout,
-                  sequence_timeout: *timeout,
-                });
-              }
-            }
+                  sequence           	: vec![],
+                  sequence_input_mode	: *input_mode,
+                  ticks_until_timeout	: *timeout,
+                  sequence_timeout   	: *timeout,}); }  }
             CustomAction::Repeat => {
               let keycode = self.last_pressed_key;
               let osc: OsCode = keycode.into();
@@ -993,49 +846,29 @@ impl Kanata {
               }
               // Release key in case the most recently pressed key is still pressed.
               self.kbd_out.release_key(osc)?;
-              self.kbd_out.press_key(osc)?;
+              self.kbd_out.press_key  (osc)?;
               self.kbd_out.release_key(osc)?;
-              if do_caps_word {
-                self.kbd_out.release_key(OsCode::KEY_LEFTSHIFT)?;
-              }
+              if do_caps_word {self.kbd_out.release_key(OsCode::KEY_LEFTSHIFT)?;}
             }
             CustomAction::DynamicMacroRecord(macro_id) => {
               if let Some((macro_id, prev_recorded_macro)) =
-                begin_record_macro(*macro_id, &mut self.dynamic_macro_record_state)
-              {
-                log::debug!("saving macro {prev_recorded_macro:?}");
-                self.dynamic_macros.insert(macro_id, prev_recorded_macro);
-              }
-            }
+                begin_record_macro(*macro_id, &mut self.dynamic_macro_record_state
+                ) {log::debug!("saving macro {prev_recorded_macro:?}");
+                self.dynamic_macros.insert(macro_id, prev_recorded_macro);}  }
             CustomAction::DynamicMacroRecordStop(num_actions_to_remove) => {
               if let Some((macro_id, prev_recorded_macro)) = stop_macro(
                 &mut self.dynamic_macro_record_state,
                 *num_actions_to_remove,
-              ) {
-                log::debug!("saving macro {prev_recorded_macro:?}");
-                self.dynamic_macros.insert(macro_id, prev_recorded_macro);
-              }
-            }
+              ) {log::debug!("saving macro {prev_recorded_macro:?}");
+                self.dynamic_macros.insert(macro_id, prev_recorded_macro);}  }
             CustomAction::DynamicMacroPlay(macro_id) => {
-              play_macro(
-                *macro_id,
+              play_macro(*macro_id,
                 &mut self.dynamic_macro_replay_state,
-                &self.dynamic_macros,
-              );
-            }
-            CustomAction::SendArbitraryCode(code) => {
-              self.kbd_out.write_code(*code as u32, KeyValue::Press)?;
-            }
-            CustomAction::CapsWord(cfg) => {
-              self.caps_word = Some(CapsWordState::new(cfg));
-            }
-            CustomAction::SetMouse { x, y } => {
-              self.kbd_out.set_mouse(*x, *y)?;
-            }
-            CustomAction::FakeKeyOnIdle(fkd) => {
-              self.ticks_since_idle = 0;
-              self.waiting_for_idle.insert(*fkd);
-            }
+                &    self.dynamic_macros,);  }
+            CustomAction::SendArbitraryCode(code) => {self.kbd_out.write_code(*code as u32, KeyValue::Press)?;}
+            CustomAction::CapsWord(cfg)           => {self.caps_word = Some(CapsWordState::new(cfg));}
+            CustomAction::SetMouse{x,y}           => {self.kbd_out.set_mouse(*x, *y)?;}
+            CustomAction::FakeKeyOnIdle(fkd)      => {self.ticks_since_idle = 0;self.waiting_for_idle.insert(*fkd);}
             CustomAction::FakeKeyOnRelease { .. }
             | CustomAction::DelayOnRelease(_)
             | CustomAction::Unmodded { .. }
@@ -1085,13 +918,9 @@ impl Kanata {
                   }
                 }
                 MoveDirection::Left | MoveDirection::Right => {
-                  if let Some(move_mouse_state_horizontal) =
-                    &self.move_mouse_state_horizontal
-                  {
+                  if let Some(move_mouse_state_horizontal) = &self.move_mouse_state_horizontal {
                     if move_mouse_state_horizontal.direction == *direction {
-                      self.move_mouse_state_horizontal = None;
-                    }
-                  }
+                      self.move_mouse_state_horizontal = None;} }
                 }
               }
               if self.movemouse_smooth_diagonals {
@@ -1100,17 +929,9 @@ impl Kanata {
               pbtn
             }
             CustomAction::MoveMouseSpeed { speed, .. } => {
-              if let Some(idx) = self
-                .move_mouse_speed_modifiers
-                .iter()
-                .position(|s| *s == *speed)
-              {
-                self.move_mouse_speed_modifiers.remove(idx);
-              }
-              log::debug!(
-                "movemousespeed modifiers: {:?}",
-                self.move_mouse_speed_modifiers
-              );
+              if let Some(idx) = self.move_mouse_speed_modifiers.iter().position(|s| *s == *speed)
+              {self.move_mouse_speed_modifiers.remove(idx);}
+              log::debug!("movemousespeed modifiers: {:?}",self.move_mouse_speed_modifiers);
               pbtn
             }
             CustomAction::Delay(delay) => {
@@ -1127,9 +948,7 @@ impl Kanata {
             CustomAction::CancelMacroOnRelease => {
               log::debug!("cancelling all macros");
               layout.active_sequences.clear();
-              layout
-                .states
-                .retain(|s| !matches!(s, State::FakeKey { .. }));
+              layout.states.retain(|s| !matches!(s, State::FakeKey { .. }));
               pbtn
             }
             CustomAction::SendArbitraryCode(code) => {
@@ -1344,14 +1163,9 @@ impl Kanata {
           if       ! is_idle                       	{ k.ticks_since_idle = 0;
           } else if  is_idle && counting_idle_ticks	{ k.ticks_since_idle = k.ticks_since_idle.saturating_add(ms_elapsed);
             #[cfg(feature="perf_logging")] log::info!("ticks since idle: {}", k.ticks_since_idle);}
-          let passed_max_switch_timing_check = k
-            .layout
-            .b()
-            .historical_keys
-            .iter_hevents()
-            .next()
-            .map(|he| he.ticks_since_occurrence >= k.switch_max_key_timing)
-            .unwrap_or(true);
+          let passed_max_switch_timing_check = k.layout.b()
+            .historical_keys.iter_hevents().next()
+            .map(|he| he.ticks_since_occurrence >= k.switch_max_key_timing).unwrap_or(true);
           is_idle && !counting_idle_ticks && passed_max_switch_timing_check
         };
         if can_block {
@@ -1359,9 +1173,7 @@ impl Kanata {
           match rx.recv() {
             Ok(kev) => {
               let mut k = kanata.lock();
-              let now = time::Instant::now()
-                .checked_sub(time::Duration::from_millis(1))
-                .expect("subtract 1ms from current time");
+              let now = time::Instant::now().checked_sub(time::Duration::from_millis(1)).expect("−1ms from current time");
               #[cfg(all(not(feature="interception_driver"),target_os="windows"))] {
                 if (now - last_input_time) > time::Duration::from_secs(LLHOOK_IDLE_TIME_CLEAR_INPUTS) {
                   log::debug!("clearing keyberon normal key states due to inactivity"); // If kanata has been inactive for long enough, clear all states. This won't trigger if there are macros running, or if a key is held down for a long time and is sending OS repeats. The reason for this code is in case like Win+L which locks the Windows desktop. When this happens, the Win key and L key will be stuck as pressed in the kanata state because LLHOOK kanata cannot read keys in the lock screen or administrator applications. So this is heuristic to detect such an issue and clear states assuming that's what happened. Only states in the normal key row are cleared, since those are the states that might be stuck. A real use case might be to have a fake key pressed for a long period of time, so make sure those are not cleared.
