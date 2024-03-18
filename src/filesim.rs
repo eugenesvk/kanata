@@ -152,6 +152,7 @@ fn main_impl() -> Result<()> {
         }
       }
     }
+    k.kbd_out.log.end();
   }
 
   Ok(())
