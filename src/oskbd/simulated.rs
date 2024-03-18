@@ -7,9 +7,9 @@ use kanata_parser::custom_action::*;
 
 use std::io;
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(any(target_os="windows",target_os="macos")))]
 use kanata_keyberon::key_code::KeyCode;
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(any(target_os="windows",target_os="macos")))]
 use std::fmt;
 
 /// Handle for writing keys to the OS.
@@ -39,7 +39,9 @@ impl KbdOut {
 
     pub fn write_key(&mut self, key: OsCode, value: KeyValue) -> Result<(), io::Error> {
         let key_ev = KeyEvent::new(key, value);
-        let event = key_ev.into();
+        let event = {
+            #[cfg(    target_os = "macos" )]{key_ev.try_into().unwrap()}
+            #[cfg(not(target_os = "macos"))]{key_ev.into()             }  };
         self.write(event)
     }
 
@@ -96,7 +98,7 @@ impl KbdOut {
     }
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(any(target_os="windows",target_os="macos")))]
 #[derive(Debug, Clone, Copy)]
 pub struct InputEvent {
     pub code: u32,
@@ -104,7 +106,7 @@ pub struct InputEvent {
     /// Key was released
     pub up: bool,
 }
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(any(target_os="windows",target_os="macos")))]
 impl fmt::Display for InputEvent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let direction = if self.up { "↑" } else { "↓" };
@@ -113,7 +115,7 @@ impl fmt::Display for InputEvent {
     }
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(any(target_os="windows",target_os="macos")))]
 impl InputEvent {
     pub fn from_oscode(code: OsCode, val: KeyValue) -> Self {
         Self {
@@ -123,7 +125,7 @@ impl InputEvent {
     }
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(any(target_os="windows",target_os="macos")))]
 impl TryFrom<InputEvent> for KeyEvent {
     type Error = ();
     fn try_from(item: InputEvent) -> Result<Self, Self::Error> {
@@ -137,12 +139,18 @@ impl TryFrom<InputEvent> for KeyEvent {
     }
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(any(target_os="windows",target_os="macos")))]
 impl From<KeyEvent> for InputEvent {
     fn from(item: KeyEvent) -> Self {
         Self {
             code: item.code.into(),
             up: item.value.into(),
         }
+    }
+}
+#[cfg(target_os = "macos")]
+impl KeyEvent {
+    pub fn new(code: OsCode, value: KeyValue) -> Self {
+        Self { code, value }
     }
 }
