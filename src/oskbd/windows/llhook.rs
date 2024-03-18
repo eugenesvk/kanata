@@ -56,8 +56,13 @@ impl fmt::Display for InputEvent {
     }
 }
 impl InputEvent {
-  fn from_hook_pinfo(pInfo:&KBDLLHOOKSTRUCT   ) -> Self { Self {
-    code: pInfo.vkCode,
+  fn from_hook_pinfo(pInfo:&KBDLLHOOKSTRUCT   ) -> Self {
+    let code = if pInfo.vkCode == (           VK_RETURN as u32) {
+      match pInfo.flags & 0x1 {0 =>           VK_RETURN as u32
+        ,                      _ => u32::from(VK_KPENTER_FAKE),}
+    } else {pInfo.vkCode};
+  Self {
+    code,
     up  :(pInfo.flags & LLKHF_UP) != 0,}}
   pub fn from_oscode    (code:OsCode, val:KeyValue) -> Self { Self {
     code: code.into(),
