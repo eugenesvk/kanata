@@ -59,7 +59,7 @@ impl InputEvent {
   fn from_hook_pinfo(pInfo:&KBDLLHOOKSTRUCT   ) -> Self {
     let code = if pInfo.vkCode == (           VK_RETURN as u32) {
       match pInfo.flags & 0x1 {0 =>           VK_RETURN as u32
-        ,                      _ => u32::from(VK_KPENTER_FAKE),}
+        ,                      _ => u32::from(vk_kpenter_fake),}
     } else {pInfo.vkCode};
   Self {
     code,
