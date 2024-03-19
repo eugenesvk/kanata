@@ -1093,46 +1093,46 @@ fn parse_action(expr: &SExpr, s: &ParsedState) -> Result<&'static KanataAction> 
       e})
 }
 
+/// Returns a single custom action in the proper wrapped type.
+fn custom(ca:CustomAction, a:&Allocations) -> Result<&'static KanataAction> {Ok(a.sref(Action::Custom(a.sref(a.sref_slice(ca)))))}
 /// Parse a `kanata_keyberon::action::Action` from a string.
 fn parse_action_atom(ac_span: &Spanned<String>, s: &ParsedState) -> Result<&'static KanataAction> {
   let ac = &*ac_span.t;
   if is_list_action(ac) {bail_span!(ac_span,"This is a list action and must be in parentheses: ({ac} ...)");}
-  match ac {
-    "_"|"‗"|"≝"                	=>  return Ok(s.a.sref(Action::Trans)),
-    "XX"|"✗"|"∅"|"•"           	=>  return Ok(s.a.sref(Action::NoOp)),
-    "lrld"                     	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::LiveReload)),)))}
-    "lrld-next"|"lrnx"         	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::LiveReloadNext)),)))}
-    "lrld-prev"|"lrpv"         	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::LiveReloadPrev)),)))}
-    "sldr"                     	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::SequenceLeader(s.default_sequence_timeout,s.default_sequence_input_mode,),)))))}
-    "scnl"                     	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::SequenceCancel)),)))}
-    "mlft"|"mouseleft"         	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::Mouse(Btn::Left))),)))}
-    "mrgt"|"mouseright"        	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::Mouse(Btn::Right))),)))}
-    "mmid"|"mousemid"          	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::Mouse(Btn::Mid))),)))}
-    "mfwd"|"mouseforward"      	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::Mouse(Btn::Forward))),)))}
-    "mbck"|"mousebackward"     	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::Mouse(Btn::Backward))),)))}
-    "mltp"|"mousetapleft"      	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::MouseTap(Btn::Left))),)))}
-    "mrtp"|"mousetapright"     	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::MouseTap(Btn::Right))),)))}
-    "mmtp"|"mousetapmid"       	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::MouseTap(Btn::Mid))),)))}
-    "mftp"|"mousetapforward"   	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::MouseTap(Btn::Forward))),)))}
-    "mbtp"|"mousetapbackward"  	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::MouseTap(Btn::Backward))),)))}
-    "mwu"|"mousewheelup"       	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::MWheelNotch {direction: MWheelDirection::Up,},)))))}
-    "mwd"|"mousewheeldown"     	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::MWheelNotch {direction: MWheelDirection::Down,},)))))}
-    "mwl"|"mousewheelleft"     	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::MWheelNotch {direction: MWheelDirection::Left,},)))))}
-    "mwr"|"mousewheelright"    	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::MWheelNotch {direction: MWheelDirection::Right,},)))))}
-    "rpt"|"repeat"|"rpt-key"   	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::Repeat)),)))}
-    "rpt-any"                  	=>  return Ok(s.a.sref(Action::Repeat)),
-    "dynamic-macro-record-stop"	=> {return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(CustomAction::DynamicMacroRecordStop(0))),)))}
-    _ => {}};if let Some(oscode) = str_to_oscode(ac) {return Ok(s.a.sref(k(oscode.into())));}
+match ac {
+  "_"|"‗"|"≝"                	=> return Ok(s.a.sref(Action::Trans )),
+  "XX"|"✗"|"∅"|"•"           	=> return Ok(s.a.sref(Action::NoOp  )),
+  "rpt-any"                  	=> return Ok(s.a.sref(Action::Repeat)),
+  "sldr"                     	=>{return custom(CustomAction::SequenceLeader	(s.default_sequence_timeout,s.default_sequence_input_mode,),&s.a,)},
+  "scnl"                     	=> return custom(CustomAction::SequenceCancel	                                 	 ,&s.a),
+  "lrld"                     	=> return custom(CustomAction::LiveReload    	                                 	 ,&s.a),
+  "lrld-next"|"lrnx"         	=> return custom(CustomAction::LiveReloadNext	                                 	 ,&s.a),
+  "lrld-prev"|"lrpv"         	=> return custom(CustomAction::LiveReloadPrev	                                 	 ,&s.a),
+  "mlft"|"mouseleft"         	=> return custom(CustomAction::Mouse         	(Btn::Left                       	),&s.a),
+  "mrgt"|"mouseright"        	=> return custom(CustomAction::Mouse         	(Btn::Right                      	),&s.a),
+  "mmid"|"mousemid"          	=> return custom(CustomAction::Mouse         	(Btn::Mid                        	),&s.a),
+  "mfwd"|"mouseforward"      	=> return custom(CustomAction::Mouse         	(Btn::Forward                    	),&s.a),
+  "mbck"|"mousebackward"     	=> return custom(CustomAction::Mouse         	(Btn::Backward                   	),&s.a),
+  "mltp"|"mousetapleft"      	=> return custom(CustomAction::MouseTap      	(Btn::Left                       	),&s.a),
+  "mrtp"|"mousetapright"     	=> return custom(CustomAction::MouseTap      	(Btn::Right                      	),&s.a),
+  "mmtp"|"mousetapmid"       	=> return custom(CustomAction::MouseTap      	(Btn::Mid                        	),&s.a),
+  "mftp"|"mousetapforward"   	=> return custom(CustomAction::MouseTap      	(Btn::Forward                    	),&s.a),
+  "mbtp"|"mousetapbackward"  	=> return custom(CustomAction::MouseTap      	(Btn::Backward                   	),&s.a),
+  "mwu" |"mousewheelup"      	=>{return custom(CustomAction::MWheelNotch   	{direction:MWheelDirection::Up   	},&s.a,)}
+  "mwd" |"mousewheeldown"    	=>{return custom(CustomAction::MWheelNotch   	{direction:MWheelDirection::Down 	},&s.a,)}
+  "mwl" |"mousewheelleft"    	=>{return custom(CustomAction::MWheelNotch   	{direction:MWheelDirection::Left 	},&s.a,)}
+  "mwr" |"mousewheelright"   	=>{return custom(CustomAction::MWheelNotch   	{direction:MWheelDirection::Right	},&s.a,)}
+  "rpt" |"repeat"|"rpt-key"  	=> return custom(CustomAction::Repeat        	                                 	 ,&s.a),
+  "dynamic-macro-record-stop"	=>{return custom(CustomAction::DynamicMacroRecordStop(0), &s.a)}
+  _                          	=>{}};
+  if let Some(oscode) = str_to_oscode(ac) {return Ok(s.a.sref(k(oscode.into())));}
   if let Some(alias) = ac.strip_prefix('@') {
     return match s.aliases.get(alias) {
       Some(ac) => Ok(*ac),
       None     => bail!("Referenced unknown alias {}. Note that order of declarations matter.",alias),
     }; }
-  if let Some(unisym) = ac.strip_prefix('🔣') {
-    return Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(
-        CustomAction::Unicode(unisym.chars().next().expect("1 char")),
-      )))))
-  }
+  // TODO: when unicode accepts multiple chars, change this to feed the whole string, not just the first char
+  if let Some(unisym) = ac.strip_prefix('🔣') {return custom(CustomAction::Unicode(unisym.chars().next().expect("1 char")),&s.a,);}
 
   // Parse a sequence like `C-S-v` or `C-A-del`
   let (mut keys, unparsed_str) = parse_mod_prefix(ac)?;
