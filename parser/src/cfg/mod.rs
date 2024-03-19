@@ -1099,32 +1099,32 @@ fn custom(ca:CustomAction, a:&Allocations) -> Result<&'static KanataAction> {Ok(
 fn parse_action_atom(ac_span: &Spanned<String>, s: &ParsedState) -> Result<&'static KanataAction> {
   let ac = &*ac_span.t;
   if is_list_action(ac) {bail_span!(ac_span,"This is a list action and must be in parentheses: ({ac} ...)");}
-match ac {
-  "_"|"‗"|"≝"                	=> return Ok(s.a.sref(Action::Trans )),
-  "XX"|"✗"|"∅"|"•"           	=> return Ok(s.a.sref(Action::NoOp  )),
-  "rpt-any"                  	=> return Ok(s.a.sref(Action::Repeat)),
-  "sldr"                     	=>{return custom(CustomAction::SequenceLeader	(s.default_sequence_timeout,s.default_sequence_input_mode,),&s.a,)},
-  "scnl"                     	=> return custom(CustomAction::SequenceCancel	                                 	 ,&s.a),
-  "lrld"                     	=> return custom(CustomAction::LiveReload    	                                 	 ,&s.a),
-  "lrld-next"|"lrnx"         	=> return custom(CustomAction::LiveReloadNext	                                 	 ,&s.a),
-  "lrld-prev"|"lrpv"         	=> return custom(CustomAction::LiveReloadPrev	                                 	 ,&s.a),
-  "mlft"|"mouseleft"         	=> return custom(CustomAction::Mouse         	(Btn::Left                       	),&s.a),
-  "mrgt"|"mouseright"        	=> return custom(CustomAction::Mouse         	(Btn::Right                      	),&s.a),
-  "mmid"|"mousemid"          	=> return custom(CustomAction::Mouse         	(Btn::Mid                        	),&s.a),
-  "mfwd"|"mouseforward"      	=> return custom(CustomAction::Mouse         	(Btn::Forward                    	),&s.a),
-  "mbck"|"mousebackward"     	=> return custom(CustomAction::Mouse         	(Btn::Backward                   	),&s.a),
-  "mltp"|"mousetapleft"      	=> return custom(CustomAction::MouseTap      	(Btn::Left                       	),&s.a),
-  "mrtp"|"mousetapright"     	=> return custom(CustomAction::MouseTap      	(Btn::Right                      	),&s.a),
-  "mmtp"|"mousetapmid"       	=> return custom(CustomAction::MouseTap      	(Btn::Mid                        	),&s.a),
-  "mftp"|"mousetapforward"   	=> return custom(CustomAction::MouseTap      	(Btn::Forward                    	),&s.a),
-  "mbtp"|"mousetapbackward"  	=> return custom(CustomAction::MouseTap      	(Btn::Backward                   	),&s.a),
-  "mwu" |"mousewheelup"      	=>{return custom(CustomAction::MWheelNotch   	{direction:MWheelDirection::Up   	},&s.a,)}
-  "mwd" |"mousewheeldown"    	=>{return custom(CustomAction::MWheelNotch   	{direction:MWheelDirection::Down 	},&s.a,)}
-  "mwl" |"mousewheelleft"    	=>{return custom(CustomAction::MWheelNotch   	{direction:MWheelDirection::Left 	},&s.a,)}
-  "mwr" |"mousewheelright"   	=>{return custom(CustomAction::MWheelNotch   	{direction:MWheelDirection::Right	},&s.a,)}
-  "rpt" |"repeat"|"rpt-key"  	=> return custom(CustomAction::Repeat        	                                 	 ,&s.a),
-  "dynamic-macro-record-stop"	=>{return custom(CustomAction::DynamicMacroRecordStop(0), &s.a)}
-  _                          	=>{}};
+  match ac {
+    "_"|"‗"|"≝"                	=> return Ok(s.a.sref(Action::Trans )),
+    "XX"|"✗"|"∅"|"•"           	=> return Ok(s.a.sref(Action::NoOp  )),
+    "rpt-any"                  	=> return Ok(s.a.sref(Action::Repeat)),
+    "sldr"                     	=>{return custom(CustomAction::SequenceLeader	(s.default_sequence_timeout,s.default_sequence_input_mode,),&s.a,)},
+    "scnl"                     	=> return custom(CustomAction::SequenceCancel	                                 	 ,&s.a),
+    "lrld"                     	=> return custom(CustomAction::LiveReload    	                                 	 ,&s.a),
+    "lrld-next"|"lrnx"         	=> return custom(CustomAction::LiveReloadNext	                                 	 ,&s.a),
+    "lrld-prev"|"lrpv"         	=> return custom(CustomAction::LiveReloadPrev	                                 	 ,&s.a),
+    "mlft"|"mouseleft"         	=> return custom(CustomAction::Mouse         	(Btn::Left                       	),&s.a),
+    "mrgt"|"mouseright"        	=> return custom(CustomAction::Mouse         	(Btn::Right                      	),&s.a),
+    "mmid"|"mousemid"          	=> return custom(CustomAction::Mouse         	(Btn::Mid                        	),&s.a),
+    "mfwd"|"mouseforward"      	=> return custom(CustomAction::Mouse         	(Btn::Forward                    	),&s.a),
+    "mbck"|"mousebackward"     	=> return custom(CustomAction::Mouse         	(Btn::Backward                   	),&s.a),
+    "mltp"|"mousetapleft"      	=> return custom(CustomAction::MouseTap      	(Btn::Left                       	),&s.a),
+    "mrtp"|"mousetapright"     	=> return custom(CustomAction::MouseTap      	(Btn::Right                      	),&s.a),
+    "mmtp"|"mousetapmid"       	=> return custom(CustomAction::MouseTap      	(Btn::Mid                        	),&s.a),
+    "mftp"|"mousetapforward"   	=> return custom(CustomAction::MouseTap      	(Btn::Forward                    	),&s.a),
+    "mbtp"|"mousetapbackward"  	=> return custom(CustomAction::MouseTap      	(Btn::Backward                   	),&s.a),
+    "mwu" |"mousewheelup"      	=>{return custom(CustomAction::MWheelNotch   	{direction:MWheelDirection::Up   	},&s.a,)}
+    "mwd" |"mousewheeldown"    	=>{return custom(CustomAction::MWheelNotch   	{direction:MWheelDirection::Down 	},&s.a,)}
+    "mwl" |"mousewheelleft"    	=>{return custom(CustomAction::MWheelNotch   	{direction:MWheelDirection::Left 	},&s.a,)}
+    "mwr" |"mousewheelright"   	=>{return custom(CustomAction::MWheelNotch   	{direction:MWheelDirection::Right	},&s.a,)}
+    "rpt" |"repeat"|"rpt-key"  	=> return custom(CustomAction::Repeat        	                                 	 ,&s.a),
+    "dynamic-macro-record-stop"	=>{return custom(CustomAction::DynamicMacroRecordStop(0), &s.a)}
+    _                          	=>{}};
   if let Some(oscode) = str_to_oscode(ac) {return Ok(s.a.sref(k(oscode.into())));}
   if let Some(alias) = ac.strip_prefix('@') {
     return match s.aliases.get(alias) {
