@@ -136,16 +136,22 @@ fn main_impl() -> Result<()> {
       for pair in l.split_whitespace() {
         match pair.split_once(':') {
           Some((kind, val)) => match kind {
-            "tick" | "🕐" | "t"           => {k.tick_ms(str::parse::<u128>(val)?)?;}
-            "press" | "↓" | "d" | "down"  => {k.handle_input_event(&KeyEvent {
-              code : str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?,
-              value: KeyValue::Press,})?;}
-            "release" | "↑" | "u" | "up"  => {k.handle_input_event(&KeyEvent {
-              code : str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?,
-              value: KeyValue::Release,})?;}
-            "repeat" | "⟳" | "r"         => {k.handle_input_event(&KeyEvent {
-              code : str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?,
-              value: KeyValue::Repeat,})?;}
+            "tick" | "🕐" | "t"           => {
+              let tick = str::parse::<u128>(val)?;
+              k.kbd_out.log.in_tick(tick);
+              k.tick_ms(tick)?;}
+            "press" | "↓" | "d" | "down"  => {
+              let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
+              k.kbd_out.log.in_press_key(key_code);
+              k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Press,})?;}
+            "release" | "↑" | "u" | "up"  => {
+              let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
+              k.kbd_out.log.in_release_key(key_code);
+              k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Release,})?;}
+            "repeat" | "⟳" | "r"         => {
+              let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
+              k.kbd_out.log.in_repeat_key(key_code);
+              k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Repeat,})?;}
             _ => bail!("invalid pair prefix: {kind}"),
           },
           None => bail!("invalid pair: {l}"),
