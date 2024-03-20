@@ -17,7 +17,28 @@ Out—————————————————————————�
  raw↑│
  raw↓│
 Σ   │ ↓J  1500 ↓L  5000 ↓RShift ↓RAlt ↓Kb1  50  🤲    ↑Kb1  50 ↓Kb1  50  🤲    ↑Kb1  50 ↑J  50 ↑RShift ↑L  50 ↑RAlt
- */
+*/
+use indoc::formatdoc;
+use std::ffi::{OsStr, OsString};
+use std::fs::File;
+use std::io::Write;
+use std::path::{Path, PathBuf};
+
+pub fn concat_os_str2(a: &OsStr, b: &OsStr) -> OsString {
+  let mut ret = OsString::with_capacity(a.len() + b.len()); // allocate once
+  ret.push(a);
+  ret.push(b); // doesn't allocate
+  ret
+}
+fn append_file_name(path: impl AsRef<Path>, appendix: impl AsRef<OsStr>) -> PathBuf {
+  let path = path.as_ref();
+  let mut result = path.to_owned();
+  let stem_in = path.file_stem().unwrap_or(OsStr::new(""));
+  let stem_out = concat_os_str2(stem_in, &OsStr::new(&appendix));
+  result.set_file_name(stem_out);
+  if let Some(ext) = path.extension() {result.set_extension(ext);}
+  result
+}
 #[derive(Debug,Copy,Clone,PartialEq)] pub enum LogFmtT {
   KeyUp,KeyDown,MouseUp,MouseDown,MouseMove,Unicode,Code,RawUp,RawDown,InKeyUp,InKeyDown,InKeyRep,InTick}
 
@@ -98,27 +119,60 @@ impl LogFmt {
   pub fn move_mouse    	(&mut self, dir  :MoveDirection  , dist:u16){self.fmt(LogFmtT::MouseMove,format!("{}{}", dir,dist))}
   pub fn write_code    	(&mut self, code: u32, value: KeyValue){self.fmt(LogFmtT::Code	,format!("{code};{value:?}"))}
 
-  pub fn end(&self) -> () {
-    let pad = self.combo.len() - 3;
-    println!("🕐Δms│{}"     	,self.time);
-    println!("In {:—<pad$}"	,"");
-    println!(" k↑ │{}"     	,self.in_key_up);
-    println!(" k↓ │{}"     	,self.in_key_down);
-    println!(" k⟳ │{}"     	,self.in_key_rep);
-    println!("Σin │{}"     	,self.in_combo);
-    println!("Out{:—<pad$}"	,"");
-    println!(" k↑ │{}"     	,self.key_up);
-    println!(" k↓ │{}"     	,self.key_down);
-    println!(" 🖰↑ │{}"     	,self.mouse_up);
-    println!(" 🖰↓ │{}"     	,self.mouse_down);
-    println!(" 🖰  │{}"     	,self.mouse_move);
-    println!(" 🔣  │{}"     	,self.unicode);
-    println!(" code│{}"    	,self.code);
-    println!(" raw↑│{}"    	,self.raw_up);
-    println!(" raw↓│{}"    	,self.raw_down);
-    println!("Σout│{}"     	,self.combo);
+  pub fn end(&self, in_path: &PathBuf, appendix: Option<String>) {
+    let table_out = formatdoc!(
+      "🕐Δms│{}
+     In───┼{:─<pad$}
+      k↑  │{}
+      k↓  │{}
+      k⟳  │{}
+     Σin  │{}
+     Out──┼{:─<pad$}
+      k↑  │{}
+      k↓  │{}
+      🖰↑  │{}
+      🖰↓  │{}
+      🖰   │{}
+      🔣  │{}
+      code│{}
+      raw↑│{}
+      raw↓│{}
+     Σout │{}
+     ",
+      self.time,
+      "",
+      self.in_key_up,
+      self.in_key_down,
+      self.in_key_rep,
+      self.in_combo,
+      "",
+      self.key_up,
+      self.key_down,
+      self.mouse_up,
+      self.mouse_down,
+      self.mouse_move,
+      self.unicode,
+      self.code,
+      self.raw_up,
+      self.raw_down,
+      self.combo
+    );
+    println!("{}", table_out);
+    if let Some(appendix_s) = appendix {
+      let out_path = append_file_name(in_path, appendix_s);
+      let out_path_s = out_path.display();
+      let mut out_file = match File::create(&out_path) {
+        Err(e) => panic!("✗ Couldn't create {}: {}", out_path_s, e),
+        Ok(out_file) => out_file,
+      };
+      match out_file.write_all(table_out.as_bytes()) {
+        Err(e) => panic!("✗ Couldn't write to {}: {}", out_path_s, e),
+        Ok(_) => println!("Saved output → {}", out_path_s),
+      }
+    }
   }
 }
+
 
 use super::*;
 

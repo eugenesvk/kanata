@@ -80,6 +80,9 @@ test/sim.txt in the current working directory and
     )]
     #[arg(short = 's', long, verbatim_doc_comment)]
     sim: Option<Vec<PathBuf>>,
+    /// Save output to the simulation file's path with its name appended by the value of this argument
+    #[arg(short = 'o', long, verbatim_doc_comment)]
+    out: Option<String>,
 }
 
 fn log_init() {
@@ -98,7 +101,7 @@ fn log_init() {
 }
 
 /// Parse CLI arguments
-fn cli_init() -> Result<(ValidatedArgs, Vec<PathBuf>)> {
+fn cli_init() -> Result<ValidatedArgs> {
   let args = Args::parse();
   let cfg_paths = args.cfg.unwrap_or_else(default_cfg);
   let sim_paths = args.sim.unwrap_or_else(default_sim);
