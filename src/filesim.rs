@@ -35,6 +35,7 @@ pub fn default_sim() -> Vec<PathBuf> {
 /// - interpreting them with kanata
 /// - printing out which actions or key/mouse events kanata would execute if the keys were
 /// pressed by a user
+/// - (optionally) saving the result to a file for reference
 struct Args {
     // Display different platform specific paths based on the target OS
     #[cfg_attr(
