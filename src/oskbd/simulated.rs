@@ -39,6 +39,7 @@ fn append_file_name(path: impl AsRef<Path>, appendix: impl AsRef<OsStr>) -> Path
   if let Some(ext) = path.extension() {result.set_extension(ext);}
   result
 }
+use win_dbg_logger::output_debug_string;
 #[derive(Debug,Copy,Clone,PartialEq)] pub enum LogFmtT {
   KeyUp,KeyDown,MouseUp,MouseDown,MouseMove,Unicode,Code,RawUp,RawDown,InKeyUp,InKeyDown,InKeyRep,InTick}
 
@@ -158,6 +159,7 @@ impl LogFmt {
       self.combo
     );
     println!("{}", table_out);
+    output_debug_string(&table_out);
     if let Some(appendix_s) = appendix {
       let out_path = append_file_name(in_path, appendix_s);
       let out_path_s = out_path.display();
