@@ -5,6 +5,8 @@
 use core::fmt;
 use std::cell::Cell;
 use std::io;
+use std::sync::atomic::AtomicI64;
+use std::sync::atomic::Ordering::SeqCst;
 use std::{mem, ptr};
 
 use winapi::ctypes::*;
@@ -44,7 +46,8 @@ impl Drop for KeyboardHook {
   }
 }
 
-#[derive(Debug, Clone, Copy)] pub struct InputEvent { // Key event received by the low level keyboard hook.
+#[derive(Debug,Clone,Copy,PartialEq,Eq)]
+pub struct InputEvent { // Key event received by the low level keyboard hook.
   pub code: u32,
   pub up  : bool, // Key was released
 }
@@ -89,6 +92,8 @@ impl From<KeyEvent> for InputEvent {
   }
 }
 
+pub static EVENTS_TO_IGNORE_COUNT: AtomicI64 = AtomicI64::new(0);
+
 /// The actual WinAPI compatible callback learn.microsoft.com/en-us/windows/win32/winmsg/lowlevelkeyboardproc
 unsafe extern "system" fn hook_proc(code:c_int, msgID:WPARAM, pInfo:LPARAM) -> LRESULT {
   // code → determines how to process the message
@@ -117,7 +122,13 @@ unsafe extern "system" fn hook_proc(code:c_int, msgID:WPARAM, pInfo:LPARAM) -> L
   log::trace!("{code}, {msgID:?}, {is_injected}");
   if code != HC_ACTION	{return CallNextHookEx(ptr::null_mut(), code, msgID, pInfo);} //↩ no extra info
   let key_event       	= InputEvent::from_hook_pinfo(hook_info); //{code:KEY_0,value:Press}
-  if is_injected      	{return CallNextHookEx(ptr::null_mut(), code, msgID, pInfo);} //↩ `SendInput()` internally calls the hook function. Filter out injected events to prevent recursion and potential stack overflows if our remapping logic sent the injected event
+  let ignore_count = EVENTS_TO_IGNORE_COUNT.load(SeqCst);
+  if is_injected &&  EVENTS_TO_IGNORE_COUNT.load(SeqCst) > 0 { //↩ `SendInput()` internally calls the hook function. Filter out kanata's injected events to prevent recursion and potential stack overflows if our remapping logic sent the injected event
+    eprintln!("ignore count: {ignore_count}");
+    if        EVENTS_TO_IGNORE_COUNT.fetch_sub(1,SeqCst) == 0 {
+      let _ = EVENTS_TO_IGNORE_COUNT.compare_exchange(-1,0, SeqCst,SeqCst);}
+    return CallNextHookEx(ptr::null_mut(), code, msgID, pInfo);
+  }
 
   let mut handled = false;
   HOOK.with(|state| { // The unwrap cannot fail, because we have initialized [`HOOK`] with a valid closure before registering the hook (this function). To access the closure we move it out of the cell and put it back after it returned. For this to work we need to prevent recursion by dropping injected events. Otherwise we would try to take the closure twice and the call would fail the second time.
