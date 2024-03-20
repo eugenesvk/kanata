@@ -1,7 +1,12 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::Result;
+#[cfg(feature = "simulated_output")]
+use anyhow::{anyhow, bail};
 use clap::Parser;
+#[cfg(feature = "simulated_output")]
 use kanata_parser::keys::str_to_oscode;
+#[cfg(feature = "simulated_output")]
 use kanata_state_machine::{oskbd::*, *};
+#[cfg(feature = "simulated_output")]
 use simplelog::*;
 
 use std::path::PathBuf;
@@ -85,6 +90,7 @@ test/sim.txt in the current working directory and
     out: Option<String>,
 }
 
+#[cfg(feature = "simulated_output")]
 fn log_init() {
     let mut log_cfg = ConfigBuilder::new();
     if let Err(e) = log_cfg.set_time_offset_to_local() {
@@ -101,6 +107,7 @@ fn log_init() {
 }
 
 /// Parse CLI arguments
+#[cfg(feature = "simulated_output")]
 fn cli_init() -> Result<ValidatedArgs> {
   let args = Args::parse();
   let cfg_paths = args.cfg.unwrap_or_else(default_cfg);
@@ -115,19 +122,23 @@ fn cli_init() -> Result<ValidatedArgs> {
   if let Some(config_sim_file) = sim_paths.first() {if !config_sim_file.exists() {bail!("Could not find the simulation file ({})\nFor more info, pass the `-h` or `--help` flags.",sim_paths[0].to_str().unwrap_or("?"))}
   } else {bail!("No simulation files provided\nFor more info, pass the `-h` or `--help` flags.");}
 
-  Ok((ValidatedArgs {
+  Ok(ValidatedArgs {
     paths          	: cfg_paths,
     #[cfg(feature  	="tcp_server")]
     port           	: None,
     #[cfg(target_os	="linux"   )]
     symlink_path   	: None,
     nodelay        	: true,
+    #[cfg(feature  	= "simulated_output")]
+    sim_paths      	,
+    #[cfg(feature  	= "simulated_output")]
+    sim_appendix   	: args.out,
     },
-    sim_paths,
-  ))
+  )
 }
 
 
+#[cfg(feature = "simulated_output")]
 fn main_impl() -> Result<()> {
   log_init();
   let (args, sim_paths) = cli_init()?;
@@ -168,10 +179,11 @@ fn main_impl() -> Result<()> {
   Ok(())
 }
 
+#[cfg(not(feature = "simulated_output"))]
+fn main() -> Result<()> {Ok(())}
+#[cfg(feature = "simulated_output")]
 fn main() -> Result<()> {
-    let ret = main_impl();
-    if let Err(ref e) = ret {
-        log::error!("{e}\n");
-    }
-    ret
+  let ret = main_impl();
+  if let Err(ref e) = ret {log::error!("{e}\n");}
+  ret
 }

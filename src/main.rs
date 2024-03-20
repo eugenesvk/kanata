@@ -160,11 +160,15 @@ fn cli_init() -> Result<ValidatedArgs> {
 
   Ok(ValidatedArgs {
     paths: cfg_paths,
-    #[cfg(feature="tcp_server")]
-    port: args.port,
-    #[cfg(target_os="linux")]
-    symlink_path: args.symlink_path,
-    nodelay: args.nodelay,
+    #[cfg(feature  	="tcp_server")]
+    port           	: args.port,
+    #[cfg(target_os	="linux")]
+    symlink_path   	: args.symlink_path,
+    nodelay        	: args.nodelay,
+    #[cfg(feature  	= "simulated_output")]
+    sim_paths      	: vec![PathBuf::new()],
+    #[cfg(feature  	= "simulated_output")]
+    sim_appendix   	: None,
   })
 }
 
