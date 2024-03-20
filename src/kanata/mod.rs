@@ -1090,7 +1090,7 @@ impl Kanata {
       loop {
         match rx.recv() {
           Err(_) => {
-            panic!("channel disconnected")
+            panic!("channel disconnected (tcp)")
           }
           Ok(event) => {
             let notification = event.as_bytes();
@@ -1187,7 +1187,7 @@ impl Kanata {
                 Err(e) => break e,};
               #[cfg(feature="perf_logging")]log::info!("[PERF]: handle time ticks: {} ns",(start.elapsed()).as_nanos());
             }
-            Err(_) => {log::error!("channel disconnected");return;}
+            Err(_) => {log::error!("channel disconnected (proc loop blocking)");return;}
           }
         } else {
           let mut k = kanata.lock();
@@ -1224,7 +1224,7 @@ impl Kanata {
               drop(k);
               std::thread::sleep(time::Duration::from_millis(1));
             }
-            Err(TryRecvError::Disconnected) => {log::error!("channel disconnected");return;}
+            Err(TryRecvError::Disconnected) => {log::error!("channel disconnected (proc loop non-blocking)");return;}
           }
         }
       };

@@ -101,7 +101,7 @@ fn start_event_preprocessor(preprocess_rx: Receiver<KeyEvent>, process_tx: Sende
           std::thread::sleep(time::Duration::from_millis(1));
         }
         Err(TryRecvError::Disconnected) => {
-          panic!("channel disconnected")
+          panic!("channel disconnected (llhook event preproc)")
         }
       }
     }
