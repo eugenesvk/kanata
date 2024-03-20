@@ -141,9 +141,9 @@ fn cli_init() -> Result<ValidatedArgs> {
 #[cfg(feature = "simulated_output")]
 fn main_impl() -> Result<()> {
   log_init();
-  let (args, sim_paths) = cli_init()?;
+  let args = cli_init()?;
 
-  for config_sim_file in &sim_paths {
+  for config_sim_file in &args.sim_paths {
     let mut k = Kanata::new(&args)?;
     println!("Evaluating simulation file = {:?}", config_sim_file);
     let s = std::fs::read_to_string(config_sim_file)?;
@@ -173,7 +173,7 @@ fn main_impl() -> Result<()> {
         }
       }
     }
-    k.kbd_out.log.end();
+    k.kbd_out.log.end(config_sim_file, args.sim_appendix.clone());
   }
 
   Ok(())

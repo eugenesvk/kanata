@@ -121,6 +121,7 @@ impl LogFmt {
   pub fn write_code    	(&mut self, code: u32, value: KeyValue){self.fmt(LogFmtT::Code	,format!("{code};{value:?}"))}
 
   pub fn end(&self, in_path: &PathBuf, appendix: Option<String>) {
+    let pad = self.combo.len() - 3;
     let table_out = formatdoc!(
       "🕐Δms│{}
      In───┼{:─<pad$}
