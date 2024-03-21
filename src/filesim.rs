@@ -154,7 +154,7 @@ fn main_impl() -> Result<()> {
             "tick" | "🕐" | "t"           => {
               let tick = str::parse::<u128>(val)?;
               k.kbd_out.log.in_tick(tick);
-              k.tick_ms(tick)?;}
+              k.tick_ms(tick, &None)?;}
             "press" | "↓" | "d" | "down"  => {
               let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
               k.kbd_out.log.in_press_key(key_code);
