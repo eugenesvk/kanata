@@ -67,6 +67,10 @@ use crate::layers::*;
 mod error;
 pub use error::*;
 
+mod fake_key;
+use fake_key::*;
+pub use fake_key::{FAKE_KEY_ROW, NORMAL_KEY_ROW};
+
 use crate::trie::Trie;
 use anyhow::anyhow;
 use std::cell::Cell;
@@ -266,7 +270,7 @@ fn parse_cfg(p: &Path) -> MResult<Cfg> {
   layout.bm().quick_tap_hold_timeout = icfg.options.concurrent_tap_hold;
   layout.bm().oneshot.on_press_release_delay = icfg.options.rapid_event_delay;
   let mut fake_keys: HashMap<String, usize> =
-    s.fake_keys.iter().map(|(k, v)| (k.clone(), v.0)).collect();
+    s.virtual_keys.iter().map(|(k, v)| (k.clone(), v.0)).collect();
   fake_keys.shrink_to_fit();
   log::info!("config file is valid");
   Ok(Cfg {
@@ -584,6 +588,8 @@ pub fn parse_cfg_raw_string(
     .filter(gen_first_atom_filter("deffakekeys"))
     .collect::<Vec<_>>();
   parse_fake_keys(&fake_keys_exprs, s)?;
+  let vkeys_exprs = root_exprs.iter().filter(gen_first_atom_filter("defvirtualkeys")).collect::<Vec<_>>();
+  parse_virtual_keys(&vkeys_exprs, s)?;
 
   let sequence_exprs = root_exprs
     .iter()
@@ -654,6 +660,7 @@ fn error_on_unknown_top_level_atoms(exprs: &[Spanned<Vec<SExpr>>]) -> Result<()>
         | "deflocalkeys-win"
         | "deflocalkeys-wintercept"
         | "deffakekeys"
+        | "defvirtualkeys"
         | "defchords"
         | "defvar"
         | "deftemplate"
@@ -886,23 +893,22 @@ fn parse_layer_indexes(exprs: &[Spanned<Vec<SExpr>>], expected_len: usize) -> Re
   Ok(layer_indexes)
 }
 
-#[derive(Debug)]
-pub struct ParsedState {
-  layer_exprs: Vec<Vec<SExpr>>,
-  aliases: Aliases,
-  layer_idxs: LayerIndexes,
-  mapping_order: Vec<usize>,
-  fake_keys: HashMap<String, (usize, &'static KanataAction)>,
-  chord_groups: HashMap<String, ChordGroup>,
-  defsrc_layer: [KanataAction; KEYS_IN_ROW],
-  vars: HashMap<String, SExpr>,
-  is_cmd_enabled: bool,
-  delegate_to_first_layer: bool,
-  default_sequence_timeout: u16,
-  default_sequence_input_mode: SequenceInputMode,
-  block_unmapped_keys: bool,
-  switch_max_key_timing: Cell<u16>,
-  a: Arc<Allocations>,
+#[derive(Debug)] pub struct ParsedState {
+  layer_exprs                	: Vec<Vec<SExpr>>,
+  aliases                    	: Aliases,
+  layer_idxs                 	: LayerIndexes,
+  mapping_order              	: Vec<usize>,
+  virtual_keys               	: HashMap<String, (usize, &'static KanataAction)>,
+  chord_groups               	: HashMap<String, ChordGroup>,
+  defsrc_layer               	: [KanataAction; KEYS_IN_ROW],
+  vars                       	: HashMap<String, SExpr>,
+  is_cmd_enabled             	: bool,
+  delegate_to_first_layer    	: bool,
+  default_sequence_timeout   	: u16,
+  default_sequence_input_mode	: SequenceInputMode,
+  block_unmapped_keys        	: bool,
+  switch_max_key_timing      	: Cell<u16>,
+  a                          	: Arc<Allocations>,
 }
 
 impl ParsedState {
@@ -915,21 +921,21 @@ impl Default for ParsedState {
   fn default() -> Self {
     let default_cfg = CfgOptions::default();
     Self {
-      layer_exprs: Default::default(),
-      aliases: Default::default(),
-      layer_idxs: Default::default(),
-      mapping_order: Default::default(),
-      defsrc_layer: [KanataAction::Trans; KEYS_IN_ROW],
-      fake_keys: Default::default(),
-      chord_groups: Default::default(),
-      vars: Default::default(),
-      is_cmd_enabled: default_cfg.enable_cmd,
-      delegate_to_first_layer: default_cfg.delegate_to_first_layer,
-      default_sequence_timeout: default_cfg.sequence_timeout,
-      default_sequence_input_mode: default_cfg.sequence_input_mode,
-      block_unmapped_keys: default_cfg.block_unmapped_keys,
-      switch_max_key_timing: Cell::new(0),
-      a: unsafe { Allocations::new() },
+      layer_exprs                	: Default::default(),
+      aliases                    	: Default::default(),
+      layer_idxs                 	: Default::default(),
+      mapping_order              	: Default::default(),
+      defsrc_layer               	: [KanataAction::Trans; KEYS_IN_ROW],
+      virtual_keys               	: Default::default(),
+      chord_groups               	: Default::default(),
+      vars                       	: Default::default(),
+      is_cmd_enabled             	: default_cfg.enable_cmd,
+      delegate_to_first_layer    	: default_cfg.delegate_to_first_layer,
+      default_sequence_timeout   	: default_cfg.sequence_timeout,
+      default_sequence_input_mode	: default_cfg.sequence_input_mode,
+      block_unmapped_keys        	: default_cfg.block_unmapped_keys,
+      switch_max_key_timing      	: Cell::new(0),
+      a                          	: unsafe { Allocations::new() },
     }
   }
 }
@@ -1152,65 +1158,69 @@ fn parse_action_list(ac: &[SExpr], s: &ParsedState) -> Result<&'static KanataAct
     _              => bail!("All list actions must start with string and not a list"),};
   if !is_list_action(ac_type) {bail_expr!(&ac[0], "Unknown action type: {ac_type}");}
   match ac_type.as_str() {
-    LAYER_SWITCH                      	=> parse_layer_base(&ac[1..], s),
-    LAYER_TOGGLE | LAYER_WHILE_HELD   	=> parse_layer_toggle(&ac[1..], s),
-    TAP_HOLD                          	=> parse_tap_hold(&ac[1..], s, HoldTapConfig::Default),
-    TAP_HOLD_PRESS                    	=> parse_tap_hold(&ac[1..], s, HoldTapConfig::HoldOnOtherKeyPress),
-    TAP_HOLD_RELEASE                  	=> parse_tap_hold(&ac[1..], s, HoldTapConfig::PermissiveHold),
-    TAP_HOLD_PRESS_TIMEOUT            	=> {parse_tap_hold_timeout(&ac[1..], s, HoldTapConfig::HoldOnOtherKeyPress)}
-    TAP_HOLD_RELEASE_TIMEOUT          	=> {parse_tap_hold_timeout(&ac[1..], s, HoldTapConfig::PermissiveHold)}
-    TAP_HOLD_RELEASE_KEYS             	=> {parse_tap_hold_keys(&ac[1..], s, "release", custom_tap_hold_release)}
-    TAP_HOLD_EXCEPT_KEYS              	=> parse_tap_hold_keys(&ac[1..], s, "except", custom_tap_hold_except),
-    MULTI                             	=> parse_multi(&ac[1..], s),
-    MACRO                             	=> parse_macro(&ac[1..], s, RepeatMacro::No),
-    MACRO_REPEAT                      	=> parse_macro(&ac[1..], s, RepeatMacro::Yes),
-    MACRO_RELEASE_CANCEL              	=> parse_macro_release_cancel(&ac[1..], s, RepeatMacro::No),
-    MACRO_REPEAT_RELEASE_CANCEL       	=> parse_macro_release_cancel(&ac[1..], s, RepeatMacro::Yes),
-    UNICODE                           	=> parse_unicode(&ac[1..], s),
-    SYM                               	=> parse_unicode(&ac[1..], s),
-    ONE_SHOT | ONE_SHOT_PRESS         	=> parse_one_shot(&ac[1..], s, OneShotEndConfig::EndOnFirstPress),
-    ONE_SHOT_RELEASE                  	=> parse_one_shot(&ac[1..], s, OneShotEndConfig::EndOnFirstRelease),
-    ONE_SHOT_PRESS_PCANCEL            	=> {parse_one_shot(&ac[1..], s, OneShotEndConfig::EndOnFirstPressOrRepress)}
-    ONE_SHOT_RELEASE_PCANCEL          	=> {parse_one_shot(&ac[1..], s, OneShotEndConfig::EndOnFirstReleaseOrRepress)}
-    TAP_DANCE                         	=> parse_tap_dance(&ac[1..], s, TapDanceConfig::Lazy),
-    TAP_DANCE_EAGER                   	=> parse_tap_dance(&ac[1..], s, TapDanceConfig::Eager),
-    CHORD                             	=> parse_chord(&ac[1..], s),
-    RELEASE_KEY                       	=> parse_release_key(&ac[1..], s),
-    RELEASE_LAYER                     	=> parse_release_layer(&ac[1..], s),
-    ON_PRESS_FAKEKEY                  	=> parse_on_press_fake_key_op(&ac[1..], s),
-    ON_RELEASE_FAKEKEY                	=> parse_on_release_fake_key_op(&ac[1..], s),
-    ON_PRESS_FAKEKEY_DELAY            	=> parse_fake_key_delay(&ac[1..], s),
-    ON_RELEASE_FAKEKEY_DELAY          	=> parse_on_release_fake_key_delay(&ac[1..], s),
-    ON_IDLE_FAKEKEY                   	=> parse_on_idle_fakekey(&ac[1..], s),
-    MWHEEL_UP                         	=> parse_mwheel(&ac[1..], MWheelDirection::Up, s),
-    MWHEEL_DOWN                       	=> parse_mwheel(&ac[1..], MWheelDirection::Down, s),
-    MWHEEL_LEFT                       	=> parse_mwheel(&ac[1..], MWheelDirection::Left, s),
-    MWHEEL_RIGHT                      	=> parse_mwheel(&ac[1..], MWheelDirection::Right, s),
-    MOVEMOUSE_UP                      	=> parse_move_mouse(&ac[1..], MoveDirection::Up, s),
-    MOVEMOUSE_DOWN                    	=> parse_move_mouse(&ac[1..], MoveDirection::Down, s),
-    MOVEMOUSE_LEFT                    	=> parse_move_mouse(&ac[1..], MoveDirection::Left, s),
-    MOVEMOUSE_RIGHT                   	=> parse_move_mouse(&ac[1..], MoveDirection::Right, s),
-    MOVEMOUSE_ACCEL_UP                	=> parse_move_mouse_accel(&ac[1..], MoveDirection::Up, s),
-    MOVEMOUSE_ACCEL_DOWN              	=> parse_move_mouse_accel(&ac[1..], MoveDirection::Down, s),
-    MOVEMOUSE_ACCEL_LEFT              	=> parse_move_mouse_accel(&ac[1..], MoveDirection::Left, s),
-    MOVEMOUSE_ACCEL_RIGHT             	=> parse_move_mouse_accel(&ac[1..], MoveDirection::Right, s),
-    MOVEMOUSE_SPEED                   	=> parse_move_mouse_speed(&ac[1..], s),
-    SETMOUSE                          	=> parse_set_mouse(&ac[1..], s),
-    DYNAMIC_MACRO_RECORD              	=> parse_dynamic_macro_record(&ac[1..], s),
-    DYNAMIC_MACRO_PLAY                	=> parse_dynamic_macro_play(&ac[1..], s),
-    ARBITRARY_CODE                    	=> parse_arbitrary_code(&ac[1..], s),
-    CMD                               	=> parse_cmd(&ac[1..], s, CmdType::Standard),
-    CMD_OUTPUT_KEYS                   	=> parse_cmd(&ac[1..], s, CmdType::OutputKeys),
-    FORK                              	=> parse_fork(&ac[1..], s),
-    CAPS_WORD                         	=> parse_caps_word(&ac[1..], s),
-    CAPS_WORD_CUSTOM                  	=> parse_caps_word_custom(&ac[1..], s),
-    DYNAMIC_MACRO_RECORD_STOP_TRUNCATE	=> parse_macro_record_stop_truncate(&ac[1..], s),
-    SWITCH                            	=> parse_switch(&ac[1..], s),
-    SEQUENCE                          	=> parse_sequence_start(&ac[1..], s),
-    UNMOD                             	=> parse_unmod(UNMOD, &ac[1..], s),
-    UNSHIFT                           	=> parse_unmod(UNSHIFT, &ac[1..], s),
-    LIVE_RELOAD_NUM                   	=> parse_live_reload_num(&ac[1..], s),
-    LIVE_RELOAD_FILE                  	=> parse_live_reload_file(&ac[1..], s),
+    LAYER_SWITCH                 	=> parse_layer_base               	(&ac[1..], s),
+    LAYER_TOGGLE|LAYER_WHILE_HELD	=> parse_layer_toggle             	(&ac[1..], s),
+    TAP_HOLD                     	=> parse_tap_hold                 	(&ac[1..], s, HoldTapConfig::Default),
+    TAP_HOLD_PRESS               	=> parse_tap_hold                 	(&ac[1..], s, HoldTapConfig::HoldOnOtherKeyPress),
+    TAP_HOLD_RELEASE             	=> parse_tap_hold                 	(&ac[1..], s, HoldTapConfig::PermissiveHold),
+    TAP_HOLD_PRESS_TIMEOUT       	=>{parse_tap_hold_timeout         	(&ac[1..], s, HoldTapConfig::HoldOnOtherKeyPress)}
+    TAP_HOLD_RELEASE_TIMEOUT     	=>{parse_tap_hold_timeout         	(&ac[1..], s, HoldTapConfig::PermissiveHold)}
+    TAP_HOLD_RELEASE_KEYS        	=>{parse_tap_hold_keys            	(&ac[1..], s, "release", custom_tap_hold_release)}
+    TAP_HOLD_EXCEPT_KEYS         	=> parse_tap_hold_keys            	(&ac[1..], s, "except", custom_tap_hold_except),
+    MULTI                        	=> parse_multi                    	(&ac[1..], s),
+    MACRO                        	=> parse_macro                    	(&ac[1..], s, RepeatMacro::No),
+    MACRO_REPEAT                 	=> parse_macro                    	(&ac[1..], s, RepeatMacro::Yes),
+    MACRO_RELEASE_CANCEL         	=> parse_macro_release_cancel     	(&ac[1..], s, RepeatMacro::No),
+    MACRO_REPEAT_RELEASE_CANCEL  	=> parse_macro_release_cancel     	(&ac[1..], s, RepeatMacro::Yes),
+    UNICODE                      	=> parse_unicode                  	(&ac[1..], s),
+    SYM                          	=> parse_unicode                  	(&ac[1..], s),
+    ONE_SHOT|ONE_SHOT_PRESS      	=> parse_one_shot                 	(&ac[1..], s, OneShotEndConfig::EndOnFirstPress),
+    ONE_SHOT_RELEASE             	=> parse_one_shot                 	(&ac[1..], s, OneShotEndConfig::EndOnFirstRelease),
+    ONE_SHOT_PRESS_PCANCEL       	=>{parse_one_shot                 	(&ac[1..], s, OneShotEndConfig::EndOnFirstPressOrRepress)}
+    ONE_SHOT_RELEASE_PCANCEL     	=>{parse_one_shot                 	(&ac[1..], s, OneShotEndConfig::EndOnFirstReleaseOrRepress)}
+    TAP_DANCE                    	=> parse_tap_dance                	(&ac[1..], s, TapDanceConfig::Lazy),
+    TAP_DANCE_EAGER              	=> parse_tap_dance                	(&ac[1..], s, TapDanceConfig::Eager),
+    CHORD                        	=> parse_chord                    	(&ac[1..], s),
+    RELEASE_KEY                  	=> parse_release_key              	(&ac[1..], s),
+    RELEASE_LAYER                	=> parse_release_layer            	(&ac[1..], s),
+    ON_PRESS_FAKEKEY             	=> parse_on_press_fake_key_op     	(&ac[1..], s),
+    ON_RELEASE_FAKEKEY           	=> parse_on_release_fake_key_op   	(&ac[1..], s),
+    ON_PRESS_FAKEKEY_DELAY       	=> parse_fake_key_delay           	(&ac[1..], s),
+    ON_RELEASE_FAKEKEY_DELAY     	=> parse_on_release_fake_key_delay	(&ac[1..], s),
+    ON_IDLE_FAKEKEY              	=> parse_on_idle_fakekey          	(&ac[1..], s),
+    ON_PRESS                     	=> parse_on_press                 	(&ac[1..], s),
+    ON_RELEASE                   	=> parse_on_release               	(&ac[1..], s),
+    ON_IDLE                      	=> parse_on_idle                  	(&ac[1..], s),
+    MWHEEL_UP                    	=> parse_mwheel                   	(&ac[1..], MWheelDirection::Up, s),
+    MWHEEL_DOWN                  	=> parse_mwheel                   	(&ac[1..], MWheelDirection::Down, s),
+    MWHEEL_LEFT                  	=> parse_mwheel                   	(&ac[1..], MWheelDirection::Left, s),
+    MWHEEL_RIGHT                 	=> parse_mwheel                   	(&ac[1..], MWheelDirection::Right, s),
+    MOVEMOUSE_UP                 	=> parse_move_mouse               	(&ac[1..], MoveDirection::Up, s),
+    MOVEMOUSE_DOWN               	=> parse_move_mouse               	(&ac[1..], MoveDirection::Down, s),
+    MOVEMOUSE_LEFT               	=> parse_move_mouse               	(&ac[1..], MoveDirection::Left, s),
+    MOVEMOUSE_RIGHT              	=> parse_move_mouse               	(&ac[1..], MoveDirection::Right, s),
+    MOVEMOUSE_ACCEL_UP           	=> parse_move_mouse_accel         	(&ac[1..], MoveDirection::Up, s),
+    MOVEMOUSE_ACCEL_DOWN         	=> parse_move_mouse_accel         	(&ac[1..], MoveDirection::Down, s),
+    MOVEMOUSE_ACCEL_LEFT         	=> parse_move_mouse_accel         	(&ac[1..], MoveDirection::Left, s),
+    MOVEMOUSE_ACCEL_RIGHT        	=> parse_move_mouse_accel         	(&ac[1..], MoveDirection::Right, s),
+    MOVEMOUSE_SPEED              	=> parse_move_mouse_speed         	(&ac[1..], s),
+    SETMOUSE                     	=> parse_set_mouse                	(&ac[1..], s),
+    DYNAMIC_MACRO_RECORD         	=> parse_dynamic_macro_record     	(&ac[1..], s),
+    DYNAMIC_MACRO_PLAY           	=> parse_dynamic_macro_play       	(&ac[1..], s),
+    ARBITRARY_CODE               	=> parse_arbitrary_code           	(&ac[1..], s),
+    CMD                          	=> parse_cmd                      	(&ac[1..], s, CmdType::Standard),
+    CMD_OUTPUT_KEYS              	=> parse_cmd                      	(&ac[1..], s, CmdType::OutputKeys),
+    FORK                         	=> parse_fork                     	(&ac[1..], s),
+    CAPS_WORD                    	=> parse_caps_word                	(&ac[1..], s),
+    CAPS_WORD_CUSTOM             	=> parse_caps_word_custom         	(&ac[1..], s),
+    SWITCH                       	=> parse_switch                   	(&ac[1..], s),
+    SEQUENCE                     	=> parse_sequence_start           	(&ac[1..], s),
+    UNMOD                        	=> parse_unmod                    	(UNMOD, &ac[1..], s),
+    UNSHIFT                      	=> parse_unmod                    	(UNSHIFT, &ac[1..], s),
+    LIVE_RELOAD_NUM              	=> parse_live_reload_num          	(&ac[1..], s),
+    LIVE_RELOAD_FILE             	=> parse_live_reload_file         	(&ac[1..], s),
+    //
+    DYNAMIC_MACRO_RECORD_STOP_TRUNCATE	=> parse_macro_record_stop_truncate	(&ac[1..], s),
     _                                 	=> unreachable!(),
   }
 }
@@ -2177,9 +2187,9 @@ fn parse_fake_keys(exprs: &[&Vec<SExpr>], s: &mut ParsedState) -> Result<()> {
         ),
       };
       let action = parse_action(action, s)?;
-      let idx = s.fake_keys.len();
+      let idx = s.virtual_keys.len();
       log::trace!("inserting {key_name}->{idx}:{action:?}");
-      if s.fake_keys
+      if s.virtual_keys
         .insert(key_name.clone(), (idx, action))
         .is_some()
       {
@@ -2187,112 +2197,33 @@ fn parse_fake_keys(exprs: &[&Vec<SExpr>], s: &mut ParsedState) -> Result<()> {
       }
     }
   }
-  if s.fake_keys.len() > KEYS_IN_ROW {
+  if s.virtual_keys.len() > KEYS_IN_ROW {
     bail!(
       "Maximum number of fake keys is {KEYS_IN_ROW}, found {}",
-      s.fake_keys.len()
+      s.virtual_keys.len()
     );
   }
   Ok(())
 }
 
-fn parse_on_press_fake_key_op(
-  ac_params: &[SExpr],
-  s: &ParsedState,
-) -> Result<&'static KanataAction> {
-  let (coord, action) = parse_fake_key_op_coord_action(ac_params, s, ON_PRESS_FAKEKEY)?;
-  Ok(s.a.sref(Action::Custom(
-    s.a.sref(s.a.sref_slice(CustomAction::FakeKey { coord, action })),
-  )))
-}
-
-fn parse_on_release_fake_key_op(
-  ac_params: &[SExpr],
-  s: &ParsedState,
-) -> Result<&'static KanataAction> {
-  let (coord, action) = parse_fake_key_op_coord_action(ac_params, s, ON_RELEASE_FAKEKEY)?;
-  Ok(s.a.sref(Action::Custom(s.a.sref(
-    s.a.sref_slice(CustomAction::FakeKeyOnRelease { coord, action }),
-  ))))
-}
-
-fn parse_fake_key_op_coord_action(
-  ac_params: &[SExpr],
-  s: &ParsedState,
-  ac_name: &str,
-) -> Result<(Coord, FakeKeyAction)> {
-  const ERR_MSG: &str = "expects two parameters: <fake key name> <(tap|press|release|toggle)>";
-  if ac_params.len() != 2 {
-    bail!("{ac_name} {ERR_MSG}");
+fn parse_virtual_keys(exprs: &[&Vec<SExpr>], s: &mut ParsedState) -> Result<()> {
+  for expr in exprs {
+    let mut subexprs = check_first_expr(expr.iter(), "defvirtualkeys")?;
+    while let Some(key_name_expr) = subexprs.next() { // Read k-v pairs from the configuration
+      let key_name = key_name_expr.atom(s.vars())
+        .ok_or_else(|| anyhow_expr!(key_name_expr, "Virtual key name must not be a list."))?.to_owned();
+      let action = match subexprs.next() {
+        Some(v) => v,
+        None    => bail_expr!(key_name_expr,"Virtual key name has no action - you must add an action."),};
+      let action = parse_action(action, s)?;
+      let idx = s.virtual_keys.len();
+      log::trace!("inserting {key_name}->{idx}:{action:?}");
+      if s.virtual_keys.insert(key_name.clone(), (idx, action)).is_some() {bail_expr!(key_name_expr, "Duplicate virtual key: {}", key_name);}
+    }
   }
-  let y = match s.fake_keys.get(ac_params[0].atom(s.vars()).ok_or_else(|| {
-    anyhow_expr!(
-      &ac_params[0],
-      "{ac_name} {ERR_MSG}\nInvalid first parameter: a fake key name cannot be a list",
-    )
-  })?) {
-    Some((y, _)) => *y as u16, // cast should be safe; checked in `parse_fake_keys`
-    None => bail_expr!(
-      &ac_params[0],
-      "{ac_name} {ERR_MSG}\nInvalid first parameter: unknown fake key name {:?}",
-      &ac_params[0]
-    ),
-  };
-  let action = ac_params[1]
-    .atom(s.vars())
-    .and_then(|a| match a {
-      "tap" => Some(FakeKeyAction::Tap),
-      "press" => Some(FakeKeyAction::Press),
-      "release" => Some(FakeKeyAction::Release),
-      "toggle" => Some(FakeKeyAction::Toggle),
-      _ => None,
-    })
-    .ok_or_else(|| {
-      anyhow_expr!(
-        &ac_params[1],
-        "{ERR_MSG}\nInvalid second parameter, it must be one of: tap, press, release",
-      )
-    })?;
-  let (x, y) = get_fake_key_coords(y);
-  Ok((Coord { x, y }, action))
-}
-
-pub const NORMAL_KEY_ROW: u8 = 0;
-pub const FAKE_KEY_ROW: u8 = 1;
-
-fn get_fake_key_coords<T: Into<usize>>(y: T) -> (u8, u16) {
-  let y: usize = y.into();
-  (FAKE_KEY_ROW, y as u16)
-}
-
-fn parse_fake_key_delay(ac_params: &[SExpr], s: &ParsedState) -> Result<&'static KanataAction> {
-  parse_delay(ac_params, false, s)
-}
-
-fn parse_on_release_fake_key_delay(
-  ac_params: &[SExpr],
-  s: &ParsedState,
-) -> Result<&'static KanataAction> {
-  parse_delay(ac_params, true, s)
-}
-
-fn parse_delay(
-  ac_params: &[SExpr],
-  is_release: bool,
-  s: &ParsedState,
-) -> Result<&'static KanataAction> {
-  const ERR_MSG: &str = "fakekey-delay expects a single number (ms, 0-65535)";
-  log::warn!("The configuration contains a fakekey-delay action. This is broken for many use cases. It is recommended to use macro instead.");
-  let delay = ac_params[0]
-    .atom(s.vars())
-    .map(str::parse::<u16>)
-    .ok_or_else(|| anyhow!("{ERR_MSG}"))?
-    .map_err(|e| anyhow!("{ERR_MSG}: {e}"))?;
-  Ok(s.a
-    .sref(Action::Custom(s.a.sref(s.a.sref_slice(match is_release {
-      false => CustomAction::Delay(delay),
-      true => CustomAction::DelayOnRelease(delay),
-    })))))
+  if s.virtual_keys.len() > KEYS_IN_ROW {bail!("Maximum number of virtual keys is {KEYS_IN_ROW}, found {}",s.virtual_keys.len());
+  }
+  Ok(())
 }
 
 fn parse_distance(expr: &SExpr, s: &ParsedState, label: &str) -> Result<u16> {
@@ -2490,7 +2421,7 @@ fn parse_layers(s: &mut ParsedState) -> Result<IntermediateLayers> {
       }
     }
     // Set fake keys on the `layer-switch` version of each layer.
-    for (y, action) in s.fake_keys.values() {
+    for (y, action) in s.virtual_keys.values() {
       let (x, y) = get_fake_key_coords(*y);
       layers_cfg[layer_level * 2][x as usize][y as usize] = **action;
     }
@@ -2507,49 +2438,24 @@ fn parse_layers(s: &mut ParsedState) -> Result<IntermediateLayers> {
   Ok(layers_cfg)
 }
 
-const SEQ_ERR: &str = "defseq expects pairs of parameters: <fake_key_name> <key_list>";
+const SEQ_ERR: &str = "defseq expects pairs of parameters: <virtual_key_name> <key_list>";
 
 fn parse_sequences(exprs: &[&Vec<SExpr>], s: &ParsedState) -> Result<KeySeqsToFKeys> {
   let mut sequences = Trie::new();
   for expr in exprs {
     let mut subexprs = check_first_expr(expr.iter(), "defseq")?.peekable();
 
-    while let Some(fake_key_expr) = subexprs.next() {
-      let fake_key = fake_key_expr.atom(s.vars()).ok_or_else(|| {
-        anyhow_expr!(fake_key_expr, "{SEQ_ERR}\nGot a list for fake_key_name")
-      })?;
-      if !s.fake_keys.contains_key(fake_key) {
-        bail_expr!(
-          fake_key_expr,
-          "{SEQ_ERR}\nThe referenced key does not exist: {fake_key}"
-        );
-      }
-      let key_seq_expr = subexprs.next().ok_or_else(|| {
-        anyhow_expr!(fake_key_expr, "{SEQ_ERR}\nMissing key_list for {fake_key}")
-      })?;
-      let key_seq = key_seq_expr.list(s.vars()).ok_or_else(|| {
-        anyhow_expr!(key_seq_expr, "{SEQ_ERR}\nGot a non-list for key_list")
-      })?;
-      if key_seq.is_empty() {
-        bail_expr!(key_seq_expr, "{SEQ_ERR}\nkey_list cannot be empty");
-      }
+    while let Some(vkey_expr) = subexprs.next() {
+      let vkey = vkey_expr.atom(s.vars())      	.ok_or_else(||	{anyhow_expr!(vkey_expr   ,"{SEQ_ERR}\nvirtual_key_name must not be a list")})?;
+      if !s.virtual_keys.contains_key(vkey)    	              	{bail_expr!  (vkey_expr   ,"{SEQ_ERR}\nThe referenced key does not exist: {vkey}");}
+      let key_seq_expr = subexprs.next()       	.ok_or_else(||	 anyhow_expr!(vkey_expr, "{SEQ_ERR}\nMissing key_list for {vkey}"))?;
+      let key_seq = key_seq_expr.list(s.vars())	.ok_or_else(||	{anyhow_expr!(key_seq_expr,"{SEQ_ERR}\nGot a non-list for key_list")})?;
+      if key_seq.is_empty()                    	              	{bail_expr!  (key_seq_expr, "{SEQ_ERR}\nkey_list cannot be empty");}
       let keycode_seq = parse_sequence_keys(key_seq, s)?;
-      if sequences.ancestor_exists(&keycode_seq) {
-        bail_expr!(
-          key_seq_expr,
-          "Sequence has a conflict: its sequence contains an earlier defined sequence"
-        );
-      }
-      if sequences.descendant_exists(&keycode_seq) {
-        bail_expr!(key_seq_expr, "Sequence has a conflict: its sequence is contained within an earlier defined seqence");
-      }
-      sequences.insert(
-        keycode_seq,
-        s.fake_keys
-          .get(fake_key)
-          .map(|(y, _)| get_fake_key_coords(*y))
-          .expect("fk exists, checked earlier"),
-      );
+      if sequences.ancestor_exists(&keycode_seq)  		{bail_expr!(key_seq_expr,"Sequence has a conflict: its sequence contains an earlier defined sequence");}
+      if sequences.descendant_exists(&keycode_seq)		{bail_expr!(key_seq_expr, "Sequence has a conflict: its sequence is contained within an earlier defined seqence");}
+      sequences.insert(keycode_seq,
+        s.virtual_keys.get(vkey).map(|(y, _)| get_fake_key_coords(*y)).expect("vk exists, checked earlier"),);
     }
   }
   Ok(sequences)
@@ -2861,54 +2767,6 @@ fn parse_sequence_start(ac_params: &[SExpr], s: &ParsedState) -> Result<&'static
   Ok(s.a.sref(Action::Custom(s.a.sref(
     s.a.sref_slice(CustomAction::SequenceLeader(timeout, input_mode)),
   ))))
-}
-
-fn parse_on_idle_fakekey(ac_params: &[SExpr], s: &ParsedState) -> Result<&'static KanataAction> {
-  const ERR_MSG: &str =
-    "on-idle-fakekey expects three parameters:\n<fake key name> <(tap|press|release)> <idle time>\n";
-  if ac_params.len() != 3 {
-    bail!("{ERR_MSG}");
-  }
-  let y = match s.fake_keys.get(ac_params[0].atom(s.vars()).ok_or_else(|| {
-    anyhow_expr!(
-      &ac_params[0],
-      "{ERR_MSG}\nInvalid first parameter: a fake key name cannot be a list",
-    )
-  })?) {
-    Some((y, _)) => *y as u16, // cast should be safe; checked in `parse_fake_keys`
-    None => bail_expr!(
-      &ac_params[0],
-      "{ERR_MSG}\nInvalid first parameter: unknown fake key name {:?}",
-      &ac_params[0]
-    ),
-  };
-  let action = ac_params[1]
-    .atom(s.vars())
-    .and_then(|a| match a {
-      "tap" => Some(FakeKeyAction::Tap),
-      "press" => Some(FakeKeyAction::Press),
-      "release" => Some(FakeKeyAction::Release),
-      _ => None,
-    })
-    .ok_or_else(|| {
-      anyhow_expr!(
-        &ac_params[1],
-        "{ERR_MSG}\nInvalid second parameter, it must be one of: tap, press, release",
-      )
-    })?;
-  let idle_duration = parse_u16(&ac_params[2], s, "idle time").map_err(|mut e| {
-    e.msg = format!("{ERR_MSG}\nInvalid third parameter: {}", e.msg);
-    e
-  })?;
-  let (x, y) = get_fake_key_coords(y);
-  let coord = Coord { x, y };
-  Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(
-    CustomAction::FakeKeyOnIdle(FakeKeyOnIdle {
-      coord,
-      action,
-      idle_duration,
-    }),
-  )))))
 }
 
 fn parse_unmod(
