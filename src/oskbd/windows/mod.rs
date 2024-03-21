@@ -6,8 +6,11 @@ use winapi::um::winuser::*;
 use encode_unicode::CharExt;
 use crate::oskbd::KeyValue;
 
-#[cfg(not(feature="interception_driver"))] mod llhook;
-#[cfg(not(feature="interception_driver"))] pub use llhook::*;
+#[cfg(all(not(feature="interception_driver"),not(feature="simulated_input")))] mod llhook;
+#[cfg(all(not(feature="interception_driver"),not(feature="simulated_input")))] pub use llhook::*;
+
+#[cfg(feature="simulated_input"    )] mod exthook_os;
+#[cfg(feature="simulated_input"    )] pub use exthook_os::*;
 
 #[cfg(feature="interception_driver")] mod interception;
 #[cfg(feature="interception_driver")] mod interception_convert;
