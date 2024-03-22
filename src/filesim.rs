@@ -138,7 +138,7 @@ fn cli_init() -> Result<ValidatedArgs> {
 }
 
 
-#[cfg(feature = "simulated_output")]
+#[cfg(all(feature = "simulated_output"),not(feature = "simulated_output"))]
 fn main_impl() -> Result<()> {
   log_init();
   let args = cli_init()?;
