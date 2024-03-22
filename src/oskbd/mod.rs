@@ -6,8 +6,11 @@
 #[cfg(target_os="linux"  	)] pub use linux::*;
 #[cfg(target_os="windows"	)] pub use windows::*;
 #[cfg(target_os="macos"  	)] pub use macos::*;
-#[cfg(feature="simulated_output"	)] mod simulated;
-#[cfg(feature="simulated_output"	)] pub use simulated::*;
+
+#[cfg(all(not(feature="simulated_input"),feature="simulated_output"))] mod simulated;
+#[cfg(all(not(feature="simulated_input"),feature="simulated_output"))] pub use simulated::*;
+#[cfg(all(    feature="simulated_input" ,feature="simulated_output"))] mod sim_out2in;
+#[cfg(all(    feature="simulated_input" ,feature="simulated_output"))] pub use sim_out2in::*;
 
 // ------------------ KeyValue --------------------
 #[derive(Copy,Clone,Debug,PartialEq,Eq)] pub enum KeyValue {Release=0,Press=1,Repeat=2,Tap,WakeUp,}
