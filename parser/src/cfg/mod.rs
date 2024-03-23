@@ -884,6 +884,7 @@ fn parse_layer_indexes(exprs: &[SpannedLayerExprs], expected_len: usize) -> Resu
     if do_element_count_check {
       let num_actions = expr.t.len() - 2;
       if num_actions != expected_len {bail_span!(expr,"Layer {} has {} item(s), but requires {} to match defsrc",layer_name,num_actions,expected_len)}
+    }
     layer_indexes.insert(layer_name, i);
   }
 
