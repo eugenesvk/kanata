@@ -283,9 +283,9 @@ impl From<KeyEvent> for InputEvent {
         }
     }
 }
-#[cfg(target_os = "macos")]
-impl KeyEvent {
-    pub fn new(code: OsCode, value: KeyValue) -> Self {
-        Self { code, value }
+#[cfg(all(target_os = "windows", feature = "interception_driver"))]
+impl From<KeyEvent> for InputEvent {
+    fn from(_item: KeyEvent) -> Self {
+        unimplemented!()
     }
 }

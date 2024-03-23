@@ -5,7 +5,8 @@ members = [
     "sim_evt",
     "keyberon",
     "example_tcp_client",
-    "tcp_protocol"
+    "tcp_protocol",
+    "simulated_input",
 ]
 
 [package]
@@ -29,10 +30,6 @@ path = "src/lib.rs"
 [[bin]]
 name = "kanata"
 path = "src/main.rs"
-
-[[bin]]
-name = "kanata_filesim"
-path = "src/filesim.rs"
 
 [dependencies]
 anyhow = "1"
