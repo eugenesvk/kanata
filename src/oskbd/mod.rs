@@ -9,8 +9,8 @@
 
 #[cfg(all(not(feature="simulated_input"),feature="simulated_output"))] mod simulated;
 #[cfg(all(not(feature="simulated_input"),feature="simulated_output"))] pub use simulated::*;
-#[cfg(all(    feature="simulated_input" ,feature="simulated_output"))] mod sim_out2in;
-#[cfg(all(    feature="simulated_input" ,feature="simulated_output"))] pub use sim_out2in::*;
+#[cfg(all(    feature="simulated_input" ,feature="simulated_output"))] mod sim_passthru;
+#[cfg(all(    feature="simulated_input" ,feature="simulated_output"))] pub use sim_passthru::*;
 
 // ------------------ KeyValue --------------------
 #[derive(Copy,Clone,Debug,PartialEq,Eq)] pub enum KeyValue {Release=0,Press=1,Repeat=2,Tap,WakeUp,}
