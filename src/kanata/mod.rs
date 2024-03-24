@@ -364,7 +364,7 @@ impl Kanata {
       self.live_reload_requested = false; if let Err(e) = self.do_live_reload(tx) {log::error!("live reload failed {e}");}
     }
 
-    #[cfg(feature="perf_logging")] log::info!("ms elapsed: {ms_elapsed}");
+    #[cfg(feature="perf_logging")] log::info!("🕐ms elapsed: {ms_elapsed}");
     Ok(ms_elapsed as u16) // `as` casting: cheaper vs doing the min of u16::MAX and ms_elapsed, doesn't matter if result truncates and wrong
   }
 
