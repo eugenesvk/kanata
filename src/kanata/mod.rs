@@ -1342,8 +1342,21 @@ fn apply_speed_modifiers() {
   assert_eq!(apply_mouse_distance_modifiers(10, &vec![33u16, 200u16]), 6);
 }
 
+#[cfg(feature="passthru_ahk")]
+/// Clean kanata's state without exiting
+pub fn clean_state(kanata:&Arc<Mutex<Kanata>>) -> Result<()> {
+  let mut k = kanata.lock();
+  let layout = k.layout.bm();
+  release_normalkey_states(layout);
+  let mut keys = PRESSED_KEYS.lock();
+  for key_os in keys.clone() {k.kbd_out.release_key(key_os)?;};
+  keys.clear();
+  Ok(())
+}
+
 /// Checks if kanata should exit based on the fixed key combination of:
 /// Lctl+Spc+Esc
+#[cfg(not(feature="passthru_ahk"))]
 fn check_for_exit(event: &KeyEvent) {
   static IS_LCL_PRESSED: AtomicBool = AtomicBool::new(false);
   static IS_SPC_PRESSED: AtomicBool = AtomicBool::new(false);
