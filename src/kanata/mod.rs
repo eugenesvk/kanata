@@ -1349,14 +1349,11 @@ pub fn clean_state(kanata:&Arc<Mutex<Kanata>>) -> Result<()> {
   let mut k = kanata.lock();
   let layout = k.layout.bm();
   release_normalkey_states(layout);
-  let k_prev = k.prev_keys.clone();
-  let k_cur  = k.cur_keys .clone();
-  for key in &k_prev {
-    if k_cur.contains(key) {continue;}
-    log::trace!(" ↑ {:?} @clean_state since Δ prev vs current", key);
-    if let Err(e) = k.kbd_out.release_key(key.into()) {bail!("failed to release key: {:?}",e);}  }
-  let mut k_pressed = PRESSED_KEYS.lock();
-  trace!("  PRESSED {:?} prev {:?} curr {:?}", k_pressed, k_prev, k_cur);
+
+  let val = "1000"; //todo: alternative to ↓↓↓ prev keys, run a tick and let the change state propagate and clean up itself?
+  let tick = str::parse::<u128>(val)?;
+  k.tick_ms(tick,&None)?;
+  // trace!("  PRESSED {:?} prev {:?} curr {:?}", k_pressed, k_prev, k_cur);
   for key_os in k_pressed.clone() {k.kbd_out.release_key(key_os)?;};
   k_pressed.clear();
   Ok(())
