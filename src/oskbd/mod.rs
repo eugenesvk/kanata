@@ -31,3 +31,20 @@ use kanata_parser::keys::OsCode;
   pub value: KeyValue,}
 #[allow(dead_code, unused)]
 impl KeyEvent { pub fn new(code:OsCode, value:KeyValue) -> Self { Self {code,value} }}
+
+
+use core::fmt;
+impl fmt::Display for KeyEvent {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    use kanata_keyberon::key_code::KeyCode;
+    let direction = match self.value {
+      KeyValue::Press  	=> "↓",
+      KeyValue::Release	=> "↑",
+      KeyValue::Repeat 	=> "⟳",
+      KeyValue::Tap    	=> "↕",
+      KeyValue::WakeUp 	=> "!",
+    };
+    let key_name = KeyCode::from(self.code);
+    write!(f, "{}{:?}", direction, key_name)
+  }
+}
