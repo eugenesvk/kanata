@@ -588,8 +588,8 @@ impl Kanata {
     log::trace!("{:?}", &self.prev_keys);
     for k in &self.prev_keys {
       if cur_keys.contains(k) {continue;}
-      log::debug!(" ↑ {:?}", k);
-      if let Err(e) = self.kbd_out.release_key(k.into()) {bail!("failed to release key: {:?}", e);}
+      log::debug!(" ↑ {:?} @handle_keystate_changes Δ prev vs current", k);
+      if let Err(e) = self.kbd_out.release_key(k.into()) {bail!("failed to release key: {:?}",e);}
     }
 
     // Press keys that exist in the current state but are missing from the previous state. Comment above regarding Vec/HashSet also applies here.
