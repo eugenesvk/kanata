@@ -601,7 +601,7 @@ impl Kanata {
       self.prev_keys.push(*k);
       self.last_pressed_key = *k;
       match &mut self.sequence_state {
-        None        => {log::debug!("↓  {:?}", k);
+        None        => {log::debug!("↓  {:?} @ sequence_state None", k);
           if let Err(e) = self.kbd_out.press_key(k.into()) {bail!("failed to press key: {:?}", e);}        }
         Some(state) => {
           state.ticks_until_timeout = state.sequence_timeout;
@@ -1212,12 +1212,12 @@ impl Kanata {
               if let Err(e) = k.handle_input_event(&kev) {break e;}
               #[cfg(all(not(feature="interception_driver"),target_os="windows"))] {last_input_time = now;}
               #[cfg(all(not(feature="interception_driver"),target_os="windows"))] {idle_clear_happened = false;}
-              #[cfg(feature="perf_logging")] log::info!("[PERF]: handle key event: {} ns",(start.elapsed()).as_nanos());
+              #[cfg(feature="perf_logging")] log::trace!("[PERF]: handle key event: {} ns",(start.elapsed()).as_nanos());
               #[cfg(feature="perf_logging")] let start = std::time::Instant::now();
               match k.handle_time_ticks(&tx) {
                 Ok(ms) => ms_elapsed = ms,
                 Err(e) => break e,};
-              #[cfg(feature="perf_logging")]log::info!("[PERF]: handle time ticks: {} ns",(start.elapsed()).as_nanos());
+              #[cfg(feature="perf_logging")]log::trace!("[PERF]: handle time ticks: {} ns",(start.elapsed()).as_nanos());
             }
             Err(_) => {log::error!("channel disconnected (proc loop blocking)");return;}
           }
@@ -1229,12 +1229,12 @@ impl Kanata {
               if let Err(e) = k.handle_input_event(&kev) {break e;}
               #[cfg(all(not(feature="interception_driver"),target_os="windows"))] {last_input_time = std::time::Instant::now();}
               #[cfg(all(not(feature="interception_driver"),target_os="windows"))] {idle_clear_happened = false;}
-              #[cfg(feature="perf_logging")] log::info!("[PERF]: handle key event: {} ns",(start.elapsed()).as_nanos());
+              #[cfg(feature="perf_logging")] log::trace!("[PERF]: handle key event: {} ns",(start.elapsed()).as_nanos());
               #[cfg(feature="perf_logging")] let start = std::time::Instant::now();
               match k.handle_time_ticks(&tx) {
                 Ok(ms) => ms_elapsed = ms,
                 Err(e) => break e,};
-              #[cfg(feature="perf_logging")] log::info!("[PERF]: handle time ticks: {} ns",(start.elapsed()).as_nanos());
+              #[cfg(feature="perf_logging")] log::trace!("[PERF]: handle time ticks: {} ns",(start.elapsed()).as_nanos());
             }
             Err(TryRecvError::Empty) => {
               #[cfg(feature="perf_logging")] let start = std::time::Instant::now();
