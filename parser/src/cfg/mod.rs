@@ -1647,7 +1647,7 @@ fn parse_mods_held_for_submacro<'a>(
   Ok((mod_keys, unparsed_str))
 }
 
-static KEYMODI: [(&str, KeyCode); 25] = [
+static KEYMODI: [(&str, KeyCode); 31] = [
   ("S-", KeyCode::LShift),
   ("‹⇧", KeyCode::LShift),
   ("⇧›", KeyCode::RShift),
@@ -1673,6 +1673,12 @@ static KEYMODI: [(&str, KeyCode); 25] = [
   ("RA-", KeyCode::RAlt),
   ("⎇›", KeyCode::RAlt),
   ("⌥›", KeyCode::RAlt),
+  ("⎈", KeyCode::LCtrl),
+  ("⌥", KeyCode::LAlt),
+  ("⎇", KeyCode::LAlt),
+  ("◆", KeyCode::LGui),
+  ("⌘", KeyCode::LGui),
+  ("❖", KeyCode::LGui),
 ];
 
 /// Parses mod keys like `C-S-`. Returns the `KeyCode`s for the modifiers parsed and the unparsed
