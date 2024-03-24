@@ -12,7 +12,7 @@ use log::*;
 fn log_init() {
   let _ = log_win::init();
   let a = log_win::set_thread_state(true);
-  log::set_max_level(log::LevelFilter::Trace);
+  log::set_max_level(log::LevelFilter::Debug);
 }
 
 use std::path::PathBuf;
