@@ -239,16 +239,7 @@ use core::fmt;
 impl fmt::Display for KeyCode {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match self {
-      KeyCode::Kb1        	=> write!(f,"1" ),
-      KeyCode::Kb2        	=> write!(f,"2" ),
-      KeyCode::Kb3        	=> write!(f,"3" ),
-      KeyCode::Kb4        	=> write!(f,"4" ),
-      KeyCode::Kb5        	=> write!(f,"5" ),
-      KeyCode::Kb6        	=> write!(f,"6" ),
-      KeyCode::Kb7        	=> write!(f,"7" ),
-      KeyCode::Kb8        	=> write!(f,"8" ),
-      KeyCode::Kb9        	=> write!(f,"9" ),
-      KeyCode::Kb0        	=> write!(f,"0" ),
+      KeyCode::Kb1        	=> write!(f,"1" ),KeyCode::Kb2=>write!(f,"2" ),KeyCode::Kb3=>write!(f,"3" ),KeyCode::Kb4=>write!(f,"4" ),KeyCode::Kb5=>write!(f,"5" ),KeyCode::Kb6=>write!(f,"6" ),KeyCode::Kb7=>write!(f,"7" ),KeyCode::Kb8=>write!(f,"8" ),KeyCode::Kb9=>write!(f,"9" ),KeyCode::Kb0=>write!(f,"0" ),
       KeyCode::LCtrl      	=> write!(f,"‹⎈" ),
       KeyCode::RCtrl      	=> write!(f, "⎈›"),
       KeyCode::LShift     	=> write!(f,"‹⇧" ),
