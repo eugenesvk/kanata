@@ -528,7 +528,6 @@ dependencies = [
  "clap",
  "dirs",
  "kanata",
- "kanata-parser",
  "log",
  "simplelog",
 ]
