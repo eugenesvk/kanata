@@ -121,7 +121,13 @@ unsafe extern "system" fn hook_proc(code:c_int, msgID:WPARAM, pInfo:LPARAM) -> L
     //dwExtraInfo:ULONG_PTR Additional info
   let hook_info   = &*(pInfo as *const KBDLLHOOKSTRUCT);
   let is_injected = (hook_info.flags & LLKHF_INJECTED) != 0;
-  log::trace!("{code}, {msgID:?}, {is_injected}");
+  log::trace!("{} {} {}",code,{match msgID as u32 {
+    WM_KEYDOWN   	=> "↓256",
+    WM_KEYUP     	=> "↑257",
+    WM_SYSKEYDOWN	=> "↓260sys",
+    WM_SYSKEYUP  	=> "↑261sys",
+    _            	=> "?",
+  }},is_injected);
   if code != HC_ACTION	{return CallNextHookEx(ptr::null_mut(), code, msgID, pInfo);} //↩ no extra info
   let key_event       	= InputEvent::from_hook_pinfo(hook_info); //{code:KEY_0,value:Press}
   if is_injected      	{return CallNextHookEx(ptr::null_mut(), code, msgID, pInfo);} //↩ `SendInput()` internally calls the hook function. Filter out injected events to prevent recursion and potential stack overflows if our remapping logic sent the injected event
