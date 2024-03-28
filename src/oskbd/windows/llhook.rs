@@ -104,8 +104,8 @@ unsafe extern "system" fn hook_proc(code:c_int, msgID:WPARAM, pInfo:LPARAM) -> L
     //  0=HC_ACTION: wParam and lParam parameters contain information about the message
   // msgID → ID keyboard message:
     // WM_KEYDOWN   ¦UP Posted to kb-focused window when a nonsystem key is pressed (⎇ is ↑)
-    // WM_SYSKEYDOWN¦UP Posted to kb-focused window when a F10 (activate menu bar) or ⎇X⃣ or posted to active window if no win has kb focus (check context code in lParam)
-      // wParam virtual-key code of the nonsystem key
+    // WM_SYSKEYDOWN¦UP Posted to kb-focused window when a F10 (activate menu bar) or ⎇X⃣ or posted to active window if no win has kb focus (check context code in lParam). ↓unavailable to LLHook
+      // wParam virtual-key code of the key
       // lParam repeat count, scan code, extended-key flag, context code, previous key-state flag, and transition-state flag
   // pInfo → pointer to a KBDLLHOOKSTRUCT struct
     //vkCode     :DWORD key's virtual code (1–254)
