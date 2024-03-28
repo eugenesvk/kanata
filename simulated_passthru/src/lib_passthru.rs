@@ -51,39 +51,6 @@ fn lib_impl() -> Result<()> {
 
   Kanata::event_loop(cfg_arc, tx)?; // 1 only listens for keyboard events (not a real loop, just registers callback closures for external function to call at will)
 
-  // for config_sim_file in &args.sim_paths {
-  //   let mut k = Kanata::new(&args)?;
-  //   log::debug!("Evaluating simulation file = {:?}", config_sim_file);
-  //   let s = std::fs::read_to_string(config_sim_file)?;
-  //   for l in s.lines() {
-  //     for pair in l.split_whitespace() {
-  //       match pair.split_once(':') {
-  //         Some((kind, val)) => match kind {
-  //           "tick" | "🕐" | "t"           => {
-  //             let tick = str::parse::<u128>(val)?;
-  //             k.kbd_out.log.in_tick(tick);
-  //             k.tick_ms(tick)?;}
-  //           "press" | "↓" | "d" | "down"  => {
-  //             let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
-  //             k.kbd_out.log.in_press_key(key_code);
-  //             k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Press,})?;}
-  //           "release" | "↑" | "u" | "up"  => {
-  //             let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
-  //             k.kbd_out.log.in_release_key(key_code);
-  //             k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Release,})?;}
-  //           "repeat" | "⟳" | "r"         => {
-  //             let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
-  //             k.kbd_out.log.in_repeat_key(key_code);
-  //             k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Repeat,})?;}
-  //           _ => bail!("invalid pair prefix: {kind}"),
-  //         },
-  //         None => bail!("invalid pair: {l}"),
-  //       }
-  //     }
-  //   }
-  //   k.kbd_out.log.end(config_sim_file, args.sim_appendix.clone());
-  // }
-
   Ok(())
 }
 
