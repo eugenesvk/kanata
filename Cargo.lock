@@ -1059,7 +1059,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "sim_evt"
+name = "simplelog"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "acee08041c5de3d5048c8b3f6f13fafb3026b24ba43c6a695a0c76179b844369"
+dependencies = [
+ "log",
+ "termcolor",
+ "time",
+]
+
+[[package]]
+name = "simulated_passthru"
 version = "0.0.1"
 dependencies = [
  "anyhow",
@@ -1091,17 +1102,6 @@ dependencies = [
  "simplelog",
  "win_dbg_logger",
  "winapi",
-]
-
-[[package]]
-name = "simplelog"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acee08041c5de3d5048c8b3f6f13fafb3026b24ba43c6a695a0c76179b844369"
-dependencies = [
- "log",
- "termcolor",
- "time",
 ]
 
 [[package]]
