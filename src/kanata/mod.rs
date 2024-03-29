@@ -1444,7 +1444,7 @@ pub fn clean_state(kanata:&Arc<Mutex<Kanata>>,tick:u128) -> Result<()> {
   release_normalkey_states(layout);
   k.tick_ms(tick,&None)?;
   let mut k_pressed = PRESSED_KEYS.lock();
-  // trace!("  PRESSED {:?} prev {:?} curr {:?}", k_pressed, k_prev, k_cur);
+  // debug!("  PRESSED {:?} tick {:?}", k_pressed, tick);
   for key_os in k_pressed.clone() {k.kbd_out.release_key(key_os)?;};
   k_pressed.clear();
   Ok(())
