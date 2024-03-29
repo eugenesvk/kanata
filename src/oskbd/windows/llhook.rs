@@ -104,19 +104,19 @@ unsafe extern "system" fn hook_proc(code:c_int, msgID:WPARAM, pInfo:LPARAM) -> L
     //  0=HC_ACTION: wParam and lParam parameters contain information about the message
   // msgID → ID keyboard message:
     // WM_KEYDOWN   ¦UP Posted to kb-focused window when a nonsystem key is pressed (⎇ is ↑)
-    // WM_SYSKEYDOWN¦UP Posted to kb-focused window when a F10 (activate menu bar) or ⎇X⃣ or posted to active window if no win has kb focus (check context code in lParam). ↓unavailable to LLHook
-      // wParam virtual-key code of the key
-      // lParam repeat count, scan code, extended-key flag, context code, previous key-state flag, and transition-state flag
+    // WM_SYSKEYDOWN¦UP Posted to kb-focused window when a F10 (activate menu bar) or ⎇X⃣ or posted to active window if no win has kb focus (check context code in lParam)
+      // (unavailable in LLhook) wParam virtual-key code of the key
+      // (unavailable in LLhook) lParam repeat count, scan code, extended-key flag, context code, previous key-state flag, and transition-state flag
   // pInfo → pointer to a KBDLLHOOKSTRUCT struct
     //vkCode     :DWORD key's virtual code (1–254)
     //scanCode   :DWORD key's hardware scan code
     //flags      :DWORD flags (extended-key, event-injected, transition-state), context code
       // Bits (2-3 6 reserved)                     	Description
+      // 7 KF_UP       >> 8 LLKHF_UP               	transition state: 0=key↓  1=key↑ (being released)
+      // 5 KF_ALTDOWN  >> 8 LLKHF_ALTDOWN          	context code    : 1=⎇↓   0=⎇↑
+      // 0 KF_EXTENDED >> 8 LLKHF_EXTENDED         	extended key (Fn, numpad): 1=yes, 0=no
       // 4 0x10             LLKHF_INJECTED         	event was injected (from any proc): 1=yes, 0=no (1₂ may be unset)
       // 1 0x02             LLKHF_LOWER_IL_INJECTED	event was injected (from a   proc@lower integrity level) 1=yes 0=no (4₂ also set)
-      // 0 KF_EXTENDED >> 8 LLKHF_EXTENDED         	extended key (Fn, numpad): 1=yes, 0=no
-      // 5 KF_ALTDOWN  >> 8 LLKHF_ALTDOWN          	context code    : 1=⎇↓   0=⎇↑
-      // 7 KF_UP       >> 8 LLKHF_UP               	transition state: 0=key↓  1=key↑ (being released)
     //time       :DWORD time stamp = GetMessageTime
     //dwExtraInfo:ULONG_PTR Additional info
   let hook_info   = &*(pInfo as *const KBDLLHOOKSTRUCT);
