@@ -1,4 +1,4 @@
-#![allow(non_upper_case_globals)]
+#![allow(unused_imports,unused_labels,unused_variables,unreachable_code,dead_code,non_upper_case_globals)]
 //! Implements the glue between OS input/output and keyberon state management.
 
 use anyhow::{bail, Result};
@@ -387,6 +387,7 @@ impl Kanata {
 
   /// Update keyberon layout state for press/release, handle repeat separately
   pub fn handle_input_event(&mut self, event: &KeyEvent) -> Result<()> {
+    // #[cfg(feature="perf_logging")] let start = time::Instant::now();
     log::debug!("process recv ev {event:?}");
     let evc: u16 = event.code.into();
     self.ticks_since_idle = 0;
@@ -406,7 +407,9 @@ impl Kanata {
         return Ok(());}
       KeyValue::WakeUp => {return Ok(());}
     };
+    // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs handle_input_event ",(start.elapsed()).as_micros());
     self.layout.bm().event(kbrn_ev);
+    // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs handle_input_event ",(start.elapsed()).as_micros());
     Ok(())
   }
 
@@ -419,7 +422,9 @@ impl Kanata {
     let ms_elapsed         	= ns_elapsed_with_rem / NS_IN_MS;
     self.time_remainder = ns_elapsed_with_rem % NS_IN_MS;
 
+    // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs pre tick_ms ",(now.elapsed()).as_micros());
     self.tick_ms(ms_elapsed, tx)?;
+    // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs tick_ms ",(now.elapsed()).as_micros());
 
     self.last_tick = match ms_elapsed {
       0      => self.last_tick,
@@ -427,6 +432,7 @@ impl Kanata {
       _      => time::Instant::now()};
 
     self.check_handle_layer_change(tx);
+    // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs check_handle_layer_change ",(now.elapsed()).as_micros());
 
     if       self.live_reload_requested
       && ((  self.prev_keys.is_empty()
@@ -435,11 +441,12 @@ impl Kanata {
       self.live_reload_requested = false; if let Err(e) = self.do_live_reload(tx) {log::error!("live reload failed {e}");}
     }
 
-    #[cfg(feature="perf_logging")] log::trace!("🕐ms elapsed: {ms_elapsed}");
+    #[cfg(feature="perf_logging")] log::debug!("🕐{}μs, ms elapsed: {ms_elapsed} ",(now.elapsed()).as_micros());
     Ok(ms_elapsed as u16) // `as` casting: cheaper vs doing the min of u16::MAX and ms_elapsed, doesn't matter if result truncates and wrong
   }
 
   pub fn tick_ms(&mut self, ms_elapsed: u128, _tx: &Option<Sender<ServerMessage>>) -> Result<()> {
+    #[cfg(feature="perf_logging")] let start = time::Instant::now();
     let mut extra_ticks: u16 = 0;
     for _ in 0..ms_elapsed {
       self.tick_states(_tx)?;
@@ -448,15 +455,19 @@ impl Kanata {
         self.layout.bm().event(event.key_event());
         extra_ticks = extra_ticks.saturating_add(event.delay());
         log::debug!("dyn macro extra ticks: {extra_ticks}, ms_elapsed: {ms_elapsed}");}   }
+    // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs tick_ms mid ms{}",(start.elapsed()).as_micros(),ms_elapsed);
     for i in 0..(extra_ticks.saturating_sub(ms_elapsed as u16)) {
       self.tick_states(_tx)?;
       if tick_replay_state(&mut self.dynamic_macro_replay_state
         ,                       self.dynamic_macro_replay_behaviour).is_some() {log::error!("overshot to next event at iteration #{i}, the code is broken!");break;}  }
+    #[cfg(feature="perf_logging")] log::debug!("🕐{}μs tick_ms end ms{}",(start.elapsed()).as_micros(),ms_elapsed);
     Ok(())
   }
 
   fn tick_states(&mut self, _tx: &Option<Sender<ServerMessage>>) -> Result<()> {
+    #[cfg(feature="perf_logging")] let start = time::Instant::now();
     self.live_reload_requested |= self.handle_keystate_changes(_tx)?;
+    // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs tick_states handle_keystate_changes",(start.elapsed()).as_micros());
     self.handle_scrolling()?;
     self.handle_move_mouse()?;
     self.tick_sequence_state()?;
@@ -464,6 +475,7 @@ impl Kanata {
     tick_record_state(&mut self.dynamic_macro_record_state);
     self.prev_keys.clear();
     self.prev_keys.append(&mut self.cur_keys);
+    // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs tick_states end",(start.elapsed()).as_micros());
     Ok(())
   }
 
@@ -620,6 +632,7 @@ impl Kanata {
   /// Updates self.cur_keys.
   /// Returns whether live reload was requested.
   fn handle_keystate_changes(&mut self, _tx: &Option<Sender<ServerMessage>>) -> Result<bool> {
+    #[cfg(feature="perf_logging")] let start = time::Instant::now();
     let     layout               	= self.layout.bm();
     let     custom_event         	= layout.tick();
     let mut live_reload_requested	= false;
@@ -628,6 +641,7 @@ impl Kanata {
     self.overrides.override_keys(cur_keys, &mut self.override_states);
     if let Some(caps_word) = &mut self.caps_word {
       if caps_word.maybe_add_lsft(cur_keys) == CapsWordNextState::End {self.caps_word = None;}}
+    // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs handle_keystate_changes caps_word",(start.elapsed()).as_micros());
 
     match custom_event { // Deal with unmodded. Unlike other custom actions, this should come before key presses and releases. I don't quite remember why custom actions come after the key processing, but I remember that it is intentional. However, since unmodded needs to modify the key lists, it should come before.
       CustomEvent::Press(custacts) => {
@@ -654,6 +668,7 @@ impl Kanata {
       cur_keys.retain(|k| !matches!(k, KeyCode::LShift | KeyCode::RShift));
       cur_keys.extend(self.unshifted_keys.iter());
     }
+    // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs handle_keystate_changes unmod",(start.elapsed()).as_micros());
 
     // Release keys that do not exist in the current state but exist in the previous state. This used to use a HashSet but it was changed to a Vec because the order of operations matters.
     log::trace!("{:?}", &self.prev_keys);
@@ -662,6 +677,7 @@ impl Kanata {
       log::debug!(" ↑ {:?} @handle_keystate_changes Δ prev vs current", k);
       if let Err(e) = self.kbd_out.release_key(k.into()) {bail!("failed to release key: {:?}",e);}
     }
+    // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs handle_keystate_changes prev_keys",(start.elapsed()).as_micros());
 
     // Press keys that exist in the current state but are missing from the previous state. Comment above regarding Vec/HashSet also applies here.
     log::trace!("{cur_keys:?}");
@@ -778,6 +794,7 @@ impl Kanata {
         }
       }
     }
+    // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs handle_keystate_changes cur_keys",(start.elapsed()).as_micros());
 
     match custom_event { // Handle custom events. This used to be in a separate function but lifetime issues cause it to now be here.
       CustomEvent::Press(custacts) => {
@@ -1065,8 +1082,10 @@ impl Kanata {
       }
       _ => {}
     };
+    // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs handle_keystate_changes custom_event",(start.elapsed()).as_micros());
 
     self.check_release_non_physical_shift()?;
+    // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs handle_keystate_changes end",(start.elapsed()).as_micros());
     Ok(live_reload_requested)
   }
 
@@ -1241,7 +1260,6 @@ impl Kanata {
         }
       }
       let mut ms_elapsed = 0;
-      info!("Starting kanata proper"); info!("You may forcefully exit kanata by pressing lctl+spc+esc at any time. These keys refer to defsrc input, meaning BEFORE kanata remaps keys.");
       #[cfg(all(not(feature="interception_driver"), target_os="windows"))] let mut idle_clear_happened = false;
       #[cfg(all(not(feature="interception_driver"), target_os="windows"))] let mut last_input_time = time::Instant::now();
 
@@ -1260,11 +1278,18 @@ impl Kanata {
           is_idle && !counting_idle_ticks && passed_max_switch_timing_check
         };
         if can_block {
-          log::trace!("blocking on channel");
+          log::debug!("                       blocking on channel");
           match rx.recv() {
             Ok(kev) => {
               let mut k = kanata.lock();
               let now = time::Instant::now().checked_sub(time::Duration::from_millis(1)).expect("−1ms from current time");
+
+              // let mut k = kanata.lock();
+          // #[cfg(feature="perf_logging")] let start = time::Instant::now();
+          // let kkk = OsCode::KEY_3;
+          // let _ = &k.kbd_out.release_key(kkk.into());
+          // #[cfg(feature="perf_logging")] log::error!("🕐{}μs start_processing_loop can block random key ",(start.elapsed()).as_micros());
+
               #[cfg(all(not(feature="interception_driver"),target_os="windows"))] {
                 if (now - last_input_time) > time::Duration::from_secs(LLHOOK_IDLE_TIME_CLEAR_INPUTS) {
                   log::debug!("clearing keyberon normal key states due to inactivity"); // If kanata has been inactive for long enough, clear all states. This won't trigger if there are macros running, or if a key is held down for a long time and is sending OS repeats. The reason for this code is in case like Win+L which locks the Windows desktop. When this happens, the Win key and L key will be stuck as pressed in the kanata state because LLHOOK kanata cannot read keys in the lock screen or administrator applications. So this is heuristic to detect such an issue and clear states assuming that's what happened. Only states in the normal key row are cleared, since those are the states that might be stuck. A real use case might be to have a fake key pressed for a long period of time, so make sure those are not cleared.
@@ -1276,15 +1301,16 @@ impl Kanata {
               k.last_tick = now;
               #[cfg(feature="perf_logging")] let start = std::time::Instant::now();
 
+              log::debug!("pre handle_input_event");
               if let Err(e) = k.handle_input_event(&kev) {break e;}
               #[cfg(all(not(feature="interception_driver"),target_os="windows"))] {last_input_time = now;}
               #[cfg(all(not(feature="interception_driver"),target_os="windows"))] {idle_clear_happened = false;}
-              #[cfg(feature="perf_logging")] log::trace!("[PERF]: handle key event: {} ns",(start.elapsed()).as_nanos());
+              #[cfg(feature="perf_logging")] log::debug!("[PERF]: handle key event: {} ns",(start.elapsed()).as_nanos());
               #[cfg(feature="perf_logging")] let start = std::time::Instant::now();
               match k.handle_time_ticks(&tx) {
                 Ok(ms) => ms_elapsed = ms,
                 Err(e) => break e,};
-              #[cfg(feature="perf_logging")]log::trace!("[PERF]: handle time ticks: {} ns",(start.elapsed()).as_nanos());
+              #[cfg(feature="perf_logging")]log::debug!("[PERF]: can_block Ok(kev) handle time ticks: {} ns",(start.elapsed()).as_nanos());
             }
             Err(_) => {log::error!("channel disconnected (proc loop blocking)");return;}
           }
@@ -1296,19 +1322,19 @@ impl Kanata {
               if let Err(e) = k.handle_input_event(&kev) {break e;}
               #[cfg(all(not(feature="interception_driver"),target_os="windows"))] {last_input_time = std::time::Instant::now();}
               #[cfg(all(not(feature="interception_driver"),target_os="windows"))] {idle_clear_happened = false;}
-              #[cfg(feature="perf_logging")] log::trace!("[PERF]: handle key event: {} ns",(start.elapsed()).as_nanos());
+              #[cfg(feature="perf_logging")] log::debug!("[PERF]: handle key event: {} ns",(start.elapsed()).as_nanos());
               #[cfg(feature="perf_logging")] let start = std::time::Instant::now();
               match k.handle_time_ticks(&tx) {
                 Ok(ms) => ms_elapsed = ms,
                 Err(e) => break e,};
-              #[cfg(feature="perf_logging")] log::trace!("[PERF]: handle time ticks: {} ns",(start.elapsed()).as_nanos());
+              #[cfg(feature="perf_logging")] log::debug!("[PERF]: noblockOk(kev) handle time ticks: {} ns",(start.elapsed()).as_nanos());
             }
             Err(TryRecvError::Empty) => {
               #[cfg(feature="perf_logging")] let start = std::time::Instant::now();
               match k.handle_time_ticks(&tx) {
                 Ok(ms) => ms_elapsed = ms,
                 Err(e) => break e,};
-              #[cfg(feature="perf_logging")] log::trace!("[PERF]: handle time ticks: {} ns",(start.elapsed()).as_nanos());
+              #[cfg(feature="perf_logging")] log::debug!("[PERF]: noblockErr handle time ticks: {} ns",(start.elapsed()).as_nanos());
               #[cfg(all(not(feature="interception_driver"),target_os="windows"))] {
                 // If kanata has been inactive for long enough, clear all states. This won't trigger if there are macros running, or if a key is held down for a long time and is sending OS repeats. The reason for this code is in case like Win+L which locks the Windows desktop. When this happens, the Win key and L key will be stuck as pressed in the kanata state because LLHOOK kanata cannot read keys in the lock screen or administrator applications. So this is heuristic to detect such an issue and clear states assuming that's what happened. Only states in the normal key row are cleared, since those are the states that might be stuck. A real use case might be to have a fake key pressed for a long period of time, so make sure those are not cleared.
                 if (std::time::Instant::now() - (last_input_time)) > time::Duration::from_secs(LLHOOK_IDLE_TIME_CLEAR_INPUTS)
@@ -1536,6 +1562,7 @@ where
       _ => {}
     }
   }
+  // debug!("reset state: releasing {:?}",coords_to_release);
   for coord in coords_to_release.into_iter() {
     layout.event(Event::Release(coord.0, coord.1));
   }
