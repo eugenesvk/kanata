@@ -1129,14 +1129,10 @@ impl Kanata {
             let mut clients = clients.lock();
             let mut stale_clients = vec![];
             for (id, client) in &mut *clients {
-              match client.write(&notification) {
-                Ok(_) => {
-                  log::debug!("layer change notification sent");
-                }
-                Err(_) => {
-                  // the client is no longer connected, let's remove them
-                  stale_clients.push(id.clone());
-                }
+              match client.write_all(&notification) {
+                Ok (_) => {log::debug!("layer change notification sent");}
+                Err(e) => {log::warn!("removing tcp client where write failed: {id}, {e:?}");
+                  stale_clients.push(id.clone());} // the client is no longer connected, let's remove them
               }
             }
 
