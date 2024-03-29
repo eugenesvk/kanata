@@ -8,6 +8,8 @@ use crate::oskbd::KeyValue;
 
 #[cfg(all(not(feature="interception_driver"),not(feature="simulated_input")))] mod llhook;
 #[cfg(all(not(feature="interception_driver"),not(feature="simulated_input")))] pub use llhook::*;
+mod scancode_to_usvk;
+#[allow(unused)] pub(crate) use scancode_to_usvk::*;
 
 #[cfg(feature="simulated_input"    )] mod exthook_os;
 #[cfg(feature="simulated_input"    )] pub use exthook_os::*;
@@ -85,7 +87,10 @@ fn send_key_sendinput(code: u16, is_key_up: bool) {
 
       let code_u32 = code as u32;
       kb_input.dwFlags |= KEYEVENTF_SCANCODE;
-      kb_input.wScan = MapVirtualKeyA(code_u32, 0) as u16;
+      #[cfg(not(feature = "win_llhook_read_scancodes"))]{
+        kb_input.wScan =                                           MapVirtualKeyA(code_u32, 0) as u16;}
+      #[cfg(    feature = "win_llhook_read_scancodes" )]{
+        kb_input.wScan = osc_to_u16(code.into()).unwrap_or_else(|| MapVirtualKeyA(code_u32, 0) as u16);}
 
       let is_extended_key: bool = code < 0xff && EXTENDED_KEYS.contains(&(code as u8));
       if is_extended_key {
