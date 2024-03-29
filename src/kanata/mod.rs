@@ -1438,14 +1438,12 @@ fn apply_speed_modifiers() {
 
 #[cfg(feature="passthru_ahk")]
 /// Clean kanata's state without exiting
-pub fn clean_state(kanata:&Arc<Mutex<Kanata>>) -> Result<()> {
+pub fn clean_state(kanata:&Arc<Mutex<Kanata>>,tick:u128) -> Result<()> {
   let mut k = kanata.lock();
   let layout = k.layout.bm();
   release_normalkey_states(layout);
-
-  let val = "1000"; //todo: alternative to ↓↓↓ prev keys, run a tick and let the change state propagate and clean up itself?
-  let tick = str::parse::<u128>(val)?;
   k.tick_ms(tick,&None)?;
+  let mut k_pressed = PRESSED_KEYS.lock();
   // trace!("  PRESSED {:?} prev {:?} curr {:?}", k_pressed, k_prev, k_cur);
   for key_os in k_pressed.clone() {k.kbd_out.release_key(key_os)?;};
   k_pressed.clear();
