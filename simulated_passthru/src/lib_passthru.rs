@@ -81,6 +81,6 @@ fn lib_kanata_passthru(cb_addr:c_longlong) -> LRESULT {
 
   // let key_code = str_to_oscode("val").unwrap_or(OsCode::KEY_RESERVED);
   // debug!("key_code={key_code:?}");
-  debug!("✗✗✗ sim_evt finished");
+  // debug!("sim_evt✗");
   0
 }
