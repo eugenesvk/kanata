@@ -1244,7 +1244,7 @@ impl Kanata {
   }
 
   /// Starts a new thread that processes OS key events and advances the keyberon layout's state.
-  pub fn start_processing_loop(kanata:Arc<Mutex<Self>>, rx:Receiver<KeyEvent>, tx:Option<Sender<ServerMessage>>, nodelay:bool) {
+  pub fn start_processing_loop(kanata:Arc<Mutex<Self>>, rx:Receiver<KeyEvent>, tx:Option<Sender<ServerMessage>>, nodelay:bool, tx_kout:Option<Sender<InputEvent>>) {
     info!("entering the processing loop");
     std::thread::spawn(move || {
       if ! nodelay {info!("Init: catching only releases and sending immediately");

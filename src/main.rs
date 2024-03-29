@@ -186,7 +186,7 @@ fn main_impl() -> Result<()> {
     (      Some(server), Some(ntx), Some(nrx))
   } else {(None        , None     , None     )};
 
-  Kanata::start_processing_loop(cfg_arc.clone(), rx, ntx, args.nodelay); // 2 handles keyboard events while also maintaining `tick()` calls to keyberon
+  Kanata::start_processing_loop(cfg_arc.clone(), rx, ntx, args.nodelay, None); // 2 handles keyboard events while also maintaining `tick()` calls to keyberon
 
   if let (Some(server), Some(nrx)) = (server, nrx) {
     #[allow(clippy::unit_arg)] Kanata::start_notification_loop(nrx, server.connections);}
