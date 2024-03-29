@@ -1541,23 +1541,18 @@ where
   let mut coords_to_release = vec![];
   for state in layout.states.iter().copied() {
     match state {
-      State::NormalKey {
-        coord: (NORMAL_KEY_ROW, y),
-        ..
-      }
-      | State::LayerModifier {
-        coord: (NORMAL_KEY_ROW, y),
-        ..
-      }
-      | State::Custom {
-        coord: (NORMAL_KEY_ROW, y),
-        ..
-      }
-      | State::RepeatingSequence {
-        coord: (NORMAL_KEY_ROW, y),
-        ..
-      } => {
+      State::NormalKey	{coord: (NORMAL_KEY_ROW, y),keycode:normal_key,flags,..} => {
+        // debug!("release normal: {} ¦ {} ¦ {:?}",normal_key,OsCode::from(normal_key),flags);
         coords_to_release.push((NORMAL_KEY_ROW, y));
+      },
+      State::FakeKey	{keycode:fake_key,..} => {
+        debug!("fake: {} ",OsCode::from(fake_key));
+      },
+      // State::NormalKey       	{coord: (NORMAL_KEY_ROW, y),..}
+      State::LayerModifier      	{coord: (NORMAL_KEY_ROW, y),..}
+      | State::Custom           	{coord: (NORMAL_KEY_ROW, y),..}
+      | State::RepeatingSequence	{coord: (NORMAL_KEY_ROW, y),..} => {
+        coords_to_release.push(           (NORMAL_KEY_ROW, y));
       }
       _ => {}
     }
