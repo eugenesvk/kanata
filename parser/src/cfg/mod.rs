@@ -252,7 +252,7 @@ pub fn new_from_str(cfg_text: &str) -> MResult<Cfg> {
   let mut s = ParsedState::default();
   let icfg = parse_cfg_raw_string(cfg_text,&mut s,&PathBuf::from("configuration"),
     &mut FileContentProvider {get_file_content_fn: &mut |_| Err("include is not supported".into()),},
-    DEF_LOCAL_KEYS,)?;
+    DEF_LOCAL_KEYS,Err("environment variables are not supported".into()),)?;
   let key_outputs          	= create_key_outputs(&icfg.klayers, &icfg.overrides);
   let switch_max_key_timing	= s.switch_max_key_timing.get();
   let mut layout           	= KanataLayout::new(Layout::new_with_trans_action_settings(
@@ -337,6 +337,9 @@ pub struct IntermediateCfg {
   pub overrides: Overrides,
 }
 
+// A snapshot of enviroment variables, or an error message with an explanation why env vars are not not supported.
+pub type EnvVars = std::result::Result<Vec<(String, String)>, String>;
+
 #[allow(clippy::type_complexity)] // return type is not pub
 fn parse_cfg_raw(p: &Path, s: &mut ParsedState) -> MResult<IntermediateCfg> {
   const INVALID_PATH_ERROR: &str = "The provided config file path is not valid";
@@ -384,8 +387,8 @@ fn parse_cfg_raw(p: &Path, s: &mut ParsedState) -> MResult<IntermediateCfg> {
     .get_file_content(&cfg_file_name)
     .map_err(|e| miette::miette!(e))?;
 
-  parse_cfg_raw_string(&text, s, p, &mut file_content_provider, DEF_LOCAL_KEYS)
-    .map_err(|e| e.into())
+  let env_vars: EnvVars = Ok(std::env::vars().collect());
+  parse_cfg_raw_string(&text,s,p,&mut file_content_provider,DEF_LOCAL_KEYS,env_vars,).map_err(|e| e.into())
 }
 
 fn expand_includes(
@@ -439,6 +442,7 @@ pub fn parse_cfg_raw_string(
   cfg_path: &Path,
   file_content_provider: &mut FileContentProvider,
   def_local_keys_variant_to_apply: &str,
+  env_vars: EnvVars,
 ) -> Result<IntermediateCfg> {
   let spanned_root_exprs = sexpr::parse(text, &cfg_path.to_string_lossy())
     .and_then(|xs| expand_includes(xs, file_content_provider))
@@ -652,7 +656,7 @@ pub fn parse_cfg_raw_string(
     .iter()
     .filter(gen_first_atom_start_filter("defalias"))
     .collect::<Vec<_>>();
-  parse_aliases(&alias_exprs, s)?;
+  parse_aliases(&alias_exprs, s, &env_vars)?;
 
   let mut klayers = parse_layers(s, &mut mapped_keys, &cfg)?;
 
@@ -1043,10 +1047,10 @@ fn push_all_atoms(exprs: &[SExpr], vars: &HashMap<String, SExpr>, pusheen: &mut 
 
 /// Parse alias->action mappings from multiple exprs starting with defalias.
 /// Mutates the input `s` by storing aliases inside.
-fn parse_aliases(exprs: &[&Vec<SExpr>], s: &mut ParsedState) -> Result<()> {
+fn parse_aliases(exprs: &[&Vec<SExpr>], s: &mut ParsedState, env_vars: &EnvVars) -> Result<()> {
   for expr in exprs {
     handle_standard_defalias(expr, s)?;
-    handle_envcond_defalias(expr, s)?;
+    handle_envcond_defalias(expr, s, env_vars)?;
   }
   Ok(())
 }
@@ -1059,7 +1063,7 @@ fn handle_standard_defalias(expr: &[SExpr], s: &mut ParsedState) -> Result<()> {
   read_alias_name_action_pairs(subexprs, s)
 }
 
-fn handle_envcond_defalias(expr: &[SExpr], s: &mut ParsedState) -> Result<()> {
+fn handle_envcond_defalias(expr: &[SExpr], s: &mut ParsedState, env_vars: &EnvVars) -> Result<()> {
   let mut subexprs = match check_first_expr(expr.iter(), "defaliasenvcond") {
     Ok(exprs) => exprs,
     Err(_) => return Ok(()),
@@ -1090,10 +1094,19 @@ fn handle_envcond_defalias(expr: &[SExpr], s: &mut ParsedState) -> Result<()> {
           "Environment variable value must be a string, not a list.\n{conderr}"
         )
       })?;
-      if !std::env::vars().any(|(name, value)| name == env_var_name && value == env_var_value)
-      {
-        log::info!("Did not find env var ({env_var_name} {env_var_value}), skipping associated aliases");
-        return Ok(());
+      match env_vars {
+        Ok(vars) => {
+          if !vars
+            .iter()
+            .any(|(name, value)| name == env_var_name && value == env_var_value)
+          {
+            log::info!("Did not find env var ({env_var_name} {env_var_value}), skipping associated aliases");
+            return Ok(());
+          }
+        }
+        Err(err) => {
+          bail_expr!(expr, "{err}");
+        }
       }
       log::info!("Found env var ({env_var_name} {env_var_value}), using associated aliases");
     }
