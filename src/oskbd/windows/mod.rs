@@ -9,7 +9,7 @@ use crate::oskbd::KeyValue;
 #[cfg(all(not(feature="interception_driver"),not(feature="simulated_input")))] mod llhook;
 #[cfg(all(not(feature="interception_driver"),not(feature="simulated_input")))] pub use llhook::*;
 mod scancode_to_usvk;
-#[allow(unused)] pub(crate) use scancode_to_usvk::*;
+#[allow(unused)] pub use scancode_to_usvk::*;
 
 #[cfg(feature="simulated_input"    )] mod exthook_os;
 #[cfg(feature="simulated_input"    )] pub use exthook_os::*;
