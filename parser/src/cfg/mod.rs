@@ -255,7 +255,9 @@ pub fn new_from_str(cfg_text: &str) -> MResult<Cfg> {
     DEF_LOCAL_KEYS,)?;
   let key_outputs          	= create_key_outputs(&icfg.klayers, &icfg.overrides);
   let switch_max_key_timing	= s.switch_max_key_timing.get();
-  let mut layout           	= KanataLayout::new(Layout::new(icfg.klayers), s.a);
+  let mut layout           	= KanataLayout::new(Layout::new_with_trans_action_settings(
+    s.a.sref(s.defsrc_layer),icfg.klayers,icfg.options.trans_resolution_behavior_v2,),
+    s.a,);
   layout.bm().quick_tap_hold_timeout = icfg.options.concurrent_tap_hold;
   layout.bm().oneshot.on_press_release_delay = icfg.options.rapid_event_delay;
   let mut fake_keys: HashMap<String, usize> = s.virtual_keys.iter().map(|(k, v)| (k.clone(), v.0)).collect();
@@ -292,7 +294,9 @@ fn parse_cfg(p: &Path) -> MResult<Cfg> {
   let icfg = parse_cfg_raw(p, &mut s)?;
   let key_outputs = create_key_outputs(&icfg.klayers, &icfg.overrides);
   let switch_max_key_timing = s.switch_max_key_timing.get();
-  let mut layout = KanataLayout::new(Layout::new(icfg.klayers), s.a);
+  let mut layout = KanataLayout::new(Layout::new_with_trans_action_settings(
+    s.a.sref(s.defsrc_layer),icfg.klayers,icfg.options.trans_resolution_behavior_v2,),
+    s.a,);
   layout.bm().quick_tap_hold_timeout = icfg.options.concurrent_tap_hold;
   layout.bm().oneshot.on_press_release_delay = icfg.options.rapid_event_delay;
   let mut fake_keys: HashMap<String, usize> =
@@ -959,7 +963,7 @@ impl Default for ParsedState {
       aliases                    	: Default::default(),
       layer_idxs                 	: Default::default(),
       mapping_order              	: Default::default(),
-      defsrc_layer               	: [KanataAction::Trans; KEYS_IN_ROW],
+      defsrc_layer               	: [KanataAction::NoOp; KEYS_IN_ROW],
       virtual_keys               	: Default::default(),
       chord_groups               	: Default::default(),
       vars                       	: Default::default(),
@@ -1947,9 +1951,9 @@ fn parse_release_layer(ac_params: &[SExpr], s: &ParsedState) -> Result<&'static 
 }
 
 fn create_defsrc_layer() -> [KanataAction; KEYS_IN_ROW] {
-  let mut layer = [KanataAction::Trans;    KEYS_IN_ROW];
+  let mut layer = [KanataAction::NoOp;    KEYS_IN_ROW];
   for (i, ac) in layer.iter_mut().enumerate() {
-    *ac = OsCode::from_u16(i as u16).map(|osc| Action::KeyCode(osc.into())).unwrap_or(Action::Trans);}
+    *ac = OsCode::from_u16(i as u16).map(|osc| Action::KeyCode(osc.into())).unwrap_or(Action::NoOp);}
   layer
 }
 
@@ -2448,10 +2452,12 @@ fn parse_live_reload_file(ac_params: &[SExpr], s: &ParsedState) -> Result<&'stat
   )))))
 }
 
-fn parse_layers(s: &mut ParsedState,mapped_keys: &mut MappedKeys,defcfg: &CfgOptions,) -> Result<IntermediateLayers> {
+fn parse_layers(s: &ParsedState,mapped_keys: &mut MappedKeys,defcfg: &CfgOptions,) -> Result<IntermediateLayers> {
   // There are two copies/versions of each layer. One is used as the target of "layer-switch" and
   // the other is the target of "layer-while-held".
   let mut layers_cfg = new_layers(s.layer_exprs.len());
+  if s.layer_exprs.len() > MAX_LAYERS / 2 {bail!("Maximum number of layers ({}) exceeded.", MAX_LAYERS / 2);}
+  let mut defsrc_layer = s.defsrc_layer;
   for (layer_level, layer) in s.layer_exprs.iter().enumerate() {
     match layer { // The skip is done to skip the the `deflayer` and layer name tokens.
       LayerExprs::DefsrcMapping(layer) => {
@@ -2532,7 +2538,7 @@ fn parse_layers(s: &mut ParsedState,mapped_keys: &mut MappedKeys,defcfg: &CfgOpt
     }
     for (i, (layer_action, defsrc_action)) in layers_cfg[layer_level * 2][0]
       .iter_mut()
-      .zip(s.defsrc_layer)
+      .zip(defsrc_layer)
       .enumerate()
     {
       // Set transparent actions in the "layer-switch" version of the layer according to
@@ -2549,7 +2555,7 @@ fn parse_layers(s: &mut ParsedState,mapped_keys: &mut MappedKeys,defcfg: &CfgOpt
               KeyCode::No => None,
               kc => Some(Action::KeyCode(kc)),
             })
-            .unwrap_or(Action::Trans);
+            .unwrap_or(Action::NoOp);
         }
       }
     }
@@ -2563,7 +2569,7 @@ fn parse_layers(s: &mut ParsedState,mapped_keys: &mut MappedKeys,defcfg: &CfgOpt
     // (as opposed to delegation to defsrc), replace the defsrc actions with the actions from
     // the first layer.
     if layer_level == 0 && s.delegate_to_first_layer {
-      for (defsrc_ac, default_layer_ac) in s.defsrc_layer.iter_mut().zip(layers_cfg[0][0]) {
+      for (defsrc_ac, default_layer_ac) in defsrc_layer.iter_mut().zip(layers_cfg[0][0]) {
         *defsrc_ac = default_layer_ac;
       }
     }

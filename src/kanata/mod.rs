@@ -1111,12 +1111,13 @@ impl Kanata {
       return Ok(());
     }
     self.cur_keys.extend(self.layout.bm().keycodes());
-    self.overrides
-      .override_keys(&mut self.cur_keys, &mut self.override_states);
-    let current_layer = self.layout.bm().current_layer();
-    if current_layer % 2 == 1 {
-      // Prioritize checking the active layer in case a layer-while-held is active.
-      if let Some(outputs_for_key) = self.key_outputs[current_layer].get(&event.code) {
+    self.overrides.override_keys(&mut self.cur_keys, &mut self.override_states);
+    // Prioritize checking the active layer in case a layer-while-held is active.
+    let active_held_layers = self.layout.bm().active_held_layers();
+    let mut held_layer_active = false;
+    for layer in active_held_layers {
+      held_layer_active = true;
+      if let Some(outputs_for_key) = self.key_outputs[usize::from(layer)].get(&event.code) {
         log::debug!("key outs for active layer-while-held: {outputs_for_key:?};");
         for osc in outputs_for_key.iter().rev().copied() {
           let kc = osc.into();
@@ -1131,10 +1132,10 @@ impl Kanata {
             return Ok(());
           }
         }
-      } else {
-        log::debug!("empty layer-while-held outputs, probably transparent");
       }
     }
+    if held_layer_active {log::debug!("empty layer-while-held outputs, probably transparent");}
+
     // Try matching a key on the default layer.
     //
     // This code executes in two cases:
