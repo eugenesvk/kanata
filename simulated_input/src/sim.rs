@@ -115,12 +115,12 @@ fn cli_init_fsim() -> Result<(ValidatedArgs, Vec<PathBuf>, Option<String>)> {
   } else {bail!("No simulation files provided\nFor more info, pass the `-h` or `--help` flags.");}
 
   Ok((ValidatedArgs {
-    paths          	: cfg_paths,
-    #[cfg(feature  	="tcp_server")]
-    port           	: None,
-    #[cfg(target_os	="linux"   )]
-    symlink_path   	: None,
-    nodelay        	: true,
+    paths             	: cfg_paths,
+    #[cfg(feature     	="tcp_server")]
+    tcp_server_address	: None::<SocketAddrWrapper>,
+    #[cfg(target_os   	="linux"   )]
+    symlink_path      	: None,
+    nodelay           	: true,
     },
     sim_paths   	,
     sim_appendix	,

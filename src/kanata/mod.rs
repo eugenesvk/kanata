@@ -18,6 +18,8 @@ use std::time;
 use crate::oskbd::{KeyEvent, *};
 #[cfg(feature="tcp_server")]
 use crate::tcp_server::simple_sexpr_to_json_array;
+#[cfg(feature = "tcp_server")]
+use crate::SocketAddrWrapper;
 use crate::ValidatedArgs;
 use kanata_parser::cfg;
 use kanata_parser::cfg::*;
@@ -78,7 +80,7 @@ pub struct Kanata {
   pub dynamic_macro_record_state    	: Option<DynamicMacroRecordState>    	,// Tracks the the inputs for a dynamic macro recording. Is Some(...) when a dynamic macro is being recorded and None otherwise.
   pub overrides                     	: Overrides                          	,// Global overrides defined in the user configuration.
   pub override_states               	: OverrideStates                     	,// Reusable allocations to help with computing whether overrides are active based on key outputs.
-      last_tick                     	: instant::Instant                      	,// Time of the last tick to know how many tick iterations to run, to achieve a 1ms tick interval more closely.
+      last_tick                     	: instant::Instant                   	,// Time of the last tick to know how many tick iterations to run, to achieve a 1ms tick interval more closely.
       time_remainder                	: u128                               	,// Tracks the non-whole-millisecond gaps between ticks to know when to do another tick iteration without sleeping, to achive a 1ms tick interval more closely.
       live_reload_requested         	: bool                               	,// Is true if a live reload was requested by the user and false otherwise.
   #[cfg(target_os                   	= "linux")                           	]
@@ -111,7 +113,7 @@ pub struct Kanata {
   pub virtual_keys                  	: HashMap<String, usize>             	,// Names of fake keys mapped to their index in the fake keys row
   pub switch_max_key_timing         	: u16                                	,// The maximum value of switch's key-timing item in the configuration.
   #[cfg(feature                     	= "tcp_server"                       	)]
-  tcp_server_port                   	: Option<i32>                        	,//
+  tcp_server_address                	: Option<SocketAddrWrapper>          	,//
 }
 
 #[derive(PartialEq,Clone,Copy)] pub enum Axis {Vertical,Horizontal,}
@@ -246,7 +248,7 @@ impl Kanata {
       virtual_keys                  	: cfg.fake_keys,
       switch_max_key_timing         	: cfg.switch_max_key_timing,
       #[cfg(feature                 	= "tcp_server")]
-      tcp_server_port               	: args.port,
+      tcp_server_address            	: args.tcp_server_address.clone(),
     })
   }
   /// Create a new configuration from a file, wrapped in an Arc<Mutex<_>>
@@ -319,7 +321,7 @@ impl Kanata {
       virtual_keys                  	: cfg.fake_keys,
       switch_max_key_timing         	: cfg.switch_max_key_timing,
       #[cfg(feature                 	= "tcp_server")]
-      tcp_server_port               	: None,
+      tcp_server_address            	: None,
     })
   }
 
@@ -915,7 +917,7 @@ impl Kanata {
                   Err(error) => {
                     log::error!("could not send {} event notification: {}",PUSH_MESSAGE,error);}
                 }  }
-              #[cfg(feature = "tcp_server")] match self.tcp_server_port {
+              #[cfg(feature = "tcp_server")] match self.tcp_server_address {
                 None    => {log::warn!("{} was used, but TCP server is not running. did you specify a port?", PUSH_MESSAGE);}
                 Some(_) => {}  }
               #[cfg(not(feature = "tcp_server"))]log::warn!("{} was used, but Kanata was compiled with TCP server disabled.",PUSH_MESSAGE);
