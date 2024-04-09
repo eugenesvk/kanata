@@ -11,6 +11,7 @@
 #[cfg(all(not(feature="simulated_input"),feature="simulated_output"))] pub use simulated::*;
 #[cfg(all(    feature="simulated_input" ,feature="simulated_output"))] mod sim_passthru;
 #[cfg(all(    feature="simulated_input" ,feature="simulated_output"))] pub use sim_passthru::*;
+pub const HI_RES_SCROLL_UNITS_IN_LO_RES: u16 = 120;
 
 // ------------------ KeyValue --------------------
 #[derive(Copy,Clone,Debug,PartialEq,Eq)] pub enum KeyValue {Release=0,Press=1,Repeat=2,Tap,WakeUp,}
