@@ -250,7 +250,7 @@ pub fn new_from_file(p: &Path) -> MResult<Cfg> {
 
 pub fn new_from_str(cfg_text: &str) -> MResult<Cfg> {
   let mut s = ParsedState::default();
-  let icfg = parse_cfg_raw_string(cfg_text,&mut s,&PathBuf::from("config text"),
+  let icfg = parse_cfg_raw_string(cfg_text,&mut s,&PathBuf::from("configuration"),
     &mut FileContentProvider {get_file_content_fn: &mut |_| Err("include is not supported".into()),},
     DEF_LOCAL_KEYS,)?;
   let key_outputs          	= create_key_outputs(&icfg.klayers, &icfg.overrides);
