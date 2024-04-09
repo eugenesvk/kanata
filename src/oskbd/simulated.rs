@@ -191,16 +191,18 @@ use std::fmt;
 /// Handle for writing keys to the OS.
 pub struct KbdOut {
   pub log : LogFmt
+  pub outputs: Vec<String>,
 }
 
 impl KbdOut {
+    fn new_actual() -> Result<Self, io::Error> {Ok(Self {log: LogFmt::new(),outputs: vec![],})}
     #[cfg(not(target_os = "linux"))]
-    pub fn new() -> Result<Self, io::Error> {Ok(Self {log:LogFmt::new()})}
+    pub fn new() -> Result<Self, io::Error> {Self::new_actual()}
     #[cfg(target_os = "linux")]
-    pub fn new(_: &Option<String>) -> Result<Self, io::Error> {Ok(Self {log:LogFmt::new()})}
+    pub fn new(_: &Option<String>) -> Result<Self, io::Error> {Self::new_actual()}
     #[cfg(target_os = "linux")]
-    pub fn write_raw(&mut self, event: InputEvent) -> Result<(),io::Error> {self.log.write_raw(event);println!("out-raw:{event:?}");Ok(())}
-    pub fn write    (&mut self, event: InputEvent) -> Result<(),io::Error> {println!("out:{event}");Ok(())}
+    pub fn write_raw(&mut self, event: InputEvent) -> Result<(),io::Error> {self.log.write_raw(event);self.outputs.push(format!("out-raw:{event:?}"));Ok(())}
+    pub fn write    (&mut self, event: InputEvent) -> Result<(),io::Error> {self.outputs.push(format!("out:{event}"));Ok(())}
     pub fn write_key(&mut self, key: OsCode, value: KeyValue) -> Result<(), io::Error> {
         let key_ev = KeyEvent::new(key, value);
         let event = {#[cfg(    target_os = "macos" )]{key_ev.try_into().unwrap()}
@@ -208,27 +210,27 @@ impl KbdOut {
         self.write(event)
       }
     pub fn write_code  (&mut self, code: u32, value: KeyValue) -> Result<(), io::Error> {self.log.write_code(code,value);
-      println!("out-code:{code};{value:?}");Ok(())}
+      self.outputs.push(format!("out-code:{code};{value:?}"));Ok(())}
     pub fn press_key   (&mut self, key: OsCode) -> Result<(),io::Error> {self.log.press_key   (key);
       self.write_key(key,KeyValue::Press  )}
     pub fn release_key (&mut self, key: OsCode) -> Result<(),io::Error> {self.log.release_key (key);
       self.write_key(key,KeyValue::Release)}
     pub fn send_unicode(&mut self, c  : char  ) -> Result<(),io::Error> {self.log.send_unicode(c);
-      println!("outU:{c}");Ok(())}
+      self.outputs.push(format!("outU:{c}"));Ok(())}
     pub fn click_btn   (&mut self, btn: Btn   ) -> Result<(),io::Error> {self.log.click_btn  (btn);
-      println!("out🖰:↓{btn:?}");Ok(())}
+      self.outputs.push(format!("out🖰:↓{btn:?}"));Ok(())}
     pub fn release_btn (&mut self, btn: Btn   ) -> Result<(),io::Error> {self.log.release_btn(btn);
-      println!("out🖰:↑{btn:?}");Ok(())}
+      self.outputs.push(format!("out🖰:↑{btn:?}"));Ok(())}
     pub fn scroll(&mut self, direction: MWheelDirection, distance: u16) -> Result<(), io::Error> {
-        println!("scroll:{direction:?},{distance:?}");Ok(())}
+        self.outputs.push(format!("scroll:{direction:?},{distance:?}"));Ok(())}
     pub fn move_mouse(&mut self, mv: CalculatedMouseMove) -> Result<(), io::Error> {
                          let (direction, distance) = ( mv.direction,  mv.distance);
             self.log.move_mouse(direction, distance);
-            println!("out🖰:move {direction:?},{distance:?}");Ok(())}
+            self.outputs.push(format!("out🖰:move {direction:?},{distance:?}"));Ok(())}
     pub fn move_mouse_many(&mut self, moves: &[CalculatedMouseMove]) -> Result<(), io::Error> {
         for mv in moves {let (direction, distance) = (&mv.direction, &mv.distance);
             self.log.move_mouse(*direction, *distance);
-            println!("out🖰:move {direction:?},{distance:?}");}Ok(())}
+            self.outputs.push(format!("out🖰:move {direction:?},{distance:?}"));}Ok(())}
     pub fn set_mouse(&mut self, x: u16, y: u16) -> Result<(), io::Error> {self.log.set_mouse(x,y);
       log::info!("out🖰:@{x},{y}");Ok(())}
 }

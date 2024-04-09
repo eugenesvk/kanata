@@ -168,8 +168,8 @@ fn main_impl() -> Result<()> {
         }
       }
     }
-    #[cfg(feature = "simulated_output")]
-    k.kbd_out.log.end(config_sim_file, sim_appendix.clone());
+    #[cfg(feature = "simulated_output")] println!("{}", k.kbd_out.outputs.join("\n"));
+    #[cfg(feature = "simulated_output")] k.kbd_out.log.end(config_sim_file, sim_appendix.clone());
   }
 
   Ok(())
