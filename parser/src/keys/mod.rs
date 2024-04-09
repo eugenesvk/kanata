@@ -194,9 +194,9 @@ pub fn str_to_oscode(s: &str) -> Option<OsCode> {
     "calc"             	=> OsCode::KEY_CALC,
 
     // NOTE: these are linux-only right now due to missing the mappings in windows.rs
-    #[cfg(any(target_os="linux",target_os="unknown"))] "plyr"|"player"	=> OsCode::KEY_PLAYER,
-    #[cfg(any(target_os="linux",target_os="unknown"))] "powr"|"power" 	=> OsCode::KEY_POWER,
-    #[cfg(any(target_os="linux",target_os="unknown"))] "zzz"  | "sleep" 	=> OsCode::KEY_SLEEP,
+    #[cfg(any(target_os="linux",target_os="unknown"))] "plyr"|"player" 	=> OsCode::KEY_PLAYER,
+    #[cfg(any(target_os="linux",target_os="unknown"))] "powr"|"power"  	=> OsCode::KEY_POWER,
+    #[cfg(any(target_os="linux",target_os="unknown"))] "zzz"  | "sleep"	=> OsCode::KEY_SLEEP,
 
     _ => {
       let custom_mappings = CUSTOM_STRS_TO_OSCODES.lock();
@@ -577,7 +577,7 @@ pub enum OsCode {
   // Mouse wheel events are not a part of EV_KEY, so they technically shouldn't be there, but they're still there, because this way it's easier to implement allowing to add them to defsrc without making tons of changes all over the codebase.
   MouseWheelDown	= 746, MouseWheelUp	= 745, MouseWheelLeft	= 747, MouseWheelRight	= 748,
 
-  KEY_MAX 	= 767,
+  KEY_MAX	= 767,
 }
 
 use core::fmt;
