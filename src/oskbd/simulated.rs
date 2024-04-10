@@ -1,23 +1,5 @@
 //! Output that just prints text to stdout instead of actually doing anything OS-related.
-/*
-todo: add output ticks
-🕐Δms│     1500     5000                     50             50       50             50     50             50
-In ———————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
- k↑ │                                                 Kb1                     Kb1      J              L
- k↓ │  J        L                      Kb1                     Kb1
- k⟳ │
-Out———————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
- k↑ │                                                                                         RShift         RAlt
- k↓ │                    RShift  RAlt
- 🖰↑ │
- 🖰↓ │
- 🖰  │
- 🔣  │                                           🤲                       🤲
- code│
- raw↑│
- raw↓│
-Σ   │ ↓J  1500 ↓L  5000 ↓RShift ↓RAlt ↓Kb1  50  🤲    ↑Kb1  50 ↓Kb1  50  🤲    ↑Kb1  50 ↑J  50 ↑RShift ↑L  50 ↑RAlt
-*/
+//! See <../../docs/simulated_output/sim_out.txt> for an example output.
 use indoc::formatdoc;
 use std::ffi::{OsStr, OsString};
 use std::fs::File;
@@ -41,16 +23,19 @@ fn append_file_name(path: impl AsRef<Path>, appendix: impl AsRef<OsStr>) -> Path
 }
 use win_dbg_logger::output_debug_string;
 #[derive(Debug,Copy,Clone,PartialEq)] pub enum LogFmtT {
-  KeyUp,KeyDown,MouseUp,MouseDown,MouseMove,Unicode,Code,RawUp,RawDown,InKeyUp,InKeyDown,InKeyRep,InTick}
+  InKeyUp,InKeyDown,InKeyRep,InTick,
+    KeyUp,  KeyDown,           Tick,MouseUp,MouseDown,MouseMove,Unicode,Code,RawUp,RawDown,}
 
 pub struct LogFmt {
-  time       	: String,
+  ticks      	: u64,
   //In       	//
+  in_time    	: String,
   in_key_up  	: String,
   in_key_down	: String,
   in_key_rep 	: String,
-  in_combo      	: String,
+  in_combo   	: String,
   //Out      	//
+  time       	: String,
   key_up     	: String,
   key_down   	: String,
   raw_up     	: String,
@@ -64,13 +49,15 @@ pub struct LogFmt {
 }
 impl LogFmt {
   pub fn new() -> Self { Self {
-    time       	: String::new(),
+    ticks      	: 0,
     //In       	//
+    in_time    	: String::new(),
     in_key_up  	: String::new(),
     in_key_down	: String::new(),
     in_key_rep 	: String::new(),
     in_combo   	: String::new(),
     //Out      	//
+    time       	: String::new(),
     key_up     	: String::new(),
     key_down   	: String::new(),
     raw_up     	: String::new(),
@@ -83,15 +70,21 @@ impl LogFmt {
     combo      	: String::new(),
   }}
   pub fn fmt(&mut self, key:LogFmtT, value:String) {
-    let pad = value.len();
+    let mut pad = value.len();
+    let mut time = "".to_string();
+    if self.ticks > 0 {
+      pad = std::cmp::max(value.len(),self.ticks.to_string().len()); // add extra padding if event tick is wider
+      time = format!("  {: <pad$}",self.ticks);
+      self.ticks = 0;}
     let blank = format!("  {: <pad$}", ""); //+␠ to allow combo log indicator
     let val   = format!("  {: <pad$}", value);
-    self.time       	+= if key == LogFmtT::InTick   	 {self.combo    += &blank; self.in_combo += &format!(" 🕐{: <pad$}",value); &val} else {&blank};
+    self.in_time    	+= if key == LogFmtT::InTick   	 {self.combo    += &blank; self.in_combo += &format!(" 🕐{: <pad$}",value); &val} else {&blank};
     self.in_key_up  	+= if key == LogFmtT::InKeyUp  	 {self.combo    += &blank; self.in_combo += &format!(" ↑{: <pad$}",value); &val} else {&blank};
     self.in_key_down	+= if key == LogFmtT::InKeyDown	 {self.combo    += &blank; self.in_combo += &format!(" ↓{: <pad$}",value); &val} else {&blank};
     self.in_key_rep 	+= if key == LogFmtT::InKeyRep 	 {self.combo    += &blank; self.in_combo += &format!(" ⟳{: <pad$}",value); &val} else {&blank};
-    self.key_up     	+= if key == LogFmtT::KeyUp    	 {self.in_combo += &blank; self.combo    += &format!(" ↑{: <pad$}",value); &val} else {&blank};
-    self.key_down   	+= if key == LogFmtT::KeyDown  	 {self.in_combo += &blank; self.combo    += &format!(" ↓{: <pad$}",value); &val} else {&blank};
+    self.   time    	+= if time.len() > 0           	 {                                                                         &time} else {&blank};
+    self.   key_up  	+= if key == LogFmtT::  KeyUp  	 {self.in_combo += &blank; self.combo    += &format!(" ↑{: <pad$}",value); &val} else {&blank};
+    self.   key_down	+= if key == LogFmtT::  KeyDown	 {self.in_combo += &blank; self.combo    += &format!(" ↓{: <pad$}",value); &val} else {&blank};
     self.mouse_up   	+= if key == LogFmtT::MouseUp  	 {self.in_combo += &blank; self.combo    += &format!(" ↑{: <pad$}",value); &val} else {&blank};
     self.mouse_down 	+= if key == LogFmtT::MouseDown	 {self.in_combo += &blank; self.combo    += &format!(" ↓{: <pad$}",value); &val} else {&blank};
     self.mouse_move 	+= if key == LogFmtT::MouseMove	 {self.in_combo += &blank; self.combo    +=                       &val   ; &val} else {&blank};
@@ -246,7 +239,7 @@ impl KbdOut {
             self.outputs.push(format!("out🖰:move {direction:?},{distance:?}"));}Ok(())}
     pub fn set_mouse(&mut self, x: u16, y: u16) -> Result<(), io::Error> {self.log.set_mouse(x,y);
       log::info!("out🖰:@{x},{y}");Ok(())}
-    pub fn tick(&mut self) {self.outputs.ticks += 1;}
+    pub fn tick(&mut self) {self.outputs.ticks += 1;self.log.ticks += 1;}
 }
 
 #[cfg(not(any(target_os="windows",target_os="macos")))]
