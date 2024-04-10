@@ -82,7 +82,7 @@ impl LogFmt {
     self.in_key_up  	+= if key == LogFmtT::InKeyUp  	 {self.combo    += &blank; self.in_combo += &format!(" ↑{: <pad$}",value); &val} else {&blank};
     self.in_key_down	+= if key == LogFmtT::InKeyDown	 {self.combo    += &blank; self.in_combo += &format!(" ↓{: <pad$}",value); &val} else {&blank};
     self.in_key_rep 	+= if key == LogFmtT::InKeyRep 	 {self.combo    += &blank; self.in_combo += &format!(" ⟳{: <pad$}",value); &val} else {&blank};
-    self.   time    	+= if time.len() > 0           	 {                                                                         &time} else {&blank};
+    self.   time    	+= if ! time.is_empty()        	 {                                                                         &time} else {&blank};
     self.   key_up  	+= if key == LogFmtT::  KeyUp  	 {self.in_combo += &blank; self.combo    += &format!(" ↑{: <pad$}",value); &val} else {&blank};
     self.   key_down	+= if key == LogFmtT::  KeyDown	 {self.in_combo += &blank; self.combo    += &format!(" ↓{: <pad$}",value); &val} else {&blank};
     self.mouse_up   	+= if key == LogFmtT::MouseUp  	 {self.in_combo += &blank; self.combo    += &format!(" ↑{: <pad$}",value); &val} else {&blank};
