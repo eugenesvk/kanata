@@ -262,7 +262,7 @@ pub fn new_from_str(cfg_text: &str) -> MResult<Cfg> {
   layout.bm().oneshot.on_press_release_delay = icfg.options.rapid_event_delay;
   let mut fake_keys: HashMap<String, usize> = s.virtual_keys.iter().map(|(k, v)| (k.clone(), v.0)).collect();
   fake_keys.shrink_to_fit();
-  log::info!("config file is valid");
+  // log::info!("config file is valid");
   Ok(Cfg {
     options    	: icfg.options,
     mapped_keys	: icfg.mapped_keys,
@@ -302,7 +302,7 @@ fn parse_cfg(p: &Path) -> MResult<Cfg> {
   let mut fake_keys: HashMap<String, usize> =
     s.virtual_keys.iter().map(|(k, v)| (k.clone(), v.0)).collect();
   fake_keys.shrink_to_fit();
-  log::info!("config file is valid");
+  // log::info!("config file is valid");
   Ok(Cfg {
     options: icfg.options,
     mapped_keys: icfg.mapped_keys,
@@ -607,7 +607,7 @@ pub fn parse_cfg_raw_string(
       #[cfg(feature = "cmd")]
       {
         if cfg.enable_cmd {
-          log::warn!("DANGER! cmd action is enabled.");
+          // log::warn!("DANGER! cmd action is enabled.");
           true
         } else {
           false
@@ -615,7 +615,7 @@ pub fn parse_cfg_raw_string(
       }
       #[cfg(not(feature = "cmd"))]
       {
-        log::info!("NOTE: kanata was compiled to never allow cmd");
+        // log::info!("NOTE: kanata was compiled to never allow cmd");
         false
       }
     },
@@ -869,7 +869,7 @@ fn parse_defsrc(expr: &[SExpr], defcfg: &CfgOptions) -> Result<(MappedKeys, Vec<
     ordered_codes.push(oscode.into());
   }
 
-  log::info!("process unmapped keys: {}", defcfg.process_unmapped_keys);
+  // log::info!("process unmapped keys: {}", defcfg.process_unmapped_keys);
   if defcfg.process_unmapped_keys {
     for osc in 0..KEYS_IN_ROW as u16 {
       if let Some(osc) = OsCode::from_u16(osc) {
