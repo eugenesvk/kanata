@@ -203,7 +203,7 @@ impl Outputs {
 
 /// Handle for writing keys to the OS.
 pub struct KbdOut {
-  pub log : LogFmt
+  pub log : LogFmt,
   pub outputs: Outputs,
 }
 
