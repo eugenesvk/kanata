@@ -67,7 +67,7 @@ fn lib_impl() -> Result<()> {
   //   }
   // });
 
-  debug!("␣✗✗✗✗␣␣␣␣RX_KEY_EV_OUT stored in a static var");
+  debug!("␣✗✗✗✗␣␣␣␣ RX_KEY_EV_OUT stored in a static var");
   let (tx_kout,rx_kout) = std::sync::mpsc::sync_channel(100);
   RX_KEY_EV_OUT.with(|state| {assert!(state.take().is_none(),"Only one channel to send keys out can be registered per thread.");
     state.set(Some(rx_kout));
