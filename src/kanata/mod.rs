@@ -583,18 +583,13 @@ impl Kanata {
                 self.kbd_out.move_mouse(*previous_move)?;
                 self.movemouse_buffer = Some((axis, current_move));
               } else {
-                self.kbd_out
-                  .move_mouse_many(&[*previous_move, current_move])?;
+                self.kbd_out.move_mouse_many(&[*previous_move, current_move])?;
                 self.movemouse_buffer = None;
               }
             }
-            None => {
-              self.movemouse_buffer = Some((axis, current_move));
-            }
+            None => {self.movemouse_buffer = Some((axis, current_move));}
           }
-        } else {
-          self.kbd_out.move_mouse(current_move)?;
-        }
+        } else {self.kbd_out.move_mouse(current_move)?;}
       } else {
         mmsh.ticks_until_move -= 1;
       }
