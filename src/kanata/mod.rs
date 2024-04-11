@@ -1246,18 +1246,6 @@ impl Kanata {
   pub fn start_processing_loop(kanata:Arc<Mutex<Self>>, rx:Receiver<KeyEvent>, tx:Option<Sender<ServerMessage>>, nodelay:bool, tx_kout:Option<Sender<InputEvent>>) {
     info!("entering the processing loop");
     std::thread::spawn(move || {
-      if ! nodelay {info!("Init: catching only releases and sending immediately");
-        for _ in 0..500 {
-          if let Ok(kev) = rx.try_recv() {
-            if kev.value == KeyValue::Release {
-              let mut k = kanata.lock();
-              info!("Init: releasing {:?}", kev.code);
-              k.kbd_out.release_key(kev.code).expect("key released");
-            }
-          }
-          std::thread::sleep(time::Duration::from_millis(1));
-        }
-      }
       let mut ms_elapsed = 0;
       #[cfg(all(not(feature="interception_driver"), target_os="windows"))] let mut idle_clear_happened = false;
       #[cfg(all(not(feature="interception_driver"), target_os="windows"))] let mut last_input_time = instant::Instant::now();
