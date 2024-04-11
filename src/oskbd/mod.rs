@@ -3,14 +3,13 @@
 #[cfg(target_os="linux"  	)] mod linux;
 #[cfg(target_os="windows"	)] mod windows;
 #[cfg(target_os="macos"  	)] mod macos;
+#[cfg(all(feature="simulated_output",    feature="simulated_input" ))] mod sim_passthru;
+#[cfg(all(feature="simulated_output",not(feature="simulated_input")))] mod simulated;
 #[cfg(target_os="linux"  	)] pub use linux::*;
 #[cfg(target_os="windows"	)] pub use windows::*;
 #[cfg(target_os="macos"  	)] pub use macos::*;
-
-#[cfg(all(not(feature="simulated_input"),feature="simulated_output"))] mod simulated;
-#[cfg(all(not(feature="simulated_input"),feature="simulated_output"))] pub use simulated::*;
-#[cfg(all(    feature="simulated_input" ,feature="simulated_output"))] mod sim_passthru;
-#[cfg(all(    feature="simulated_input" ,feature="simulated_output"))] pub use sim_passthru::*;
+#[cfg(all(feature="simulated_output",    feature="simulated_input" ))] pub use sim_passthru::*;
+#[cfg(all(feature="simulated_output",not(feature="simulated_input")))] pub use simulated::*;
 pub const HI_RES_SCROLL_UNITS_IN_LO_RES: u16 = 120;
 
 // ------------------ KeyValue --------------------
