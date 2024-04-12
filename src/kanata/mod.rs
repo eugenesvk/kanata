@@ -170,12 +170,21 @@ static MAPPED_KEYS: Lazy<Mutex<cfg::MappedKeys>> =
   Lazy::new(|| Mutex::new(cfg::MappedKeys::default()));
 
 impl Kanata {
+  #[cfg(    feature="passthru_ahk" )]
   /// Create a new configuration from a file.
-  pub fn new(args: &ValidatedArgs) -> Result<Self> {
+  pub fn new(args:&ValidatedArgs,tx:Option<Sender<InputEvent>>) -> Result<Self> {
+    Kanata::new_both(args,tx)
+  }
+  #[cfg(not(feature="passthru_ahk"))]
+  /// Create a new configuration from a file.
+  pub fn new(args:&ValidatedArgs,                             ) -> Result<Self> {
+    Kanata::new_both(args,None)
+  }
+  fn new_both(args:&ValidatedArgs,tx:Option<Sender<InputEvent>>) -> Result<Self> {
     let cfg = match cfg::new_from_file(&args.paths[0]) {
       Ok (c) => c,
       Err(e) => {log::error!("{e:?}"); bail!("failed to parse file");}};
-    let kbd_out = match KbdOut::new(#[cfg(target_os="linux")]&args.symlink_path,) {
+    let kbd_out = match KbdOut::new(#[cfg(target_os="linux")]&args.symlink_path,#[cfg(feature="passthru_ahk")]tx) {
       Ok (kbd_out) => kbd_out,
       Err(err    ) => {error!("Failed to open the output uinput device. Make sure you've added the user executing kanata to the `uinput` group");bail!(err)}};
     #[cfg(target_os="windows")] unsafe {// log::info!("Asking Windows to improve timer precision");
@@ -249,11 +258,14 @@ impl Kanata {
     })
   }
   /// Create a new configuration from a file, wrapped in an Arc<Mutex<_>>
-  pub fn new_arc(args: &ValidatedArgs) -> Result<Arc<Mutex<Self>>> {Ok(Arc::new(Mutex::new(Self::new(args)?)))}
+  #[cfg(not(feature="passthru_ahk"))]
+  pub fn new_arc(args: &ValidatedArgs                               ) -> Result<Arc<Mutex<Self>>> {Ok(Arc::new(Mutex::new(Self::new(args   )?)))}
+  #[cfg(    feature="passthru_ahk" )]
+  pub fn new_arc(args: &ValidatedArgs, tx:Option<Sender<InputEvent>>) -> Result<Arc<Mutex<Self>>> {Ok(Arc::new(Mutex::new(Self::new(args,tx)?)))}
 
   pub fn new_from_str(cfg: &str) -> Result<Self> {
     let cfg = match cfg::new_from_str(cfg) {Ok(c)=>c, Err(e)=>{log::error!("{e:?}");bail!("failed to parse file");}};
-    let kbd_out = match KbdOut::new(#[cfg(target_os = "linux")]&None,) {
+    let kbd_out = match KbdOut::new(#[cfg(target_os="linux")]&None,#[cfg(feature="passthru_ahk")]None) {
       Ok (kbd_out) => kbd_out,
       Err(err    ) => {error!("Failed to open the output uinput device. Make sure you've added the user executing kanata to the `uinput` group");bail!(err)}    };
 
