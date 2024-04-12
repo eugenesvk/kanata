@@ -170,7 +170,10 @@ fn cli_init() -> Result<ValidatedArgs> {
 
 fn main_impl() -> Result<()> {
   let args = cli_init()?; // parse CLI arguments and initialize logging
+  #[cfg(not(feature="passthru_ahk"))]
   let cfg_arc = Kanata::new_arc(&args)?; // new configuration from a file
+  #[cfg(    feature="passthru_ahk" )]
+  let cfg_arc = Kanata::new_arc(&args,None)?; // new configuration from a file
   if ! args.nodelay {info!("Sleeping for 2s. Please release all keys and don't press additional ones. Run kanata with --help to see how understand more and how to disable this sleep.");
     std::thread::sleep(std::time::Duration::from_secs(2));}
 
@@ -187,7 +190,7 @@ fn main_impl() -> Result<()> {
     (      Some(server), Some(ntx), Some(nrx))
   } else {(None        , None     , None     )};
 
-  Kanata::start_processing_loop(cfg_arc.clone(), rx, ntx, args.nodelay, None); // 2 handles keyboard events while also maintaining `tick()` calls to keyberon
+  Kanata::start_processing_loop(cfg_arc.clone(), rx, ntx, args.nodelay); // 2 handles keyboard events while also maintaining `tick()` calls to keyberon
 
   if let (Some(server), Some(nrx)) = (server, nrx) {
     #[allow(clippy::unit_arg)] Kanata::start_notification_loop(nrx, server.connections);}
