@@ -39,8 +39,9 @@ fn cli_init() -> Result<ValidatedArgs> {
   Ok(ValidatedArgs {paths:vec![cfg_file], nodelay:true},)
 }
 
-use std::sync::mpsc::{Receiver, SyncSender as Sender, TryRecvError};
+// use std::sync::mpsc::{Receiver, SyncSender as Sender, TryRecvError};
 // thread_local! {pub static CHANNEL_KEY_EV_OUT:Cell<Option<(Sender<InputEvent>,Receiver<InputEvent>)>> = Cell::default();} // Stores the channel for the current thread
+use std::sync::mpsc::{Receiver};
 thread_local! {pub static RX_KEY_EV_OUT:Cell<Option<Receiver<InputEvent>>> = Cell::default();} // Stores receiver for key data to be sent out for the current thread
 
 fn lib_impl() -> Result<()> {
