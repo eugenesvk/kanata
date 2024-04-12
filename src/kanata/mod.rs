@@ -178,12 +178,10 @@ impl Kanata {
     let kbd_out = match KbdOut::new(#[cfg(target_os="linux")]&args.symlink_path,) {
       Ok (kbd_out) => kbd_out,
       Err(err    ) => {error!("Failed to open the output uinput device. Make sure you've added the user executing kanata to the `uinput` group");bail!(err)}};
-    #[cfg(target_os="windows")] unsafe {
-      // log::info!("Asking Windows to improve timer precision");
+    #[cfg(target_os="windows")] unsafe {// log::info!("Asking Windows to improve timer precision");
       if winapi::um::timeapi::timeBeginPeriod(1) == winapi::um::mmsystem::TIMERR_NOCANDO {
         bail!("failed to improve timer precision");}}
-    #[cfg(target_os="windows")] unsafe {
-      // log::info!("Asking Windows to increase process priority");
+    #[cfg(target_os="windows")] unsafe {// log::info!("Asking Windows to increase process priority");
       winapi::um::processthreadsapi::SetPriorityClass(
         winapi::um::processthreadsapi::GetCurrentProcess(),
         winapi::um::winbase::HIGH_PRIORITY_CLASS,);}
