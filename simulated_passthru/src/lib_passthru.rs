@@ -46,7 +46,8 @@ thread_local! {pub static RX_KEY_EV_OUT:Cell<Option<Receiver<InputEvent>>> = Cel
 
 fn lib_impl() -> Result<()> {
   let args = cli_init()?;
-  let cfg_arc = Kanata::new_arc(&args)?; // new configuration from a file
+  let (tx_kout,rx_kout) = std::sync::mpsc::sync_channel(100);
+  let cfg_arc = Kanata::new_arc(&args,Some(tx_kout))?; // new configuration from a file
   debug!("loaded {:?}",args.paths[0]);
   if CFG.set(cfg_arc.clone()).is_err() {warn!("Someone else set our ‘CFG’");}; // store a clone of cfg so that we can ask it to reset itself
 
@@ -69,7 +70,6 @@ fn lib_impl() -> Result<()> {
   // });
 
   debug!("␣✗✗✗✗␣␣␣␣ RX_KEY_EV_OUT stored in a static var");
-  let (tx_kout,rx_kout) = std::sync::mpsc::sync_channel(100);
   RX_KEY_EV_OUT.with(|state| {assert!(state.take().is_none(),"Only one channel to send keys out can be registered per thread.");
     state.set(Some(rx_kout));
   });
@@ -78,7 +78,7 @@ fn lib_impl() -> Result<()> {
   // The reason for two different event loops is that the "event loop" only listens for keyboard events, which it sends to the "processing loop". The processing loop handles keyboard events while also maintaining `tick()` calls to keyberon.
   let (tx,rx) = std::sync::mpsc::sync_channel(100);
   let ntx = None;
-  Kanata::start_processing_loop(cfg_arc.clone(), rx, ntx, args.nodelay, Some(tx_kout)); // 2 handles keyboard events while also maintaining `tick()` calls to keyberon
+  Kanata::start_processing_loop(cfg_arc.clone(), rx, ntx, args.nodelay); // 2 handles keyboard events while also maintaining `tick()` calls to keyberon
 
   Kanata::event_loop(cfg_arc, tx)?; // 1 only listens for keyboard events (not a real loop, just registers callback closures for external function to call at will)
 
