@@ -98,7 +98,7 @@ mod log_win;
 #[no_mangle] pub extern "win64"
 fn lib_kanata_passthru(cb_addr:c_longlong) -> LRESULT {
   log_init();
-  let ret = set_out_ev_listener(cb_addr);
+  let ret = set_cb_out_ev(cb_addr);
   if let Err(ref e) = ret {error!("couldn't register external key out event callback"); return 1};
   let ret = set_send_out_ev_cb();
   if let Err(ref e) = ret {error!("couldn't register internal key out event callback"); return 1};
