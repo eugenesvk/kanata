@@ -471,7 +471,7 @@ impl Kanata {
       self.tick_states(_tx)?;
       if tick_replay_state(&mut self.dynamic_macro_replay_state
         ,                       self.dynamic_macro_replay_behaviour).is_some() {log::error!("overshot to next event at iteration #{i}, the code is broken!");break;}  }
-    #[cfg(feature="perf_logging")] log::debug!("🕐{}μs tick_ms end ms{}",(start.elapsed()).as_micros(),ms_elapsed);
+    // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs tick_ms end ms{}",(start.elapsed()).as_micros(),ms_elapsed);
     Ok(())
   }
 
@@ -1301,12 +1301,12 @@ impl Kanata {
               if let Err(e) = k.handle_input_event(&kev) {break e;}
               #[cfg(all(not(feature="interception_driver"),target_os="windows"))] {last_input_time = now;}
               #[cfg(all(not(feature="interception_driver"),target_os="windows"))] {idle_clear_happened = false;}
-              #[cfg(feature="perf_logging")] log::debug!("[PERF]: handle key event: {} ns",(start.elapsed()).as_nanos());
+              // #[cfg(feature="perf_logging")] log::debug!("[PERF]: handle key event: {} ns",(start.elapsed()).as_nanos());
               #[cfg(feature="perf_logging")] let start = instant::Instant::now();
               match k.handle_time_ticks(&tx) {
                 Ok(ms) => ms_elapsed = ms,
                 Err(e) => break e,};
-              #[cfg(feature="perf_logging")]log::debug!("[PERF]: can_block Ok(kev) handle time ticks: {} ns",(start.elapsed()).as_nanos());
+              // #[cfg(feature="perf_logging")]log::debug!("[PERF]: can_block Ok(kev) handle time ticks: {} ns",(start.elapsed()).as_nanos());
             }
             Err(_) => {log::error!("channel disconnected (proc loop blocking)");return;}
           }
@@ -1318,19 +1318,19 @@ impl Kanata {
               if let Err(e) = k.handle_input_event(&kev) {break e;}
               #[cfg(all(not(feature="interception_driver"),target_os="windows"))] {last_input_time = instant::Instant::now();}
               #[cfg(all(not(feature="interception_driver"),target_os="windows"))] {idle_clear_happened = false;}
-              #[cfg(feature="perf_logging")] log::debug!("[PERF]: handle key event: {} ns",(start.elapsed()).as_nanos());
+              // #[cfg(feature="perf_logging")] log::debug!("[PERF]: handle key event: {} ns",(start.elapsed()).as_nanos());
               #[cfg(feature="perf_logging")] let start = instant::Instant::now();
               match k.handle_time_ticks(&tx) {
                 Ok(ms) => ms_elapsed = ms,
                 Err(e) => break e,};
-              #[cfg(feature="perf_logging")] log::debug!("[PERF]: noblockOk(kev) handle time ticks: {} ns",(start.elapsed()).as_nanos());
+              // #[cfg(feature="perf_logging")] log::debug!("[PERF]: noblockOk(kev) handle time ticks: {} ns",(start.elapsed()).as_nanos());
             }
             Err(TryRecvError::Empty) => {
               #[cfg(feature="perf_logging")] let start = instant::Instant::now();
               match k.handle_time_ticks(&tx) {
                 Ok(ms) => ms_elapsed = ms,
                 Err(e) => break e,};
-              #[cfg(feature="perf_logging")] log::debug!("[PERF]: noblockErr handle time ticks: {} ns",(start.elapsed()).as_nanos());
+              // #[cfg(feature="perf_logging")] log::debug!("[PERF]: noblockErr handle time ticks: {} ns",(start.elapsed()).as_nanos());
               #[cfg(all(not(feature="interception_driver"),target_os="windows"))] {
                 // If kanata has been inactive for long enough, clear all states. This won't trigger if there are macros running, or if a key is held down for a long time and is sending OS repeats. The reason for this code is in case like Win+L which locks the Windows desktop. When this happens, the Win key and L key will be stuck as pressed in the kanata state because LLHOOK kanata cannot read keys in the lock screen or administrator applications. So this is heuristic to detect such an issue and clear states assuming that's what happened. Only states in the normal key row are cleared, since those are the states that might be stuck. A real use case might be to have a fake key pressed for a long period of time, so make sure those are not cleared.
                 if (instant::Instant::now() - (last_input_time)) > time::Duration::from_secs(LLHOOK_IDLE_TIME_CLEAR_INPUTS)
