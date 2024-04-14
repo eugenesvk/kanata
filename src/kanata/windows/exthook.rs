@@ -10,6 +10,7 @@ use crate::kanata::*;
 impl Kanata {
   /// Initialize the callback that is passed to the Windows low level hook to receive key events and run the native_windows_gui event loop.
   pub fn event_loop(_cfg:Arc<Mutex<Self>>, tx:Sender<KeyEvent>) -> Result<()> {
+    #[cfg(feature="perf_logging")] let start = std::time::Instant::now();
     let (preprocess_tx, preprocess_rx) = sync_channel(100);
     start_event_preprocessor(preprocess_rx, tx);
 
