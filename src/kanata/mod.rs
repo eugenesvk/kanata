@@ -170,17 +170,8 @@ static MAPPED_KEYS: Lazy<Mutex<cfg::MappedKeys>> =
   Lazy::new(|| Mutex::new(cfg::MappedKeys::default()));
 
 impl Kanata {
-  #[cfg(    feature="passthru_ahk" )]
   /// Create a new configuration from a file.
-  pub fn new(args:&ValidatedArgs,tx:Option<ASender<InputEvent>>) -> Result<Self> {
-    Kanata::new_both(args,tx)
-  }
-  #[cfg(not(feature="passthru_ahk"))]
-  /// Create a new configuration from a file.
-  pub fn new(args:&ValidatedArgs,                             ) -> Result<Self> {
-    Kanata::new_both(args,None)
-  }
-  fn new_both(args:&ValidatedArgs,tx:Option<ASender<InputEvent>>) -> Result<Self> {
+  pub fn new(args: &ValidatedArgs, #[cfg(feature = "passthru_ahk")] tx: Option<ASender<InputEvent>>) -> Result<Self> {
     let cfg = match cfg::new_from_file(&args.paths[0]) {
       Ok (c) => c,
       Err(e) => {log::error!("{e:?}"); bail!("failed to parse file");}};
