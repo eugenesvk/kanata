@@ -96,6 +96,7 @@ fn add_default_str_osc_mappings(mapping: &mut HashMap<String, OsCode>) {
 /// Do your best to keep the str side a maximum character length of 4 so that configuration file can stay clean.
 #[rustfmt::skip]
 pub fn str_to_oscode(s: &str) -> Option<OsCode> {
+  if let Some(osc) = CUSTOM_STRS_TO_OSCODES.lock().get(s) {return Some(*osc);}
   Some(match s {
     // Alphanumeric
     "Digit0"|"0"=>OsCode::KEY_0,"Digit1"|"1"=>OsCode::KEY_1,"Digit2"|"2"=>OsCode::KEY_2,"Digit3"|"3"=>OsCode::KEY_3,"Digit4"|"4"=>OsCode::KEY_4,"Digit5"|"5"=>OsCode::KEY_5,"Digit6"|"6"=>OsCode::KEY_6,"Digit7"|"7"=>OsCode::KEY_7,"Digit8"|"8"=>OsCode::KEY_8,"Digit9"|"9"=>OsCode::KEY_9,
@@ -197,14 +198,7 @@ pub fn str_to_oscode(s: &str) -> Option<OsCode> {
     #[cfg(any(target_os="linux",target_os="unknown"))] "plyr"|"player" 	=> OsCode::KEY_PLAYER,
     #[cfg(any(target_os="linux",target_os="unknown"))] "powr"|"power"  	=> OsCode::KEY_POWER,
     #[cfg(any(target_os="linux",target_os="unknown"))] "zzz"  | "sleep"	=> OsCode::KEY_SLEEP,
-
-    _ => {
-      let custom_mappings = CUSTOM_STRS_TO_OSCODES.lock();
-      match custom_mappings.get(s) {
-        Some(osc) => *osc,
-        None      => return None,
-      }
-    }
+    _ => return None,
   })
 }
 
