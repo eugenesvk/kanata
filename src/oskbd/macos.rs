@@ -1,5 +1,8 @@
 //! Contains the input/output code for keyboards on Macos.
-#![cfg_attr(feature="simulated_output",allow(dead_code,unused_imports,unused_variables,unused_mut))]
+#![cfg_attr(
+    feature = "simulated_output",
+    allow(dead_code, unused_imports, unused_variables, unused_mut)
+)]
 
 use super::*;
 use crate::kanata::CalculatedMouseMove;

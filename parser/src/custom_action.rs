@@ -4,8 +4,8 @@
 //! be updated, to include the new action to the documented list of supported actions in macro.
 
 use anyhow::{anyhow, Result};
-use kanata_keyberon::key_code::KeyCode;
 use core::fmt;
+use kanata_keyberon::key_code::KeyCode;
 
 use crate::{cfg::SimpleSExpr, keys::OsCode};
 
@@ -89,15 +89,15 @@ pub enum Btn {
     Backward,
 }
 impl fmt::Display for Btn {
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    match self {
-      Btn::Left    	=> write!(f,"‹🖰"),
-      Btn::Right   	=> write!(f,"🖰›"),
-      Btn::Mid     	=> write!(f,"🖱"),
-      Btn::Backward	=> write!(f,"⎌🖰"),
-      Btn::Forward 	=> write!(f,"🖰↷"),
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Btn::Left => write!(f, "‹🖰"),
+            Btn::Right => write!(f, "🖰›"),
+            Btn::Mid => write!(f, "🖱"),
+            Btn::Backward => write!(f, "⎌🖰"),
+            Btn::Forward => write!(f, "🖰↷"),
+        }
     }
-  }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -130,14 +130,14 @@ pub enum MWheelDirection {
     Right,
 }
 impl fmt::Display for MWheelDirection {
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    match self {
-      MWheelDirection::Up   	=> write!(f,"🖱↑"),
-      MWheelDirection::Down 	=> write!(f,"🖱↓"),
-      MWheelDirection::Left 	=> write!(f,"🖱←"),
-      MWheelDirection::Right	=> write!(f,"🖱→"),
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            MWheelDirection::Up => write!(f, "🖱↑"),
+            MWheelDirection::Down => write!(f, "🖱↓"),
+            MWheelDirection::Left => write!(f, "🖱←"),
+            MWheelDirection::Right => write!(f, "🖱→"),
+        }
     }
-  }
 }
 
 impl TryFrom<OsCode> for MWheelDirection {
@@ -162,14 +162,14 @@ pub enum MoveDirection {
     Right,
 }
 impl fmt::Display for MoveDirection {
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    match self {
-      MoveDirection::Up   	=> write!(f,"↑"),
-      MoveDirection::Down 	=> write!(f,"↓"),
-      MoveDirection::Left 	=> write!(f,"←"),
-      MoveDirection::Right	=> write!(f,"→"),
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            MoveDirection::Up => write!(f, "↑"),
+            MoveDirection::Down => write!(f, "↓"),
+            MoveDirection::Left => write!(f, "←"),
+            MoveDirection::Right => write!(f, "→"),
+        }
     }
-  }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct CapsWordCfg {

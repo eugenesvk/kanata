@@ -1,32 +1,32 @@
 use crate::oskbd::*;
 use crate::Kanata;
 
-#[cfg(feature="tcp_server")]
+#[cfg(feature = "tcp_server")]
 use kanata_tcp_protocol::*;
 use parking_lot::Mutex;
 use std::net::SocketAddr;
 use std::sync::mpsc::SyncSender as Sender;
 use std::sync::Arc;
 
-#[cfg(feature="tcp_server")]
+#[cfg(feature = "tcp_server")]
 type HashMap<K, V> = rustc_hash::FxHashMap<K, V>;
-#[cfg(feature="tcp_server")]
+#[cfg(feature = "tcp_server")]
 use kanata_parser::cfg::SimpleSExpr;
-#[cfg(feature="tcp_server")]
+#[cfg(feature = "tcp_server")]
 use std::io::{Read, Write};
-#[cfg(feature="tcp_server")]
+#[cfg(feature = "tcp_server")]
 use std::net::{TcpListener, TcpStream};
 
-#[cfg(feature="tcp_server")]
+#[cfg(feature = "tcp_server")]
 pub type Connections = Arc<Mutex<HashMap<String, TcpStream>>>;
 
-#[cfg(not(feature="tcp_server"))]
+#[cfg(not(feature = "tcp_server"))]
 pub type Connections = ();
 
-#[cfg(feature="tcp_server")]
+#[cfg(feature = "tcp_server")]
 use kanata_parser::custom_action::FakeKeyAction;
 
-#[cfg(feature="tcp_server")]
+#[cfg(feature = "tcp_server")]
 fn to_action(val: FakeKeyActionMessage) -> FakeKeyAction {
     match val {
         FakeKeyActionMessage::Press => FakeKeyAction::Press,
@@ -36,20 +36,20 @@ fn to_action(val: FakeKeyActionMessage) -> FakeKeyAction {
     }
 }
 
-#[cfg(feature="tcp_server")]
+#[cfg(feature = "tcp_server")]
 pub struct TcpServer {
     pub address: SocketAddr,
     pub connections: Connections,
     pub wakeup_channel: Sender<KeyEvent>,
 }
 
-#[cfg(not(feature="tcp_server"))]
+#[cfg(not(feature = "tcp_server"))]
 pub struct TcpServer {
     pub connections: Connections,
 }
 
 impl TcpServer {
-    #[cfg(feature="tcp_server")]
+    #[cfg(feature = "tcp_server")]
     pub fn new(address: SocketAddr, wakeup_channel: Sender<KeyEvent>) -> Self {
         Self {
             address,
@@ -58,12 +58,12 @@ impl TcpServer {
         }
     }
 
-    #[cfg(not(feature="tcp_server"))]
+    #[cfg(not(feature = "tcp_server"))]
     pub fn new(_address: SocketAddr, _wakeup_channel: Sender<KeyEvent>) -> Self {
         Self { connections: () }
     }
 
-    #[cfg(feature="tcp_server")]
+    #[cfg(feature = "tcp_server")]
     pub fn start(&mut self, kanata: Arc<Mutex<Kanata>>) {
         use std::str::FromStr;
 
@@ -259,17 +259,18 @@ impl TcpServer {
         });
     }
 
-    #[cfg(not(feature="tcp_server"))]
+    #[cfg(not(feature = "tcp_server"))]
     pub fn start(&mut self, _kanata: Arc<Mutex<Kanata>>) {}
 }
 
-
-#[cfg(feature="tcp_server")]
+#[cfg(feature = "tcp_server")]
 pub fn simple_sexpr_to_json_array(exprs: &[SimpleSExpr]) -> serde_json::Value {
-  let mut result = Vec::new();
-  for expr in exprs.iter() { match expr {
-    SimpleSExpr::Atom(s)    => result.push(serde_json::Value::String(s.clone())),
-    SimpleSExpr::List(list) => result.push(simple_sexpr_to_json_array(list)), }
-  }
-  serde_json::Value::Array(result)
+    let mut result = Vec::new();
+    for expr in exprs.iter() {
+        match expr {
+            SimpleSExpr::Atom(s) => result.push(serde_json::Value::String(s.clone())),
+            SimpleSExpr::List(list) => result.push(simple_sexpr_to_json_array(list)),
+        }
+    }
+    serde_json::Value::Array(result)
 }

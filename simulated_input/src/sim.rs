@@ -100,118 +100,198 @@ fn log_init() {
 
 /// Parse CLI arguments
 fn cli_init_fsim() -> Result<(ValidatedArgs, Vec<PathBuf>, Option<String>)> {
-  let args = Args::parse();
-  let cfg_paths = args.cfg.unwrap_or_else(default_cfg);
-  let sim_paths = args.sim.unwrap_or_else(default_sim);
-  let sim_appendix = args.out;
+    let args = Args::parse();
+    let cfg_paths = args.cfg.unwrap_or_else(default_cfg);
+    let sim_paths = args.sim.unwrap_or_else(default_sim);
+    let sim_appendix = args.out;
 
-  log::info!("kanata_simulated_input v{} starting",env!("CARGO_PKG_VERSION"));
-  #[cfg(all(not(feature="interception_driver"), target_os="windows")	)] log::info!("using LLHOOK+SendInput for keyboard IO");
-  #[cfg(all(    feature="interception_driver" , target_os="windows")	)] log::info!("using the Interception driver for keyboard IO");
+    log::info!(
+        "kanata_simulated_input v{} starting",
+        env!("CARGO_PKG_VERSION")
+    );
+    #[cfg(all(not(feature = "interception_driver"), target_os = "windows"))]
+    log::info!("using LLHOOK+SendInput for keyboard IO");
+    #[cfg(all(feature = "interception_driver", target_os = "windows"))]
+    log::info!("using the Interception driver for keyboard IO");
 
-  if let Some(config_file    ) = cfg_paths.first() {if !config_file.exists() {bail!("Could not find the config file ({})\nFor more info, pass the `-h` or `--help` flags.",cfg_paths[0].to_str().unwrap_or("?"))}
-  } else {bail!("No config files provided\nFor more info, pass the `-h` or `--help` flags.");}
-  if let Some(config_sim_file) = sim_paths.first() {if !config_sim_file.exists() {bail!("Could not find the simulation file ({})\nFor more info, pass the `-h` or `--help` flags.",sim_paths[0].to_str().unwrap_or("?"))}
-  } else {bail!("No simulation files provided\nFor more info, pass the `-h` or `--help` flags.");}
+    if let Some(config_file) = cfg_paths.first() {
+        if !config_file.exists() {
+            bail!("Could not find the config file ({})\nFor more info, pass the `-h` or `--help` flags.",cfg_paths[0].to_str().unwrap_or("?"))
+        }
+    } else {
+        bail!("No config files provided\nFor more info, pass the `-h` or `--help` flags.");
+    }
+    if let Some(config_sim_file) = sim_paths.first() {
+        if !config_sim_file.exists() {
+            bail!("Could not find the simulation file ({})\nFor more info, pass the `-h` or `--help` flags.",sim_paths[0].to_str().unwrap_or("?"))
+        }
+    } else {
+        bail!("No simulation files provided\nFor more info, pass the `-h` or `--help` flags.");
+    }
 
-  Ok((ValidatedArgs {
-    paths             	: cfg_paths,
-    #[cfg(feature     	="tcp_server")]
-    tcp_server_address	: None::<SocketAddrWrapper>,
-    #[cfg(target_os   	="linux"   )]
-    symlink_path      	: None,
-    nodelay           	: true,
-    },
-    sim_paths   	,
-    sim_appendix	,
+    Ok((
+        ValidatedArgs {
+            paths: cfg_paths,
+            #[cfg(feature = "tcp_server")]
+            tcp_server_address: None::<SocketAddrWrapper>,
+            #[cfg(target_os = "linux")]
+            symlink_path: None,
+            nodelay: true,
+        },
+        sim_paths,
+        sim_appendix,
     ))
 }
 fn split_at_1(s: &str) -> (&str, &str) {
-  match s.chars().next() {
-    Some(c) => s.split_at(c.len_utf8()),
-    None    => s.split_at(0           ),
-  }
+    match s.chars().next() {
+        Some(c) => s.split_at(c.len_utf8()),
+        None => s.split_at(0),
+    }
 }
 
-
 fn main_impl() -> Result<()> {
-  log_init();
-  let (args, sim_paths, sim_appendix) = cli_init_fsim()?;
-  #[cfg(not(feature = "simulated_output"))]{
-    if sim_appendix.is_some() {bail!("The program was compiled without simulated output. The -o|--out flag is unsupported");}}
-
-  for config_sim_file in &sim_paths {
-    #[cfg(not(feature = "passthru_ahk"))]
-    let mut k = Kanata::new(&args)?;
-    #[cfg(   feature = "passthru_ahk" )]
-    let mut k = Kanata::new(&args, None)?;
-    println!("Evaluating simulation file = {:?}", config_sim_file);
-    let s = std::fs::read_to_string(config_sim_file)?;
-    for l in s.lines() {
-      for pair in l.split_whitespace() {
-        match pair.split_once(':') {
-          Some((kind, val)) => match kind {
-            "tick" | "🕐" | "t"           => {
-              let tick = str::parse::<u128>(val)?;
-              #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
-              k.kbd_out.log.in_tick(tick);
-              k.tick_ms(tick, &None)?;}
-            "press" | "↓" | "d" | "down"  => {
-              let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
-              #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
-              k.kbd_out.log.in_press_key(key_code);
-              k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Press,})?;}
-            "release" | "↑" | "u" | "up"  => {
-              let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
-              #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
-              k.kbd_out.log.in_release_key(key_code);
-              k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Release,})?;}
-            "repeat" | "⟳" | "r"         => {
-              let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
-              #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
-              k.kbd_out.log.in_repeat_key(key_code);
-              k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Repeat,})?;}
-            _ => bail!("invalid pair prefix: {kind}"),
-          },
-          None => {
-            match split_at_1(pair) { //allow skipping : separator for unique non-key symbols
-              (kind, val) => match kind {
-                "🕐" => {
-                  let tick = str::parse::<u128>(val)?;
-                  #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
-                  k.kbd_out.log.in_tick(tick);
-                  k.tick_ms(tick, &None)?;}
-                "↓" => {
-                  let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
-                  #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
-                  k.kbd_out.log.in_press_key(key_code);
-                  k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Press,})?;}
-                "↑" => {
-                  let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
-                  #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
-                  k.kbd_out.log.in_release_key(key_code);
-                  k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Release,})?;}
-                "⟳" => {
-                  let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
-                  #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
-                  k.kbd_out.log.in_repeat_key(key_code);
-                  k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Repeat,})?;}
-                _ => bail!("invalid pair: {l}"),
-              }
-            }
-          },
+    log_init();
+    let (args, sim_paths, sim_appendix) = cli_init_fsim()?;
+    #[cfg(not(feature = "simulated_output"))]
+    {
+        if sim_appendix.is_some() {
+            bail!("The program was compiled without simulated output. The -o|--out flag is unsupported");
         }
-      }
     }
-    #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))] println!("{}", k.kbd_out.outputs.events.join("\n"));
-    #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))] k.kbd_out.log.end(config_sim_file, sim_appendix.clone());
-  }
 
-  Ok(())
+    for config_sim_file in &sim_paths {
+        #[cfg(not(feature = "passthru_ahk"))]
+        let mut k = Kanata::new(&args)?;
+        #[cfg(feature = "passthru_ahk")]
+        let mut k = Kanata::new(&args, None)?;
+        println!("Evaluating simulation file = {:?}", config_sim_file);
+        let s = std::fs::read_to_string(config_sim_file)?;
+        for l in s.lines() {
+            for pair in l.split_whitespace() {
+                match pair.split_once(':') {
+                    Some((kind, val)) => match kind {
+                        "tick" | "🕐" | "t" => {
+                            let tick = str::parse::<u128>(val)?;
+                            #[cfg(all(
+                                not(feature = "simulated_input"),
+                                feature = "simulated_output"
+                            ))]
+                            k.kbd_out.log.in_tick(tick);
+                            k.tick_ms(tick, &None)?;
+                        }
+                        "press" | "↓" | "d" | "down" => {
+                            let key_code =
+                                str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
+                            #[cfg(all(
+                                not(feature = "simulated_input"),
+                                feature = "simulated_output"
+                            ))]
+                            k.kbd_out.log.in_press_key(key_code);
+                            k.handle_input_event(&KeyEvent {
+                                code: key_code,
+                                value: KeyValue::Press,
+                            })?;
+                        }
+                        "release" | "↑" | "u" | "up" => {
+                            let key_code =
+                                str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
+                            #[cfg(all(
+                                not(feature = "simulated_input"),
+                                feature = "simulated_output"
+                            ))]
+                            k.kbd_out.log.in_release_key(key_code);
+                            k.handle_input_event(&KeyEvent {
+                                code: key_code,
+                                value: KeyValue::Release,
+                            })?;
+                        }
+                        "repeat" | "⟳" | "r" => {
+                            let key_code =
+                                str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
+                            #[cfg(all(
+                                not(feature = "simulated_input"),
+                                feature = "simulated_output"
+                            ))]
+                            k.kbd_out.log.in_repeat_key(key_code);
+                            k.handle_input_event(&KeyEvent {
+                                code: key_code,
+                                value: KeyValue::Repeat,
+                            })?;
+                        }
+                        _ => bail!("invalid pair prefix: {kind}"),
+                    },
+                    None => {
+                        match split_at_1(pair) {
+                            //allow skipping : separator for unique non-key symbols
+                            (kind, val) => match kind {
+                                "🕐" => {
+                                    let tick = str::parse::<u128>(val)?;
+                                    #[cfg(all(
+                                        not(feature = "simulated_input"),
+                                        feature = "simulated_output"
+                                    ))]
+                                    k.kbd_out.log.in_tick(tick);
+                                    k.tick_ms(tick, &None)?;
+                                }
+                                "↓" => {
+                                    let key_code = str_to_oscode(val)
+                                        .ok_or_else(|| anyhow!("unknown key: {val}"))?;
+                                    #[cfg(all(
+                                        not(feature = "simulated_input"),
+                                        feature = "simulated_output"
+                                    ))]
+                                    k.kbd_out.log.in_press_key(key_code);
+                                    k.handle_input_event(&KeyEvent {
+                                        code: key_code,
+                                        value: KeyValue::Press,
+                                    })?;
+                                }
+                                "↑" => {
+                                    let key_code = str_to_oscode(val)
+                                        .ok_or_else(|| anyhow!("unknown key: {val}"))?;
+                                    #[cfg(all(
+                                        not(feature = "simulated_input"),
+                                        feature = "simulated_output"
+                                    ))]
+                                    k.kbd_out.log.in_release_key(key_code);
+                                    k.handle_input_event(&KeyEvent {
+                                        code: key_code,
+                                        value: KeyValue::Release,
+                                    })?;
+                                }
+                                "⟳" => {
+                                    let key_code = str_to_oscode(val)
+                                        .ok_or_else(|| anyhow!("unknown key: {val}"))?;
+                                    #[cfg(all(
+                                        not(feature = "simulated_input"),
+                                        feature = "simulated_output"
+                                    ))]
+                                    k.kbd_out.log.in_repeat_key(key_code);
+                                    k.handle_input_event(&KeyEvent {
+                                        code: key_code,
+                                        value: KeyValue::Repeat,
+                                    })?;
+                                }
+                                _ => bail!("invalid pair: {l}"),
+                            },
+                        }
+                    }
+                }
+            }
+        }
+        #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
+        println!("{}", k.kbd_out.outputs.events.join("\n"));
+        #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
+        k.kbd_out.log.end(config_sim_file, sim_appendix.clone());
+    }
+
+    Ok(())
 }
 
 fn main() -> Result<()> {
-  let ret = main_impl();
-  if let Err(ref e) = ret {log::error!("{e}\n");}
-  ret
+    let ret = main_impl();
+    if let Err(ref e) = ret {
+        log::error!("{e}\n");
+    }
+    ret
 }
