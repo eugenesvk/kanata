@@ -171,7 +171,7 @@ fn main_impl() -> Result<()> {
               #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
               k.kbd_out.log.in_repeat_key(key_code);
               k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Repeat,})?;}
-            _ => bail!("invalid pair: {kind}"),
+            _ => bail!("invalid pair prefix: {kind}"),
           },
           None => {
             match split_at_1(pair) { //allow skipping : separator for unique non-key symbols
