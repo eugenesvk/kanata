@@ -26,4 +26,5 @@ kanata = { path = ".." , default_features = false }
 [features]
 default = ["simulated_output", "tcp_server"]
 simulated_output = ["kanata/simulated_output"]
+passthru_ahk = []
 tcp_server = ["kanata/tcp_server"]
