@@ -520,6 +520,7 @@ dependencies = [
  "arraydeque",
  "heapless",
  "kanata-keyberon-macros",
+ "rustc-hash",
 ]
 
 [[package]]
