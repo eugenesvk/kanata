@@ -14,13 +14,13 @@
 )
 
 (deflayer-custom-map (base)
-  caps : (tap-hold 200 200 (caps-word 2000) lctl)
-  spc  : (tap-hold 200 200 spc (layer-while-held nav))
+  caps (tap-hold 200 200 (caps-word 2000) lctl)
+  spc  (tap-hold 200 200 spc (layer-while-held nav))
 )
 
 (deflayer-custom-map (nav)
-  i : up
-  j : left
-  k : down
-  l : right
+  i up
+  j left
+  k down
+  l right
 )
