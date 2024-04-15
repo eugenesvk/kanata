@@ -261,7 +261,7 @@ pub fn new_from_str(cfg_text: &str) -> MResult<Cfg> {
   let icfg = parse_cfg_raw_string(cfg_text,&mut s,&PathBuf::from("configuration"),
     &mut FileContentProvider {get_file_content_fn: &mut |_| Err("include is not supported".into()),},
     DEF_LOCAL_KEYS,Err("environment variables are not supported".into()),)?;
-  let key_outputs          	= create_key_outputs(&icfg.klayers, &icfg.overrides);
+  let key_outputs          	= create_key_outputs(&icfg.klayers, &icfg.overrides, &icfg.chords_v2);
   let switch_max_key_timing	= s.switch_max_key_timing.get();
   let mut layout           	= KanataLayout::new(Layout::new_with_trans_action_settings(
     s.a.sref(s.defsrc_layer),icfg.klayers,icfg.options.trans_resolution_behavior_v2,),
@@ -468,7 +468,7 @@ pub fn parse_cfg_raw_string(
   def_local_keys_variant_to_apply: &str,
   env_vars: EnvVars,
 ) -> Result<IntermediateCfg> {
-  lsp_hint_inactive_code: Vec<LspHintInactiveCode> = vec![];
+  let mut lsp_hint_inactive_code: Vec<LspHintInactiveCode> = vec![];
   let spanned_root_exprs = sexpr::parse(text, &cfg_path.to_string_lossy())
     .and_then(|xs| expand_includes(xs, file_content_provider))
     .and_then(|xs| {filter_platform_specific_cfg(xs,def_local_keys_variant_to_apply,&mut lsp_hint_inactive_code,)})
@@ -2534,7 +2534,7 @@ fn parse_layers(s: &ParserState,mapped_keys: &mut MappedKeys,defcfg: &CfgOptions
           layers_cfg[layer_level * 2 + 1][0][s.mapping_order[i]] = *ac; }
       }
       LayerExprs::CustomMapping(layer) => { // Parse actions as input -> output triplets
-        let mut triplets = layer[2..].chunks_exact(3);
+        let mut pairs = layer[2..].chunks_exact(2);
         let mut layer_mapped_keys = HashSet::default();
         let mut defsrc_anykey_used = false;
         let mut unmapped_anykey_used = false;
