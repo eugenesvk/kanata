@@ -153,22 +153,22 @@ fn main_impl() -> Result<()> {
           Some((kind, val)) => match kind {
             "tick" | "🕐" | "t"           => {
               let tick = str::parse::<u128>(val)?;
-              #[cfg(feature = "simulated_output")]
+              #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
               k.kbd_out.log.in_tick(tick);
               k.tick_ms(tick, &None)?;}
             "press" | "↓" | "d" | "down"  => {
               let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
-              #[cfg(feature = "simulated_output")]
+              #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
               k.kbd_out.log.in_press_key(key_code);
               k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Press,})?;}
             "release" | "↑" | "u" | "up"  => {
               let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
-              #[cfg(feature = "simulated_output")]
+              #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
               k.kbd_out.log.in_release_key(key_code);
               k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Release,})?;}
             "repeat" | "⟳" | "r"         => {
               let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
-              #[cfg(feature = "simulated_output")]
+              #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
               k.kbd_out.log.in_repeat_key(key_code);
               k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Repeat,})?;}
             _ => bail!("invalid pair: {kind}"),
@@ -178,22 +178,22 @@ fn main_impl() -> Result<()> {
               (kind, val) => match kind {
                 "🕐" => {
                   let tick = str::parse::<u128>(val)?;
-                  #[cfg(feature = "simulated_output")]
+                  #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
                   k.kbd_out.log.in_tick(tick);
                   k.tick_ms(tick, &None)?;}
                 "↓" => {
                   let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
-                  #[cfg(feature = "simulated_output")]
+                  #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
                   k.kbd_out.log.in_press_key(key_code);
                   k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Press,})?;}
                 "↑" => {
                   let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
-                  #[cfg(feature = "simulated_output")]
+                  #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
                   k.kbd_out.log.in_release_key(key_code);
                   k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Release,})?;}
                 "⟳" => {
                   let key_code = str_to_oscode(val).ok_or_else(|| anyhow!("unknown key: {val}"))?;
-                  #[cfg(feature = "simulated_output")]
+                  #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))]
                   k.kbd_out.log.in_repeat_key(key_code);
                   k.handle_input_event(&KeyEvent {code:key_code, value:KeyValue::Repeat,})?;}
                 _ => bail!("invalid pair: {l}"),
@@ -203,8 +203,8 @@ fn main_impl() -> Result<()> {
         }
       }
     }
-    #[cfg(feature = "simulated_output")] println!("{}", k.kbd_out.outputs.events.join("\n"));
-    #[cfg(feature = "simulated_output")] k.kbd_out.log.end(config_sim_file, sim_appendix.clone());
+    #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))] println!("{}", k.kbd_out.outputs.events.join("\n"));
+    #[cfg(all(not(feature = "simulated_input"), feature = "simulated_output"))] k.kbd_out.log.end(config_sim_file, sim_appendix.clone());
   }
 
   Ok(())
