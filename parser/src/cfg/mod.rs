@@ -2805,7 +2805,7 @@ fn parse_layers(
                     let input = &triplet[0];
                     let action = &triplet[1];
                     // TODO: remove me some time after April 2024 to reduce code bloat somewhat.
-                    const MAPSTRS: &[&str] = &["=", ":", "->", ">>", "maps-to", "→", "🞂"];
+                    const MAPSTRS: &[&str] = &[":", "->", ">>", "maps-to", "→", "🞂"];
                     const MAPSTR_ERR: &str = "Seems you are using a retired configuration style.\nYou should remove all mapping strings from deflayermap;\ndeflayermap now uses pairs instead of triples.";
                     if input.atom(s.vars()).is_some_and(|x| MAPSTRS.contains(&x)) {
                         bail_expr!(input, "{MAPSTR_ERR}");
