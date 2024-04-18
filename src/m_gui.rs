@@ -260,12 +260,13 @@ fn main_impl() -> Result<()> {
 }
 
 pub fn main_gui() {
-  // let ret = main_impl();
-  // if let Err(ref e) = ret {log::error!("{e}\n");}
-  // eprintln!("\nPress enter to exit");
+  nwg::init().expect("Failed to init Native Windows GUI");
+
+  let ret = main_impl();
+  if let Err(ref e) = ret {log::error!("{e}\n");}
+  eprintln!("\nPress enter to exit");
   // let _ = std::io::stdin().read_line(&mut String::new());
 
-  nwg::init().expect("Failed to init Native Windows GUI");
   let _ui = SystemTray::build_ui(Default::default()).expect("Failed to build UI");
   nwg::dispatch_thread_events();
 }
