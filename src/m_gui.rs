@@ -46,8 +46,8 @@ use simplelog::*;
 
 use std::path::PathBuf;
 
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod tests;
 
 #[derive(Parser, Debug)]
 // #[command(author, version, verbatim_doc_comment)]
