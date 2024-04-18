@@ -228,14 +228,8 @@ fn main_impl() -> Result<()> {
     let (tx, rx) = std::sync::mpsc::sync_channel(100);
 
     let (server, ntx, nrx) = if let Some(address) = {
-        #[cfg(feature = "tcp_server")]
-        {
-            args.tcp_server_address
-        }
-        #[cfg(not(feature = "tcp_server"))]
-        {
-            None::<SocketAddrWrapper>
-        }
+      #[cfg(feature = "tcp_server")]{args.tcp_server_address}
+      #[cfg(not(feature = "tcp_server"))]{None::<SocketAddrWrapper>}
     } {
         let mut server = TcpServer::new(address.into_inner(), tx.clone());
         server.start(cfg_arc.clone());
