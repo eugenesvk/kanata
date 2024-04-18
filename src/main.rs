@@ -11,6 +11,8 @@ use crate::m_cli::main_cli;
 
 use anyhow::{Result};
 #[cfg(not(feature = "gui"))]
+use anyhow::{Result};
+#[cfg(not(feature = "gui"))]
 fn main() -> Result<()> {
     let ret = main_cli();
     ret
@@ -18,5 +20,5 @@ fn main() -> Result<()> {
 
 #[cfg(feature = "gui")]
 fn main() {
-    main_gui()
+    main_gui();
 }
