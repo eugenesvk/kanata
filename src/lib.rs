@@ -6,6 +6,10 @@ use std::str::FromStr;
 pub mod kanata;
 pub mod oskbd;
 pub mod tcp_server;
+#[cfg(feature = "gui")]
+pub mod m_gui;
+#[cfg(feature = "gui")]
+pub mod log_win;
 
 pub use kanata::*;
 pub use tcp_server::TcpServer;
