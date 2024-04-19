@@ -82,8 +82,9 @@ winapi = { version = "0.3.9", features = [
 ] }
 native-windows-gui = { version = "1.0.12", default_features = false, features=["tray-notification","message-window","menu","cursor"] }
 native-windows-derive = { version = "1.0.5", default_features = false, optional = true }
+lazy_static = { version = "1.4.0", optional = true }
+regex = { version = "1.10.4", optional = true }
 kanata-interception = { version = "0.2.0", optional = true }
-win_dbg_logger = "0.1.0"
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
 embed-resource = { version = "2.4.2", optional = true }
@@ -103,7 +104,7 @@ simulated_output = ["indoc"]
 wasm = [ "instant/wasm-bindgen" ]
 simulated_input = ["indoc"]
 passthru_ahk = []
-gui = ["native-windows-derive", "embed-resource", "indoc", "regex"]
+gui = ["native-windows-derive", "embed-resource", "indoc", "regex","lazy_static"]
 
 [profile.release]
 opt-level = "z"
