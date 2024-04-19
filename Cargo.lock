@@ -499,6 +499,7 @@ dependencies = [
  "kanata-parser",
  "kanata-tcp-protocol",
  "karabiner-driverkit",
+ "lazy_static",
  "log",
  "miette",
  "mio",
@@ -514,7 +515,6 @@ dependencies = [
  "serde_json",
  "signal-hook",
  "simplelog",
- "win_dbg_logger",
  "winapi",
 ]
 
