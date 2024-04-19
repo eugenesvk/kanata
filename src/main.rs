@@ -2,9 +2,8 @@
 #![allow(non_upper_case_globals)]
 
 #[cfg(feature = "gui")]
-pub mod m_gui;
-#[cfg(feature = "gui")]
-use m_gui::main_gui;
+use kanata_state_machine::m_gui::main_gui;
+
 #[cfg(not(feature = "gui"))]
 pub mod m_cli;
 #[cfg(not(feature = "gui"))]
