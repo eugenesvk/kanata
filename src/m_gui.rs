@@ -258,9 +258,4 @@ pub fn main_gui() {
 
   let ret = main_impl();
   if let Err(ref e) = ret {log::error!("{e}\n");}
-  eprintln!("\nPress enter to exit");
-  // let _ = std::io::stdin().read_line(&mut String::new());
-
-  let _ui = SystemTray::build_ui(Default::default()).expect("Failed to build UI");
-  nwg::dispatch_thread_events();
 }
