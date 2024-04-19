@@ -40,7 +40,7 @@ impl SystemTray {
 use anyhow::{bail, Result};
 use clap::Parser;
 use kanata_parser::cfg;
-use kanata_state_machine::*;
+use crate::*;
 use log::info;
 use simplelog::*;
 
