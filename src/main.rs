@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "gui", windows_subsystem = "windows")] //disable console on Windows
 #![allow(non_upper_case_globals)]
 
 #[cfg(feature = "gui")]
