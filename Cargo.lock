@@ -1537,6 +1537,7 @@ dependencies = [
  "lazy_static",
  "log",
  "regex",
+ "simplelog",
  "winapi",
 ]
 
