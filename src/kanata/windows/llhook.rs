@@ -72,8 +72,8 @@ impl Kanata {
         #[cfg(feature = "gui")]
         let _ui = m_gui::SystemTray::build_ui(Default::default()).expect("Failed to build UI");
         native_windows_gui::dispatch_thread_events(); // The event loop is also required for the low-level keyboard hook to work.
-        eprintln!("\nPress enter to exit"); // moved from main to not panic on a disconnected channel
-        let _ = std::io::stdin().read_line(&mut String::new());
+        //TEMP todo disable// eprintln!("\nPress enter to exit"); // moved from main to not panic on a disconnected channel
+        //TEMP todo disable// let _ = std::io::stdin().read_line(&mut String::new());
         Ok(())
     }
 }
