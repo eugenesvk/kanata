@@ -180,9 +180,9 @@ unsafe extern "system" fn hook_proc(code: c_int, msgID: WPARAM, pInfo: LPARAM) -
 }
 
 /// Handle for writing keys to the OS
-#[cfg(not(feature = "simulated_output"))]
+#[cfg(any(not(feature = "simulated_output"), not(feature = "passthru_ahk")))]
 pub struct KbdOut {}
-#[cfg(not(feature = "simulated_output"))]
+#[cfg(any(not(feature = "simulated_output"), not(feature = "passthru_ahk")))]
 impl KbdOut {
     pub fn new() -> Result<Self, io::Error> {
         Ok(Self {})
