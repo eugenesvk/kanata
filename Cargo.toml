@@ -8,6 +8,7 @@ members = [
     "tcp_protocol",
     "simulated_input",
     "windows_key_tester",
+    "win_dbg_logger",
     "helper",
 ]
 exclude = [
@@ -103,8 +104,8 @@ interception_driver = ["kanata-interception", "kanata-parser/interception_driver
 simulated_output = ["indoc"]
 wasm = [ "instant/wasm-bindgen" ]
 simulated_input = ["indoc"]
-passthru_ahk = []
-gui = ["native-windows-derive", "embed-resource", "indoc", "regex","lazy_static"]
+passthru_ahk = ["win_dbg_logger"]
+gui = ["native-windows-derive", "embed-resource", "indoc", "regex","lazy_static","win_dbg_logger"]
 
 [profile.release]
 opt-level = "z"
