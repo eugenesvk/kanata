@@ -10,7 +10,7 @@ pub mod tcp_server;
 #[cfg(feature = "gui")]
 pub mod m_gui;
 #[cfg(feature = "gui")]
-use win_dbg_logger as log_win;
+// use win_dbg_logger as log_win;
 
 pub use kanata::*;
 pub use tcp_server::TcpServer;
