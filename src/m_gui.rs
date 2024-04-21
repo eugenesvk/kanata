@@ -1,8 +1,5 @@
 #![allow(unused_imports,unused_variables,unreachable_code,dead_code,non_upper_case_globals)]
 // #![allow(non_upper_case_globals)]
-// destroy tray on exit
-// hide main window without flashing
-// show main window on popup
 
 extern crate native_windows_gui    as nwg;
 extern crate native_windows_derive as nwd;
@@ -162,7 +159,7 @@ fn cli_init() -> Result<ValidatedArgs> {
   if *IS_TERM	{
     CombinedLogger::init(vec![
     TermLogger ::new(log_lvl,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,),
-    // WriteLogger::new(log_lvl,log_cfg.build(),WinDbgLogger),
+    WriteLogger::new(log_lvl,log_cfg.build(),log_win::WINDBG_LOGGER),
     ]).expect("logger can init");
   }
   log::info!("kanata v{} starting", env!("CARGO_PKG_VERSION"));
@@ -254,7 +251,6 @@ fn main_impl() -> Result<()> {
 
 use log::*;
 use win_dbg_logger as log_win;
-use win_dbg_logger::WinDbgLogger;
 fn log_init(max_lvl: &i8) {
     let _ = log_win::init();
     let a = log_win::set_thread_state(true);
