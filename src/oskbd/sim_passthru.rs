@@ -43,7 +43,7 @@ use std::sync::mpsc::{
 /// Handle for writing keys to the simulated input provider.
 pub struct KbdOut {
     #[cfg(feature = "passthru_ahk")]
-    tx_kout: Option<ASender<InputEvent>>,
+    pub tx_kout: Option<ASender<InputEvent>>,
 }
 
 use std::io::{Error as IoErr, ErrorKind::NotConnected};
