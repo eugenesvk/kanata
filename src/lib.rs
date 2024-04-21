@@ -1,3 +1,4 @@
+//=kanata_state_machine
 use anyhow::{anyhow, Error, Result};
 use std::net::SocketAddr;
 use std::path::PathBuf;
