@@ -277,6 +277,7 @@ use winapi::um::wincon::{AttachConsole, FreeConsole, ATTACH_PARENT_PROCESS};
 use winapi::shared::minwindef::BOOL;
 use std::io::{stdout, IsTerminal};
 pub fn main_gui() {
+  let _attach_console = *IS_CONSOLE;
   if *IS_TERM	{
     println!("println terminal; is_attached console = {}",*IS_CONSOLE); // GUI launch will have no console
     info!("info! terminal; is_attached console = {}",*IS_CONSOLE); // isn't ready yet
