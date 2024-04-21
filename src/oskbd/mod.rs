@@ -4,7 +4,8 @@
 mod linux;
 #[cfg(target_os = "macos")]
 mod macos;
-#[cfg(all(feature = "simulated_output", feature = "simulated_input"))]
+#[cfg(any(all(feature="simulated_input",feature="simulated_output"),
+          all(feature="simulated_input",feature="simulated_output",feature="passthru_ahk"),))]
 mod sim_passthru;
 #[cfg(all(not(feature = "simulated_input"), not(feature = "simulated_output"), feature = "simulated_output"))]
 mod simulated;
@@ -14,7 +15,8 @@ mod windows;
 pub use linux::*;
 #[cfg(target_os = "macos")]
 pub use macos::*;
-#[cfg(all(feature = "simulated_output", feature = "simulated_input"))]
+#[cfg(any(all(feature="simulated_input",feature="simulated_output"),
+          all(feature="simulated_input",feature="simulated_output",feature="passthru_ahk"),))]
 pub use sim_passthru::*;
 #[cfg(all(not(feature = "simulated_input"), not(feature = "simulated_output"), feature = "simulated_output"))]
 pub use simulated::*;
