@@ -1856,8 +1856,7 @@ pub fn clean_state(kanata: &Arc<Mutex<Kanata>>, tick: u128) -> Result<()> {
 
 /// Checks if kanata should exit based on the fixed key combination of:
 /// Lctl+Spc+Esc
-#[cfg(not(feature = "passthru_ahk"))]
-fn check_for_exit(event: &KeyEvent) {
+fn check_for_exit(event: &KeyEvent) {#[cfg(not(feature = "passthru_ahk"))] {
     static IS_LCL_PRESSED: AtomicBool = AtomicBool::new(false);
     static IS_SPC_PRESSED: AtomicBool = AtomicBool::new(false);
     static IS_ESC_PRESSED: AtomicBool = AtomicBool::new(false);
@@ -1885,7 +1884,7 @@ fn check_for_exit(event: &KeyEvent) {
             signal_hook::low_level::raise(signal_hook::consts::SIGTERM).expect("raise signal");
         }
     }
-}
+}}
 
 fn update_kbd_out(_cfg: &CfgOptions, _kbd_out: &KbdOut) -> Result<()> {
     #[cfg(all(not(feature = "simulated_output"), target_os = "linux"))]
