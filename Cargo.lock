@@ -1534,7 +1534,10 @@ checksum = "7219d36b6eac893fa81e84ebe06485e7dcbb616177469b142df14f1f4deb1311"
 name = "win_dbg_logger"
 version = "0.1.0"
 dependencies = [
+ "lazy_static",
  "log",
+ "regex",
+ "winapi",
 ]
 
 [[package]]
