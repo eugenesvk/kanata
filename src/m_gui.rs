@@ -158,13 +158,14 @@ fn cli_init() -> Result<ValidatedArgs> {
     eprintln!("WARNING: could not set log TZ to local: {e:?}");
   };
   log_cfg.set_time_format_rfc3339();
-  CombinedLogger::init(vec![TermLogger::new(
-    log_lvl,
-    log_cfg.build(),
-    TerminalMode::Mixed,
-    ColorChoice::AlwaysAnsi,
-  )])
-  .expect("logger can init");
+  // todo: use this logger with WinDbg
+  use crate::log_win::WinDebugLogger;
+  if *IS_TERM	{
+    CombinedLogger::init(vec![
+    TermLogger ::new(log_lvl,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,),
+    WriteLogger::new(log_lvl,log_cfg.build(),WinDebugLogger),
+    ]).expect("logger can init");
+  }
   log::info!("kanata v{} starting", env!("CARGO_PKG_VERSION"));
   #[cfg(all(not(feature = "interception_driver"), target_os = "windows"))]
   log::info!("using LLHOOK+SendInput for keyboard IO");
