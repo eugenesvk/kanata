@@ -163,7 +163,7 @@ fn cli_init() -> Result<ValidatedArgs> {
   if *IS_TERM	{
     CombinedLogger::init(vec![
     TermLogger ::new(log_lvl,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,),
-    WriteLogger::new(log_lvl,log_cfg.build(),WinDebugLogger),
+    // WriteLogger::new(log_lvl,log_cfg.build(),WinDbgLogger),
     ]).expect("logger can init");
   }
   log::info!("kanata v{} starting", env!("CARGO_PKG_VERSION"));
