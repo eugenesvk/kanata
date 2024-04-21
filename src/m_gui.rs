@@ -253,9 +253,39 @@ fn main_impl() -> Result<()> {
     Ok(())
 }
 
-pub fn main_gui() {
-  nwg::init().expect("Failed to init Native Windows GUI");
+use log::*;
+use crate::log_win;
+fn log_init(max_lvl: &i8) {
+    let _ = log_win::init();
+    let a = log_win::set_thread_state(true);
+    let log_lvl = match max_lvl {
+        1 => log::LevelFilter::Error,
+        2 => log::LevelFilter::Warn,
+        3 => log::LevelFilter::Info,
+        4 => log::LevelFilter::Debug,
+        5 => log::LevelFilter::Trace,
+        _ => log::LevelFilter::Info,
+    };
+    log::set_max_level(log_lvl);
+}
 
+use once_cell::sync::Lazy;
+static IS_TERM:Lazy<bool> = Lazy::new(||stdout().is_terminal());
+
+use winapi::um::wincon::{AttachConsole, FreeConsole, ATTACH_PARENT_PROCESS};
+use winapi::shared::minwindef::BOOL;
+use std::io::{stdout, IsTerminal};
+pub fn main_gui() {
+  let is_attached:BOOL; // doesn't attach in GUI launch mode
+  unsafe {is_attached = AttachConsole(ATTACH_PARENT_PROCESS);};
+  if *IS_TERM	{
+    println!("println terminal; is_attached console = {:?}",is_attached); // GUI launch will have no console
+    log::info!("log::info terminal; is_attached console = {:?}",is_attached); // isn't ready yet
+  } else {
+    log_init(&4);
+    info!("I'm not a terminal");
+  }
   let ret = main_impl();
   if let Err(ref e) = ret {log::error!("{e}\n");}
+  unsafe {FreeConsole();}
 }
