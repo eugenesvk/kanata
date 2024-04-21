@@ -159,8 +159,11 @@ fn cli_init() -> Result<ValidatedArgs> {
   if *IS_TERM	{
     CombinedLogger::init(vec![
     TermLogger ::new(log_lvl,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,),
-    WriteLogger::new(log_lvl,log_cfg.build(),log_win::WINDBG_LOGGER),
+    log_win::windbg_simple_combo(log_lvl),
+    // Box::new(log_win::WINDBG_LOGGER), // works
+    // WriteLogger::new(log_lvl,log_cfg.build(),log_win::WINDBG_LOGGER), // not implemented
     ]).expect("logger can init");
+    info!("info! terminal; is_ttached console = {}",*IS_CONSOLE);trace!("trace!");debug!("debug!");
   }
   log::info!("kanata v{} starting", env!("CARGO_PKG_VERSION"));
   #[cfg(all(not(feature = "interception_driver"), target_os = "windows"))]
