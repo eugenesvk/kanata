@@ -159,7 +159,6 @@ fn cli_init() -> Result<ValidatedArgs> {
   };
   log_cfg.set_time_format_rfc3339();
   // todo: use this logger with WinDbg
-  use crate::log_win::WinDebugLogger;
   if *IS_TERM	{
     CombinedLogger::init(vec![
     TermLogger ::new(log_lvl,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,),
@@ -254,7 +253,8 @@ fn main_impl() -> Result<()> {
 }
 
 use log::*;
-use crate::log_win;
+use win_dbg_logger as log_win;
+use win_dbg_logger::WinDbgLogger;
 fn log_init(max_lvl: &i8) {
     let _ = log_win::init();
     let a = log_win::set_thread_state(true);
