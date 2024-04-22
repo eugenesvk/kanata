@@ -163,7 +163,7 @@ fn cli_init() -> Result<ValidatedArgs> {
     // Box::new(log_win::WINDBG_LOGGER), // works
     // WriteLogger::new(log_lvl,log_cfg.build(),log_win::WINDBG_LOGGER), // not implemented
     ]).expect("logger can init");
-    info!("info! terminal; is_ttached console = {}",*IS_CONSOLE);trace!("trace!");debug!("debug!");
+    info!("info! terminal; is_attached console = {}",*IS_CONSOLE);debug!("debug!");trace!("trace!");
   }
   log::info!("kanata v{} starting", env!("CARGO_PKG_VERSION"));
   #[cfg(all(not(feature = "interception_driver"), target_os = "windows"))]
@@ -283,7 +283,7 @@ pub fn main_gui() {
     info!("info! terminal; is_attached console = {}",*IS_CONSOLE); // isn't ready yet
   } else {
     log_init(&5);
-    info!("info! I'm not a terminal, is_attached console = {}",*IS_CONSOLE);trace!("trace");debug!("debug");
+    info!("info! I'm not a terminal, is_attached console = {}",*IS_CONSOLE);debug!("debug");trace!("trace");
   }
   let ret = main_impl();
   if let Err(ref e) = ret {log::error!("{e}\n");}
