@@ -62,29 +62,16 @@ use std::path::PathBuf;
 ///     https://github.com/jtroo/kanata
 struct Args {
   // Display different platform specific paths based on the target OS
-  #[cfg_attr(
-    target_os = "windows",
-    doc = r"Configuration file(s) to use with kanata. If not specified, defaults to
-kanata.kbd in the current working directory and
-'C:\Users\user\AppData\Roaming\kanata\kanata.kbd'"
-  )]
-  #[cfg_attr(
-    target_os = "macos",
-    doc = "Configuration file(s) to use with kanata. If not specified, defaults to
-kanata.kbd in the current working directory and
-'$HOME/Library/Application Support/kanata/kanata.kbd.'"
-  )]
-  #[cfg_attr(
-    not(any(target_os = "macos", target_os = "windows")),
-    doc = "Configuration file(s) to use with kanata. If not specified, defaults to
-kanata.kbd in the current working directory and
-'$XDG_CONFIG_HOME/kanata/kanata.kbd'"
-  )]
+  #[cfg_attr(target_os = "windows",
+    doc = r"Configuration file(s) to use with kanata. If not specified, defaults to kanata.kbd in the current working directory and 'C:\Users\user\AppData\Roaming\kanata\kanata.kbd'")]
+  #[cfg_attr(target_os = "macos",
+    doc = "Configuration file(s) to use with kanata. If not specified, defaults to kanata.kbd in the current working directory and '$HOME/Library/Application Support/kanata/kanata.kbd.'")]
+  #[cfg_attr(not(any(target_os = "macos", target_os = "windows")),
+    doc = "Configuration file(s) to use with kanata. If not specified, defaults to kanata.kbd in the current working directory and '$XDG_CONFIG_HOME/kanata/kanata.kbd'")]
   #[arg(short, long, verbatim_doc_comment)]
   cfg: Option<Vec<PathBuf>>,
 
-  /// Port to run the optional TCP server on. If blank, no TCP port will be
-  /// listened on.
+  /// Port to run the optional TCP server on. If blank, no TCP port will be listened on.
   #[cfg(feature = "tcp_server")]
   #[arg(
     short = 'p',
@@ -133,8 +120,24 @@ kanata.kbd in the current working directory and
 }
 
 /// Parse CLI arguments and initialize logging.
-fn cli_init() -> Result<ValidatedArgs> {
-  let args = Args::parse();
+fn args_init() -> Result<ValidatedArgs> {
+  use std::str::FromStr;
+  let address = SocketAddrWrapper::from_str("5829")?;
+  let args = Args {
+  cfg               	: Some(vec![r"~\.config\kanata\kanata.kbd".into()]),
+  #[cfg             	(feature = "tcp_server"	)]
+  tcp_server_address	: Some(address) ,// Port to run the optional TCP server on. If blank, no TCP port will be listened on.
+  #[cfg             	(target_os = "linux"  	)]
+  symlink_path      	: None                	,// Path for the symlink pointing to the newly-created device. If blank, no symlink will be created.
+  #[cfg             	(target_os = "macos"  	)]
+  list              	: false               	,// List the keyboards available for grabbing and exit.
+  debug             	: false               	,// Enable debug logging.
+  trace             	: false               	,// Enable trace logging; implies --debug as well.
+  nodelay           	: true                	,// Remove the startup delay on kanata. In some cases, removing the delay may cause keyboard issues on startup.
+  #[cfg             	(target_os = "linux")]	//
+  wait_device_ms    	: Some(200u64)        	,// |200|ms to wait before attempting to register a newly connected device. You may wish to increase this if you have a device that is failing to register - the device may be taking too long to become ready.
+  check             	: false               	,// Validate configuration file and exit
+  };
 
   #[cfg(target_os = "macos")]
   if args.list {
@@ -160,8 +163,6 @@ fn cli_init() -> Result<ValidatedArgs> {
     CombinedLogger::init(vec![
     TermLogger ::new(log_lvl,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,),
     log_win::windbg_simple_combo(log_lvl),
-    // Box::new(log_win::WINDBG_LOGGER), // works
-    // WriteLogger::new(log_lvl,log_cfg.build(),log_win::WINDBG_LOGGER), // not implemented
     ]).expect("logger can init");
     info!("info! terminal; is_attached console = {}",*IS_CONSOLE);debug!("debug!");trace!("trace!");
   }
@@ -212,7 +213,7 @@ fn cli_init() -> Result<ValidatedArgs> {
 }
 
 fn main_impl() -> Result<()> {
-    let args = cli_init()?; // parse CLI arguments and initialize logging
+    let args = args_init()?; // parse arguments and initialize logging
     #[cfg(not(feature = "passthru_ahk"))]
     let cfg_arc = Kanata::new_arc(&args)?; // new configuration from a file
     #[cfg(feature = "passthru_ahk")]
