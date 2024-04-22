@@ -14,6 +14,7 @@ pub mod m_gui;
 pub use m_gui::*;
 #[cfg(feature = "gui")]
 pub use win_dbg_logger as log_win;
+pub use win_dbg_logger::WINDBG_LOGGER;
 
 pub use kanata::*;
 pub use tcp_server::TcpServer;
