@@ -174,7 +174,7 @@ pub fn is_debugger_present() -> bool {
 pub fn init() {
   match log::set_logger(&WINDBG_LOGGER) {
     Ok(()) => {} //↓ there's really nothing we can do about it.
-    Err(_) => {output_debug_string("Warning: Failed to register WinDbgLogger as the current Rust logger.\r\n",);}
+    Err(_) => {output_debug_string("⚠ Failed to register WinDbgLogger as the current Rust logger\r\n",);}
   }
 }
 
