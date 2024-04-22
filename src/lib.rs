@@ -7,10 +7,13 @@ use std::str::FromStr;
 pub mod kanata;
 pub mod oskbd;
 pub mod tcp_server;
+pub mod lib_main;
 #[cfg(feature = "gui")]
 pub mod m_gui;
 #[cfg(feature = "gui")]
-// use win_dbg_logger as log_win;
+pub use m_gui::*;
+#[cfg(feature = "gui")]
+pub use win_dbg_logger as log_win;
 
 pub use kanata::*;
 pub use tcp_server::TcpServer;
