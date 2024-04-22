@@ -121,22 +121,12 @@ fn cli_init() -> Result<ValidatedArgs> {
   };
   log_cfg.set_time_format_rfc3339();
   #[cfg(not(feature = "gui"))]
-  CombinedLogger::init(vec![
-    TermLogger::new(log_lvl,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,
-  )]).expect("logger can init");
-  #[cfg(feature = "gui")]
-  if *IS_TERM	{
-    CombinedLogger::init(vec![
-    TermLogger::new(log_lvl,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,),
-    log_win::windbg_simple_combo(log_lvl),
-    ]).expect("logger can init");
-    println!("println! IS_TERM = {}; IS_CONSOLE = {}",*IS_TERM,*IS_CONSOLE); // GUI launch will have no console
-    info!("info! IS_TERM = {}; IS_CONSOLE = {}",*IS_TERM,*IS_CONSOLE);debug!("debug!");trace!("trace!");
-  } else {
-    CombinedLogger::init(vec![log_win::windbg_simple_combo(log_lvl),]).expect("logger can init");
-    println!("println! IS_TERM = {}; IS_CONSOLE = {}",*IS_TERM,*IS_CONSOLE);
-    info!("info! IS_TERM = {}; IS_CONSOLE = {}",*IS_TERM,*IS_CONSOLE);debug!("debug!");trace!("trace!");
-  }
+    CombinedLogger::init(vec![TermLogger::new(log_lvl,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,
+    )]).expect("logger can init");
+  #[cfg(feature = "gui")] if *IS_TERM	{
+    CombinedLogger::init(vec![TermLogger::new(log_lvl,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,),
+      log_win::windbg_simple_combo(log_lvl),]).expect("logger can init");
+  } else {CombinedLogger::init(vec![log_win::windbg_simple_combo(log_lvl),]).expect("logger can init");}
   log::info!("kanata v{} starting", env!("CARGO_PKG_VERSION"));
   #[cfg(all(not(feature = "interception_driver"), target_os = "windows"))]
   log::info!("using LLHOOK+SendInput for keyboard IO");
