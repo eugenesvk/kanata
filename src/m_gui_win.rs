@@ -12,7 +12,7 @@ use nwd::NwgUi;
 use nwg::{NativeUi,ControlHandle};
 
 #[derive(Default,Debug,Clone)] pub struct SystemTrayData {
-  pub ttt:String,
+  pub tooltip:String,
 }
 #[derive(Default)] pub struct SystemTray {
   pub app_data     	: RefCell<SystemTrayData>,
@@ -76,7 +76,7 @@ impl SystemTray {
   fn exit(&self) {nwg::stop_thread_dispatch();}
 }
 
-mod system_tray_ui {
+pub mod system_tray_ui {
   use native_windows_gui::{self as nwg, MousePressEvent};
   use super::*;
   use std::rc::Rc;
@@ -92,7 +92,8 @@ mod system_tray_ui {
     fn build_ui(mut d: SystemTray) -> Result<SystemTrayUi, nwg::NwgError> {
       use nwg::Event as E;
 
-      d.app_data     	= RefCell::new(Default::default());
+      let app_data = d.app_data.borrow().clone();
+      // d.app_data  	= RefCell::new(Default::default());
       d.tray_item_dyn	=	RefCell::new(Default::default());
       d.handlers_dyn 	=	RefCell::new(Default::default());
       // Resources
@@ -100,10 +101,11 @@ mod system_tray_ui {
       d.embed	= nwg::EmbedResource::load(Some("kanata.exe"))?;
       nwg::Icon::builder().source_embed(Some(&d.embed)).source_embed_str(Some("iconMain")).build(&mut d.icon)?;
 
+
       // Controls
       nwg::MessageWindow   	::builder()
         .                  	  build(       &mut d.window    	)?                          	;
-      nwg::TrayNotification	::builder().parent(&d.window)   	.icon(Some(&d.icon))        	.tip(Some("TipHello"))
+      nwg::TrayNotification	::builder().parent(&d.window)   	.icon(Some(&d.icon))        	.tip(Some(&app_data.tooltip)) //(Some("TipHello"))
         .                  	  build(       &mut d.tray      	)?                          	;
       nwg::Menu            	::builder().parent(&d.window)   	.popup(true)/*context menu*/	//
         .                  	  build(       &mut d.tray_menu 	)?                          	;
