@@ -1,8 +1,12 @@
 #![allow(unused_imports,unused_variables,unreachable_code,dead_code,non_upper_case_globals)]
 // #![allow(non_upper_case_globals)]
 
+use crate::Kanata;
+use parking_lot::Mutex;
+use anyhow::{Result,Context};
 extern crate native_windows_gui    as nwg;
 extern crate native_windows_derive as nwd;
+use std::sync::Arc;
 use core::cell::RefCell;
 use nwd::NwgUi;
 use nwg::{NativeUi,ControlHandle};
@@ -149,6 +153,14 @@ mod system_tray_ui {
       Rc::get_mut(&mut self.inner).expect("REASON")}}
 }
 
+pub fn build_tray(cfg: &Arc<Mutex<Kanata>>) -> Result<system_tray_ui::SystemTrayUi> {
+  let k       	= cfg.lock();
+  let paths   	= &k.cfg_paths;
+  let path_cur	= &paths[0];
+  let app_data	= SystemTrayData {tooltip:path_cur.display().to_string()};
+  let app     	= SystemTray {app_data:RefCell::new(app_data), ..Default::default()};
+  SystemTray::build_ui(app).context("Failed to build UI")
+}
 
 pub use log::*;
 pub use winapi::um::wincon::{AttachConsole, FreeConsole, ATTACH_PARENT_PROCESS};
