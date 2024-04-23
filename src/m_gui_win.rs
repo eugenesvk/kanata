@@ -27,7 +27,7 @@ impl SystemTray {
   fn show_menu(&self) {
     let (x, y) = nwg::GlobalCursor::position();
     self.tray_menu.popup(x, y);  }
-  fn hello1(&self) {nwg::simple_message("Hello", "Hello World!");}
+  fn hello1(&self) {nwg::simple_message("HelloMsg", "Hello World!");}
   fn hello2(&self) {
     let flags = nwg::TrayNotificationFlags::USER_ICON | nwg::TrayNotificationFlags::LARGE_ICON;
     self.tray.show("Hello World", Some("Welcome to my application"), Some(flags), Some(&self.icon));  }
