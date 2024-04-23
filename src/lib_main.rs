@@ -239,6 +239,7 @@ pub fn lib_main_gui() {
     // eprintln!("\nPress enter to exit");
     // let _ = std::io::stdin().read_line(&mut String::new());
     // TODO: ↑panics on Err(TryRecvError::Disconnected) @ Win/llhook
+    // todo: coordinate with exit(&self) {nwg::stop_thread_dispatch();}
   // }
 
   unsafe {FreeConsole();}
