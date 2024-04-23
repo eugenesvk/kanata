@@ -73,41 +73,7 @@ impl Kanata {
             true
         });
         #[cfg(feature = "gui")]
-        // let _ui = SystemTray::build_ui(Default::default()).context("Failed to build UI")?;
-        let app_data = SystemTrayData {ttt:"✗✗✗".to_string()};
-        let app : SystemTray = SystemTray {app_data:RefCell::new(app_data), ..Default::default()};
-
-        // let mut app : SystemTray = SystemTray {data:RefCell::new(app_data), ..Default::default()};
-        // let _a = &app.tray_item1;
-        // info!("{:?}",_a.handle);
-        // info!("tray_item1 pre add {:?}",_a.handle);
-        // let _a = &app.tray_item4;
-        // let _ = app.add_menu();
-        // let _a = &app.tray_item1;
-        // info!("tray_item1 pos add {:?}",_a.handle);
-        let mut _ui = SystemTray::build_ui(app).context("Failed to build UI")?;
-        // let _ = _ui.inner.borrow_mut().add_menu();
-        // let _ = _ui.tray_item1.drop();
-
-        // nwg::Font::set_global_family("Segoe UI").context("Failed to set default font")?;
-        // let _ui = MessageBank::build_ui(Default::default()).context("Failed to build UI")?;
-        // _ui.add_message();
-        // _ui.add_message();
-        // _ui.add_message();
-        // _ui.add_message();
-
-
-        // let ui_inner = _ui.inner.borrow();
-        // match _ui.hmenu_item() {
-            // Some(mi1) => {mi1.text = "saD".into();},
-            // None => {},
-        // };
-            // nwg::MenuItem::builder()
-                // .text("Hello")
-                // .parent(&_ui.trzay_menu)
-                // .build(&mut _ui.tray_item1)?;
-                // .build(&mut ui.data.tray_item1)?;
-
+        let _ui = build_tray(&_cfg)?;
 
         native_windows_gui::dispatch_thread_events(); // The event loop is also required for the low-level keyboard hook to work.
         // app.data.borrow_mut().close(); // close the shared memory handle once we are done
