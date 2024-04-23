@@ -10,26 +10,21 @@ use nwg::{NativeUi,ControlHandle};
 #[derive(Default,Debug,Clone)] pub struct SystemTrayData {
   pub ttt:String,
 }
-#[derive(Default, NwgUi)] pub struct SystemTray {
-  pub                                                     	handle        	: ControlHandle,
-  pub                                                     	data          	: RefCell<SystemTrayData>,
-  pub                                                     	tray_item_dyn 	: RefCell<Vec<nwg::MenuItem>>,
-  pub                                                     	handlers_dyn  	: RefCell<Vec<nwg::EventHandler>>,
-  #[nwg_resource]                                         	pub embed     	: nwg::EmbedResource,
-  #[nwg_control]                                          	pub window    	: nwg::MessageWindow,
-  #[nwg_resource(source_embed    :Some(&data.embed)       	              	//
-    ,            source_embed_str:Some("iconMain"))]      	pub icon      	: nwg::Icon,
-  #[nwg_control(icon:Some(&data.icon)                     	              	//
-    ,           tip :Some("TipHello"))]                   	              	//
-   #[nwg_events(MousePressLeftUp:[SystemTray::show_menu]  	              	//
-    ,           OnContextMenu   :[SystemTray::show_menu])]	pub tray      	: nwg::TrayNotification,
-  #[nwg_control(parent:window   , popup: true)]           	pub tray_menu 	: nwg::Menu,
-  #[nwg_control(parent:tray_menu, text:"&1 Hello")]       	              	//
-   #[nwg_events(OnMenuItemSelected:[SystemTray::hello1])] 	pub tray_item1	: nwg::MenuItem,
-  #[nwg_control(parent:tray_menu, text:"&2 Popup")]       	              	//
-   #[nwg_events(OnMenuItemSelected:[SystemTray::hello2])] 	pub tray_item2	: nwg::MenuItem,
-  #[nwg_control(parent:tray_menu, text:"&X Exit\t‹⎈␠⎋")]  	              	//
-   #[nwg_events(OnMenuItemSelected:[SystemTray::exit  ])] 	pub tray_item3	: nwg::MenuItem,
+#[derive(Default)] pub struct SystemTray {
+  pub app_data     	: RefCell<SystemTrayData>,
+  ///              	Store dynamically created tray menu items
+  pub tray_item_dyn	: RefCell<Vec<nwg::MenuItem>>,
+  ///              	Store dynamically created tray menu items' handlers
+  pub handlers_dyn 	: RefCell<Vec<nwg::EventHandler>>,
+  ///              	Store embedded-in-the-binary resources like icons not to load them from a file
+  pub embed        	: nwg::EmbedResource,
+  pub icon         	: nwg::Icon,
+  pub window       	: nwg::MessageWindow,
+  pub tray         	: nwg::TrayNotification,
+  pub tray_menu    	: nwg::Menu,
+  pub tray_item1   	: nwg::MenuItem,
+  pub tray_item2   	: nwg::MenuItem,
+  pub tray_item3   	: nwg::MenuItem,
 }
 use winapi::shared::windef::{HWND, HMENU};
 ///fn change_menu_item_text(menu: &nwg::Menu, item_id: u32, new_text: &str) {
@@ -76,6 +71,84 @@ impl SystemTray {
     self.tray.show("Hello World", Some("Welcome to my application"), Some(flags), Some(&self.icon));  }
   fn exit(&self) {nwg::stop_thread_dispatch();}
 }
+
+mod system_tray_ui {
+  use native_windows_gui::{self as nwg, MousePressEvent};
+  use super::*;
+  use std::rc::Rc;
+  use std::cell::RefCell;
+  use std::ops::{Deref, DerefMut};
+
+  pub struct SystemTrayUi {
+    inner      	: Rc<SystemTray>,
+    handler_def	: RefCell<Vec<nwg::EventHandler>>
+  }
+
+  impl nwg::NativeUi<SystemTrayUi> for SystemTray {
+    fn build_ui(mut d: SystemTray) -> Result<SystemTrayUi, nwg::NwgError> {
+      use nwg::Event as E;
+
+      d.app_data     	= RefCell::new(Default::default());
+      d.tray_item_dyn	=	RefCell::new(Default::default());
+      d.handlers_dyn 	=	RefCell::new(Default::default());
+      // Resources
+      d.embed	= Default::default();
+      d.embed	= nwg::EmbedResource::load(Some("kanata.exe"))?;
+      nwg::Icon::builder().source_embed(Some(&d.embed)).source_embed_str(Some("iconMain")).build(&mut d.icon)?;
+
+      // Controls
+      nwg::MessageWindow   	::builder()
+        .                  	  build(       &mut d.window    	)?                          	;
+      nwg::TrayNotification	::builder().parent(&d.window)   	.icon(Some(&d.icon))        	.tip(Some("TipHello"))
+        .                  	  build(       &mut d.tray      	)?                          	;
+      nwg::Menu            	::builder().parent(&d.window)   	.popup(true)/*context menu*/	//
+        .                  	  build(       &mut d.tray_menu 	)?                          	;
+      nwg::MenuItem        	::builder().parent(&d.tray_menu)	.text("&1 Hello")           	//
+        .                  	  build(       &mut d.tray_item1	)?                          	;
+      nwg::MenuItem        	::builder().parent(&d.tray_menu)	.text("&2 Popup")           	//
+        .                  	  build(       &mut d.tray_item2	)?                          	;
+      nwg::MenuItem        	::builder().parent(&d.tray_menu)	.text("&X Exit\t‹⎈␠⎋")      	//
+        .                  	  build(       &mut d.tray_item3	)?                          	;
+
+      let ui = SystemTrayUi { // Wrap-up
+        inner      	: Rc::new(d),
+        handler_def	: Default::default(),
+      };
+
+      let evt_ui = Rc::downgrade(&ui.inner); // Events
+      let handle_events = move |evt, _evt_data, handle| {
+        if let Some(evt_ui) = evt_ui.upgrade() {
+          match evt {
+            E::OnMousePress(MousePressEvent::MousePressLeftUp)	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
+            E::OnContextMenu                                  	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
+            E::OnMenuItemSelected =>
+              if        &handle == &evt_ui.tray_item1	{SystemTray::hello1(&evt_ui);
+              } else if &handle == &evt_ui.tray_item2	{SystemTray::hello2(&evt_ui);
+              } else if &handle == &evt_ui.tray_item3	{SystemTray::exit  (&evt_ui);
+              },
+            _ => {}
+          }
+        }
+      };
+      ui.handler_def.borrow_mut().push(nwg::full_bind_event_handler(&ui.window.handle, handle_events));
+      return Ok(ui);
+    }
+  }
+
+  impl Drop for SystemTrayUi { /// To make sure that everything is freed without issues, the default handler must be unbound.
+    fn drop(&mut self) {
+      let mut handlers = self.handler_def.borrow_mut();
+      for handler in handlers.drain(0..) {nwg::unbind_event_handler(&handler);}
+    }
+  }
+  impl Deref    for SystemTrayUi {type Target = SystemTray;fn deref    (&    self) -> &    Self::Target {&    self.inner}}
+  // impl DerefMut for SystemTrayUi {                         fn deref_mut(&mut self) -> &mut Self::Target {&mut self.inner}}
+  impl DerefMut for SystemTrayUi {
+    // fn deref_mut(&mut self) -> &mut crate::SystemTray {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+      Rc::get_mut(&mut self.inner).expect("REASON")}}
+}
+
 
 pub use log::*;
 pub use winapi::um::wincon::{AttachConsole, FreeConsole, ATTACH_PARENT_PROCESS};
