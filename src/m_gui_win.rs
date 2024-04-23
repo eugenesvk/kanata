@@ -3,26 +3,35 @@
 
 extern crate native_windows_gui    as nwg;
 extern crate native_windows_derive as nwd;
+use core::cell::RefCell;
 use nwd::NwgUi;
-use nwg::NativeUi;
+use nwg::{NativeUi,ControlHandle};
 
-#[derive(Default, NwgUi)] pub struct SystemTray {
-  #[nwg_resource]                                         	embed     	: nwg::EmbedResource,
-  #[nwg_control]                                          	window    	: nwg::MessageWindow,
-  #[nwg_resource(source_embed    :Some(&data.embed)       	          	//
-    ,            source_embed_str:Some("iconMain"))]      	icon      	: nwg::Icon,
-  #[nwg_control(icon:Some(&data.icon)                     	          	//
-    ,           tip :Some("Hello"))]                      	          	//
-   #[nwg_events(MousePressLeftUp:[SystemTray::show_menu]  	          	//
-    ,           OnContextMenu   :[SystemTray::show_menu])]	tray      	: nwg::TrayNotification,
-  #[nwg_control(parent:window   , popup: true)]           	tray_menu 	: nwg::Menu,
-  #[nwg_control(parent:tray_menu, text:"&1 Hello")]       	          	//
-   #[nwg_events(OnMenuItemSelected:[SystemTray::hello1])] 	tray_item1	: nwg::MenuItem,
-  #[nwg_control(parent:tray_menu, text:"&2 Popup")]       	          	//
-   #[nwg_events(OnMenuItemSelected:[SystemTray::hello2])] 	tray_item2	: nwg::MenuItem,
-  #[nwg_control(parent:tray_menu, text:"&X Exit")]        	          	//
-   #[nwg_events(OnMenuItemSelected:[SystemTray::exit  ])] 	tray_item3	: nwg::MenuItem,
+#[derive(Default,Debug,Clone)] pub struct SystemTrayData {
+  pub ttt:String,
 }
+#[derive(Default, NwgUi)] pub struct SystemTray {
+  pub                                                     	handle        	: ControlHandle,
+  pub                                                     	data          	: RefCell<SystemTrayData>,
+  pub                                                     	tray_item_dyn 	: RefCell<Vec<nwg::MenuItem>>,
+  pub                                                     	handlers_dyn  	: RefCell<Vec<nwg::EventHandler>>,
+  #[nwg_resource]                                         	pub embed     	: nwg::EmbedResource,
+  #[nwg_control]                                          	pub window    	: nwg::MessageWindow,
+  #[nwg_resource(source_embed    :Some(&data.embed)       	              	//
+    ,            source_embed_str:Some("iconMain"))]      	pub icon      	: nwg::Icon,
+  #[nwg_control(icon:Some(&data.icon)                     	              	//
+    ,           tip :Some("TipHello"))]                   	              	//
+   #[nwg_events(MousePressLeftUp:[SystemTray::show_menu]  	              	//
+    ,           OnContextMenu   :[SystemTray::show_menu])]	pub tray      	: nwg::TrayNotification,
+  #[nwg_control(parent:window   , popup: true)]           	pub tray_menu 	: nwg::Menu,
+  #[nwg_control(parent:tray_menu, text:"&1 Hello")]       	              	//
+   #[nwg_events(OnMenuItemSelected:[SystemTray::hello1])] 	pub tray_item1	: nwg::MenuItem,
+  #[nwg_control(parent:tray_menu, text:"&2 Popup")]       	              	//
+   #[nwg_events(OnMenuItemSelected:[SystemTray::hello2])] 	pub tray_item2	: nwg::MenuItem,
+  #[nwg_control(parent:tray_menu, text:"&X Exit\t‹⎈␠⎋")]  	              	//
+   #[nwg_events(OnMenuItemSelected:[SystemTray::exit  ])] 	pub tray_item3	: nwg::MenuItem,
+}
+use winapi::shared::windef::{HWND, HMENU};
 ///fn change_menu_item_text(menu: &nwg::Menu, item_id: u32, new_text: &str) {
 ///  let mut item_info = nwg::MenuItemInfo::default(); // Get the current menu item info
 ///  item_info.text = Some(String::new()); // Initialize with an empty string to get the current text
