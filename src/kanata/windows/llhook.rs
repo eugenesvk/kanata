@@ -23,6 +23,7 @@ use nwg::NativeUi;
 impl Kanata {
     /// Initialize the callback that is passed to the Windows low level hook to receive key events and run the native_windows_gui event loop.
     pub fn event_loop(_cfg: Arc<Mutex<Self>>, tx: Sender<KeyEvent>) -> Result<()> {
+        #[cfg(not(feature = "gui"))]
         unsafe {
             // Display debug and panic output when launched from a terminal.
             use winapi::um::wincon::*;
