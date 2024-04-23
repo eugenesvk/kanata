@@ -74,7 +74,7 @@ impl Kanata {
         #[cfg(feature = "gui")]
         // let _ui = SystemTray::build_ui(Default::default()).context("Failed to build UI")?;
         let app_data = SystemTrayData {ttt:"✗✗✗".to_string()};
-        let app : SystemTray = SystemTray {data:RefCell::new(app_data), ..Default::default()};
+        let app : SystemTray = SystemTray {app_data:RefCell::new(app_data), ..Default::default()};
 
         // let mut app : SystemTray = SystemTray {data:RefCell::new(app_data), ..Default::default()};
         // let _a = &app.tray_item1;
