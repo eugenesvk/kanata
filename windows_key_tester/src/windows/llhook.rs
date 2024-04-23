@@ -80,6 +80,7 @@ unsafe extern "system" fn hook_proc(code: c_int, wparam: WPARAM, lparam: LPARAM)
 
 pub fn start() -> Result<()> {
     // Display debug and panic output when launched from a terminal.
+    #[cfg(not(feature = "gui"))]
     unsafe {
         use winapi::um::wincon::*;
         if AttachConsole(ATTACH_PARENT_PROCESS) != 0 {
