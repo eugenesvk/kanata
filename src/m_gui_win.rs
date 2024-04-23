@@ -23,7 +23,27 @@ use nwg::NativeUi;
   #[nwg_control(parent:tray_menu, text:"&X Exit")]        	          	//
    #[nwg_events(OnMenuItemSelected:[SystemTray::exit  ])] 	tray_item3	: nwg::MenuItem,
 }
+///fn change_menu_item_text(menu: &nwg::Menu, item_id: u32, new_text: &str) {
+///  let mut item_info = nwg::MenuItemInfo::default(); // Get the current menu item info
+///  item_info.text = Some(String::new()); // Initialize with an empty string to get the current text
+///  menu.get_item_info(item_id, &mut item_info).expect("Failed to get menu item info");
+///  item_info.text = Some(new_text.to_string()); // Modify the text
+///  menu.set_item_info(item_id, &item_info).expect("Failed to set menu item info"); // Set the modified menu item info
+///  // Optionally, redraw the menu or the window containing the menu This step might be necessary depending on your application's behavior
+///}
 impl SystemTray {
+  // fn update_menu(&self) {
+  //   self.nwg::TextInput::builder()
+  //       .text(&data.form_data)
+  //       .parent(&parent)
+  //       .build(&mut data.value)?;
+  // }
+  // pub fn hmenu_item(&self) -> Option<(HMENU, u32)> {
+  //   match &self.tray_item1.handle {
+  //     &ControlHandle::MenuItem(h, i) => Some((h, i)),
+  //     _ => None,
+  //   }
+  // }
   pub fn add_menu(&self) -> Result<(),nwg::NwgError> {
     // let title 	= self.message_title  .text();
     let menu_text	= "Add_menu New menu item!";
