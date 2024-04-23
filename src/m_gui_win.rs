@@ -24,6 +24,20 @@ use nwg::NativeUi;
    #[nwg_events(OnMenuItemSelected:[SystemTray::exit  ])] 	tray_item3	: nwg::MenuItem,
 }
 impl SystemTray {
+  pub fn add_menu(&self) -> Result<(),nwg::NwgError> {
+    // let title 	= self.message_title  .text();
+    let menu_text	= "Add_menu New menu item!";
+
+    let mut new_menu = Default::default();
+    nwg::MenuItem::builder().text(menu_text).parent(&self.tray_menu).build(&mut new_menu)?;
+
+    let mut tray_item_dyn 	= self.tray_item_dyn.borrow_mut();
+    // let mut handler_dyn	= self.handlers_dyn .borrow_mut();
+
+    tray_item_dyn.push(new_menu);
+    Ok(())
+  }
+
   fn show_menu(&self) {
     let (x, y) = nwg::GlobalCursor::position();
     self.tray_menu.popup(x, y);  }
