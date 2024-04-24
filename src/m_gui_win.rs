@@ -150,11 +150,6 @@ pub mod system_tray_ui {
     }
   }
   impl Deref    for SystemTrayUi {type Target = SystemTray;fn deref    (&    self) -> &    Self::Target {&    self.inner}}
-  // impl DerefMut for SystemTrayUi {                         fn deref_mut(&mut self) -> &mut Self::Target {&mut self.inner}}
-  impl DerefMut for SystemTrayUi {
-    // fn deref_mut(&mut self) -> &mut crate::SystemTray {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-      Rc::get_mut(&mut self.inner).expect("REASON")}}
 }
 
 pub fn build_tray(cfg: &Arc<Mutex<Kanata>>) -> Result<system_tray_ui::SystemTrayUi> {
