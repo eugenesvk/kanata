@@ -203,6 +203,10 @@ fn main_impl() -> Result<()> {
   let cfg_arc = Kanata::new_arc(&args)?; // new configuration from a file
   #[cfg(feature = "passthru_ahk")]
   let cfg_arc = Kanata::new_arc(&args, None)?; // new configuration from a file
+
+  #[cfg(feature = "gui")]
+  if CFG.set(cfg_arc.clone()).is_err() {warn!("Someone else set our ‘CFG’");}; // store a clone of cfg so that we can ask it to reset itself
+
   if !args.nodelay {
     info!("Sleeping for 2s. Please release all keys and don't press additional ones. Run kanata with --help to see how understand more and how to disable this sleep.");
     std::thread::sleep(std::time::Duration::from_secs(2));
@@ -253,6 +257,13 @@ pub fn lib_main_cli() -> Result<()> {
   let _ = std::io::stdin().read_line(&mut String::new());
   ret
 }
+
+#[cfg(feature = "gui")]
+use parking_lot::Mutex;
+#[cfg(feature = "gui")]
+use std::sync::{Arc, OnceLock};
+#[cfg(feature = "gui")]
+pub static CFG: OnceLock<Arc<Mutex<Kanata>>> = OnceLock::new();
 
 #[cfg(feature = "gui")]
 pub fn lib_main_gui() {
