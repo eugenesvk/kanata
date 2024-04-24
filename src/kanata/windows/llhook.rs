@@ -76,9 +76,10 @@ impl Kanata {
         let _ui = build_tray(&_cfg)?;
 
         native_windows_gui::dispatch_thread_events(); // The event loop is also required for the low-level keyboard hook to work.
-        // app.data.borrow_mut().close(); // close the shared memory handle once we are done
-        //TEMP todo disable// eprintln!("\nPress enter to exit"); // moved from main to not panic on a disconnected channel
-        //TEMP todo disable// let _ = std::io::stdin().read_line(&mut String::new());
+        // if *IS_TERM  {
+          // eprintln!("\nPress enter to exit"); // moved from main to not panic on a disconnected channel
+          // let _ = std::io::stdin().read_line(&mut String::new());
+        // }
         Ok(())
     }
 }
