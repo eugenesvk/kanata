@@ -20,6 +20,8 @@ use nwg::{NativeUi,ControlHandle};
   pub tray_item_dyn	: RefCell<Vec<nwg::MenuItem>>,
   ///              	Store dynamically created tray menu items' handlers
   pub handlers_dyn 	: RefCell<Vec<nwg::EventHandler>>,
+  ///              	Store dynamically created tray menu items' raw handlers
+  pub handlers_r_dyn 	: RefCell<Vec<nwg::RawEventHandler>>,
   ///              	Store embedded-in-the-binary resources like icons not to load them from a file
   pub embed        	: nwg::EmbedResource,
   pub icon         	: nwg::Icon,
@@ -77,7 +79,9 @@ impl SystemTray {
 }
 
 pub mod system_tray_ui {
-  use winapi::um::winuser::{WM_CLOSE};
+  use winapi::um::winuser::{WM_CLOSE,WM_DESTROY,WM_NCDESTROY};
+  use winapi::um::wincon::{CTRL_BREAK_EVENT,CTRL_CLOSE_EVENT,CTRL_C_EVENT,CTRL_LOGOFF_EVENT,CTRL_SHUTDOWN_EVENT};
+  use winapi::shared::minwindef::{HIWORD, LOWORD};
   use native_windows_gui::{self as nwg, MousePressEvent};
   use super::*;
   use std::rc::Rc;
@@ -94,15 +98,15 @@ pub mod system_tray_ui {
       use nwg::Event as E;
 
       let app_data = d.app_data.borrow().clone();
-      // d.app_data  	= RefCell::new(Default::default());
-      d.tray_item_dyn	=	RefCell::new(Default::default());
-      d.handlers_dyn 	=	RefCell::new(Default::default());
+      // d.app_data   	= RefCell::new(Default::default());
+      d.tray_item_dyn 	=	RefCell::new(Default::default());
+      d.handlers_dyn  	=	RefCell::new(Default::default());
+      d.handlers_r_dyn	=	RefCell::new(Default::default());
       // Resources
       d.embed	= Default::default();
       d.embed	= nwg::EmbedResource::load(Some("kanata.exe"))?;
       nwg::Icon::builder().source_embed(Some(&d.embed)).source_embed_str(Some("iconMain")).strict(true)/*use sys, not panic, if missing*/
         .build(&mut d.icon)?;
-
 
       // Controls
       nwg::MessageWindow   	::builder()
@@ -117,6 +121,29 @@ pub mod system_tray_ui {
         .                  	  build(       &mut d.tray_item2	)?                          	;
       nwg::MenuItem        	::builder().parent(&d.tray_menu)	.text("&X Exit\t‹⎈␠⎋")      	//
         .                  	  build(       &mut d.tray_item3	)?                          	;
+
+      // let window = nwg::Window::default();
+      const RAW_HANDLER_ID: usize = 0xFFFF + 1; // <0xFFFF reserved
+      let h_raw = nwg::bind_raw_event_handler(&d.window.handle, RAW_HANDLER_ID, |_win_id, msg, w, l| {
+        match msg {
+          // WM_MOVE         	=> info!("MOVING!"),
+          // WM_SIZE         	=> {info!("w: {}, h: {}", LOWORD(l as u32), HIWORD(l as u32));}
+          // WM_CLOSE        	=> {info!("WM_CLOSE: {:?}", w); nwg::stop_thread_dispatch()},
+          // WM_DESTROY      	=> {info!("WM_DESTROY: {:?}", w); nwg::stop_thread_dispatch()},
+          // WM_NCDESTROY    	=> {info!("WM_NCDESTROY : {:?}", w); nwg::stop_thread_dispatch()},
+          CTRL_BREAK_EVENT   	=> {info!("CTRL_BREAK_EVENT : {:?}", w); nwg::stop_thread_dispatch()},
+          CTRL_CLOSE_EVENT   	=> {info!("CTRL_CLOSE_EVENT : {:?}", w); nwg::stop_thread_dispatch()},
+          CTRL_C_EVENT       	=> {info!("CTRL_C_EVENT : {:?}", w); nwg::stop_thread_dispatch()},
+          CTRL_LOGOFF_EVENT  	=> {info!("CTRL_LOGOFF_EVENT : {:?}", w); nwg::stop_thread_dispatch()},
+          CTRL_SHUTDOWN_EVENT	=> {info!("CTRL_SHUTDOWN_EVENT : {:?}", w); nwg::stop_thread_dispatch()},
+          _                  	=> info!("{:?}", w),
+        }
+        None
+      }).unwrap();
+      // match h_raw {
+      //   Ok(h_raw)	=> {let mut handler_r_dyn	= d.handlers_r_dyn .borrow_mut(); handler_r_dyn.push(h_raw);},
+      //   Err(e)   	=> return Err(e),
+      // };
 
       let ui = SystemTrayUi { // Wrap-up
         inner      	: Rc::new(d),
