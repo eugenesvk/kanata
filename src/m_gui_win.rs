@@ -99,7 +99,8 @@ pub mod system_tray_ui {
       // Resources
       d.embed	= Default::default();
       d.embed	= nwg::EmbedResource::load(Some("kanata.exe"))?;
-      nwg::Icon::builder().source_embed(Some(&d.embed)).source_embed_str(Some("iconMain")).build(&mut d.icon)?;
+      nwg::Icon::builder().source_embed(Some(&d.embed)).source_embed_str(Some("iconMain")).strict(true)/*use sys, not panic, if missing*/
+        .build(&mut d.icon)?;
 
 
       // Controls
