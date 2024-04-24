@@ -77,6 +77,7 @@ impl SystemTray {
 }
 
 pub mod system_tray_ui {
+  use winapi::um::winuser::{WM_CLOSE};
   use native_windows_gui::{self as nwg, MousePressEvent};
   use super::*;
   use std::rc::Rc;
