@@ -1,7 +1,7 @@
 #![allow(non_upper_case_globals)]
 use anyhow::{bail, Result};
 use clap::{Parser};
-#[cfg(feature = "gui")]
+#[cfg(all(target_os = "windows", feature = "gui"))]
 use clap::{CommandFactory,error::ErrorKind};
 use kanata_parser::cfg;
 use crate::*;
@@ -101,9 +101,9 @@ kanata.kbd in the current working directory and
 
 /// Parse CLI arguments and initialize logging.
 fn cli_init() -> Result<ValidatedArgs> {
-  #[cfg(not(feature = "gui"))]
+  #[cfg(all(not(target_os = "windows"), not(feature = "gui")))]
   let args = Args::parse();
-  #[cfg(feature = "gui")]
+  #[cfg(all(    target_os = "windows",      feature = "gui" ))]
   let args = match Args::try_parse() {
     Ok (args )   	=> args,
     Err(e)       	=> {
@@ -144,10 +144,11 @@ fn cli_init() -> Result<ValidatedArgs> {
     eprintln!("WARNING: could not set log TZ to local: {e:?}");
   };
   log_cfg.set_time_format_rfc3339();
-  #[cfg(not(feature = "gui"))]
+  #[cfg(all(not(target_os = "windows"), not(feature = "gui")))]
     CombinedLogger::init(vec![TermLogger::new(log_lvl,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,
     )]).expect("logger can init");
-  #[cfg(feature = "gui")] if *IS_TERM	{
+  #[cfg(all(    target_os = "windows",      feature = "gui" ))]
+  if *IS_TERM	{
     CombinedLogger::init(vec![TermLogger::new(log_lvl,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,),
       log_win::windbg_simple_combo(log_lvl),]).expect("logger can init");
   } else {CombinedLogger::init(vec![log_win::windbg_simple_combo(log_lvl),]).expect("logger can init");}
@@ -204,7 +205,7 @@ fn main_impl() -> Result<()> {
   #[cfg(feature = "passthru_ahk")]
   let cfg_arc = Kanata::new_arc(&args, None)?; // new configuration from a file
 
-  #[cfg(feature = "gui")]
+  #[cfg(all(    target_os = "windows",      feature = "gui" ))]
   if CFG.set(cfg_arc.clone()).is_err() {warn!("Someone else set our ‘CFG’");}; // store a clone of cfg so that we can ask it to reset itself
 
   if !args.nodelay {
@@ -258,14 +259,14 @@ pub fn lib_main_cli() -> Result<()> {
   ret
 }
 
-#[cfg(feature = "gui")]
+#[cfg(all(    target_os = "windows",      feature = "gui" ))]
 use parking_lot::Mutex;
-#[cfg(feature = "gui")]
+#[cfg(all(    target_os = "windows",      feature = "gui" ))]
 use std::sync::{Arc, OnceLock};
-#[cfg(feature = "gui")]
+#[cfg(all(    target_os = "windows",      feature = "gui" ))]
 pub static CFG: OnceLock<Arc<Mutex<Kanata>>> = OnceLock::new();
 
-#[cfg(feature = "gui")]
+#[cfg(all(    target_os = "windows",      feature = "gui" ))]
 pub fn lib_main_gui() {
   let _attach_console = *IS_CONSOLE;
   let ret = main_impl();
