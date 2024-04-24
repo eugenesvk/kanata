@@ -1,7 +1,8 @@
 #![allow(unused_imports,unused_variables,unreachable_code,dead_code,non_upper_case_globals)]
 // #![allow(non_upper_case_globals)]
 
-use crate::Kanata;
+use std::ffi::OsStr;
+use crate::{Kanata,kanata};
 use parking_lot::Mutex;
 use anyhow::{Result,Context};
 extern crate native_windows_gui    as nwg;
@@ -27,9 +28,10 @@ use nwg::{NativeUi,ControlHandle};
   pub tray         	: nwg::TrayNotification,
   pub tray_menu    	: nwg::Menu,
   pub tray_item1   	: nwg::MenuItem,
-  pub tray_item2   	: nwg::MenuItem,
+  pub tray_2reload 	: nwg::MenuItem,
   pub tray_item3   	: nwg::MenuItem,
 }
+use crate::lib_main::CFG;
 use winapi::shared::windef::{HWND, HMENU};
 ///fn change_menu_item_text(menu: &nwg::Menu, item_id: u32, new_text: &str) {
 ///  let mut item_info = nwg::MenuItemInfo::default(); // Get the current menu item info
@@ -70,9 +72,21 @@ impl SystemTray {
     let (x, y) = nwg::GlobalCursor::position();
     self.tray_menu.popup(x, y);  }
   fn hello1(&self) {nwg::simple_message("HelloMsg", "Hello World!");}
-  fn hello2(&self) {
-    let flags = nwg::TrayNotificationFlags::USER_ICON | nwg::TrayNotificationFlags::LARGE_ICON;
-    self.tray.show("Hello World", Some("Welcome to my application"), Some(flags), Some(&self.icon));  }
+  fn reload(&self) {
+    use nwg::TrayNotificationFlags as f_tray;
+    let mut msg_title  :String = "".to_string();
+    let mut msg_content:String = "".to_string();
+    let mut flags:f_tray = f_tray::empty();
+    if let Some(cfg) = CFG.get() {let mut k = cfg.lock();
+      let paths = &k.cfg_paths; let path_cur = &paths[0]; msg_content += &path_cur.display().to_string();
+      let cfg_name = &path_cur.file_name().unwrap_or_else(||OsStr::new("")).to_string_lossy().to_string();
+      if k.request_live_reload().is_err() {
+        msg_title      +=&("✗ \"".to_owned() + cfg_name + "\" NOT reloaded");warn!("{}", msg_title); flags |= f_tray::ERROR_ICON;
+      } else {msg_title+=&("🔄 \"".to_owned() + cfg_name + "\" reloaded")   ;info!("{}", msg_title)}; flags |= f_tray::USER_ICON;
+    }   else {msg_title+="✗ Config NOT reloaded, no CFG";warn!("{}", msg_title); flags |= f_tray::ERROR_ICON;
+    };
+    flags |= f_tray::LARGE_ICON; // todo: fails without this, must have SM_CXICON x SM_CYICON?
+    self.tray.show(&msg_content, Some(&msg_title), Some(flags), Some(&self.icon));}
   fn exit(&self) {nwg::stop_thread_dispatch();}
 }
 
@@ -105,17 +119,17 @@ pub mod system_tray_ui {
 
       // Controls
       nwg::MessageWindow   	::builder()
-        .                  	  build(       &mut d.window    	)?                          	;
-      nwg::TrayNotification	::builder().parent(&d.window)   	.icon(Some(&d.icon))        	.tip(Some(&app_data.tooltip))
-        .                  	  build(       &mut d.tray      	)?                          	;
-      nwg::Menu            	::builder().parent(&d.window)   	.popup(true)/*context menu*/	//
-        .                  	  build(       &mut d.tray_menu 	)?                          	;
-      nwg::MenuItem        	::builder().parent(&d.tray_menu)	.text("&1 Hello")           	//
-        .                  	  build(       &mut d.tray_item1	)?                          	;
-      nwg::MenuItem        	::builder().parent(&d.tray_menu)	.text("&2 Popup")           	//
-        .                  	  build(       &mut d.tray_item2	)?                          	;
-      nwg::MenuItem        	::builder().parent(&d.tray_menu)	.text("&X Exit\t‹⎈␠⎋")      	//
-        .                  	  build(       &mut d.tray_item3	)?                          	;
+        .                  	  build(       &mut d.window      	)?                          	;
+      nwg::TrayNotification	::builder().parent(&d.window)     	.icon(Some(&d.icon))        	.tip(Some(&app_data.tooltip))
+        .                  	  build(       &mut d.tray        	)?                          	;
+      nwg::Menu            	::builder().parent(&d.window)     	.popup(true)/*context menu*/	//
+        .                  	  build(       &mut d.tray_menu   	)?                          	;
+      nwg::MenuItem        	::builder().parent(&d.tray_menu)  	.text("&1 Hello")           	//
+        .                  	  build(       &mut d.tray_item1  	)?                          	;
+      nwg::MenuItem        	::builder().parent(&d.tray_menu)  	.text("&R Reload config")   	//
+        .                  	  build(       &mut d.tray_2reload	)?                          	;
+      nwg::MenuItem        	::builder().parent(&d.tray_menu)  	.text("&X Exit\t‹⎈␠⎋")      	//
+        .                  	  build(       &mut d.tray_item3  	)?                          	;
 
       let ui = SystemTrayUi { // Wrap-up
         inner      	: Rc::new(d),
@@ -130,9 +144,9 @@ pub mod system_tray_ui {
             E::OnMousePress(MousePressEvent::MousePressLeftUp)	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
             E::OnContextMenu/*🖰›*/                            	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
             E::OnMenuItemSelected =>
-              if        &handle == &evt_ui.tray_item1	{SystemTray::hello1(&evt_ui);
-              } else if &handle == &evt_ui.tray_item2	{SystemTray::hello2(&evt_ui);
-              } else if &handle == &evt_ui.tray_item3	{SystemTray::exit  (&evt_ui);
+              if        &handle == &evt_ui.tray_item1  	{SystemTray::hello1(&evt_ui);
+              } else if &handle == &evt_ui.tray_2reload	{SystemTray::reload(&evt_ui);
+              } else if &handle == &evt_ui.tray_item3  	{SystemTray::exit  (&evt_ui);
               },
             _ => {}
           }
