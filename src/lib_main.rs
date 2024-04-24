@@ -1,6 +1,8 @@
 #![allow(non_upper_case_globals)]
 use anyhow::{bail, Result};
-use clap::{Parser,CommandFactory,error::ErrorKind};
+use clap::{Parser};
+#[cfg(feature = "gui")]
+use clap::{CommandFactory,error::ErrorKind};
 use kanata_parser::cfg;
 use crate::*;
 use log::info;
