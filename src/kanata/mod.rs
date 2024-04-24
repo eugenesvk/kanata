@@ -413,8 +413,8 @@ impl Kanata {
         Ok(Arc::new(Mutex::new(k)))
     }
 
-    #[cfg(feature = "gui")]
-    fn set_live_reload(&mut self) -> Result<()> {
+    #[cfg(all(target_os = "windows", feature = "gui"))]
+    pub fn request_live_reload(&mut self) -> Result<()> {
         self.live_reload_requested = true;
         Ok(())
     }
