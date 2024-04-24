@@ -384,6 +384,11 @@ impl Kanata {
         Ok(Arc::new(Mutex::new(k)))
     }
 
+    #[cfg(feature = "gui")]
+    fn set_live_reload(&mut self) -> Result<()> {
+        self.live_reload_requested = true;
+        Ok(())
+    }
     fn do_live_reload(&mut self, _tx: &Option<Sender<ServerMessage>>) -> Result<()> {
         let cfg = match cfg::new_from_file(&self.cfg_paths[self.cur_cfg_idx]) {
             Ok(c) => c,
