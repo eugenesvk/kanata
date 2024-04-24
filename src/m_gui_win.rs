@@ -126,7 +126,7 @@ pub mod system_tray_ui {
         if let Some(evt_ui) = evt_ui.upgrade() {
           match evt {
             E::OnMousePress(MousePressEvent::MousePressLeftUp)	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
-            E::OnContextMenu                                  	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
+            E::OnContextMenu/*🖰›*/                            	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
             E::OnMenuItemSelected =>
               if        &handle == &evt_ui.tray_item1	{SystemTray::hello1(&evt_ui);
               } else if &handle == &evt_ui.tray_item2	{SystemTray::hello2(&evt_ui);
