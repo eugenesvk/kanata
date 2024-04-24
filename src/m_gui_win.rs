@@ -105,7 +105,7 @@ pub mod system_tray_ui {
       // Controls
       nwg::MessageWindow   	::builder()
         .                  	  build(       &mut d.window    	)?                          	;
-      nwg::TrayNotification	::builder().parent(&d.window)   	.icon(Some(&d.icon))        	.tip(Some(&app_data.tooltip)) //(Some("TipHello"))
+      nwg::TrayNotification	::builder().parent(&d.window)   	.icon(Some(&d.icon))        	.tip(Some(&app_data.tooltip))
         .                  	  build(       &mut d.tray      	)?                          	;
       nwg::Menu            	::builder().parent(&d.window)   	.popup(true)/*context menu*/	//
         .                  	  build(       &mut d.tray_menu 	)?                          	;
