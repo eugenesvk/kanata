@@ -1,4 +1,4 @@
-#![allow(unused_imports,unused_variables,unreachable_code,dead_code,non_upper_case_globals)]
+#![allow(unused_imports,unused_variables,unreachable_code,dead_code,non_upper_case_globals,unused_mut)]
 // #![allow(non_upper_case_globals)]
 
 use std::ffi::OsStr;
