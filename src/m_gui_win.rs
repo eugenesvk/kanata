@@ -152,7 +152,9 @@ pub mod system_tray_ui {
           // let menu_text	= i_acc + cfg_name; // &1 kanata.kbd
           let menu_text   	= format!("{cfg_name}\t{i_acc}"); // kanata.kbd &1
           let mut menu_item = Default::default();
-          nwg::MenuItem::builder().parent(&d.tray_1cfg_m).text(&menu_text).build(&mut menu_item)?;
+          if i == 0	{nwg::MenuItem::builder().parent(&d.tray_1cfg_m).text(&menu_text).check(true)	.build(&mut menu_item)?;
+          } else   	{nwg::MenuItem::builder().parent(&d.tray_1cfg_m).text(&menu_text)            	.build(&mut menu_item)?;
+          }
 
           let menu_item_h = menu_item.handle;
           info!("got handle to menu item={:?}",menu_item_h);
