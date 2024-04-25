@@ -12,8 +12,10 @@ use core::cell::RefCell;
 use nwd::NwgUi;
 use nwg::{NativeUi,ControlHandle};
 
+use std::path::PathBuf;
 #[derive(Default,Debug,Clone)] pub struct SystemTrayData {
   pub tooltip:String,
+  pub cfg_p  :Vec<PathBuf>,
 }
 #[derive(Default)] pub struct SystemTray {
   pub app_data     	: RefCell<SystemTrayData>,
@@ -27,9 +29,9 @@ use nwg::{NativeUi,ControlHandle};
   pub window       	: nwg::MessageWindow,
   pub tray         	: nwg::TrayNotification,
   pub tray_menu    	: nwg::Menu,
-  pub tray_item1   	: nwg::MenuItem,
+  pub tray_1cfg_m  	: nwg::Menu,
   pub tray_2reload 	: nwg::MenuItem,
-  pub tray_item3   	: nwg::MenuItem,
+  pub tray_3exit   	: nwg::MenuItem,
 }
 use crate::lib_main::CFG;
 use winapi::shared::windef::{HWND, HMENU};
@@ -49,7 +51,7 @@ impl SystemTray {
   //       .build(&mut data.value)?;
   // }
   // pub fn hmenu_item(&self) -> Option<(HMENU, u32)> {
-  //   match &self.tray_item1.handle {
+  //   match &self.tray_1cfg_m.handle {
   //     &ControlHandle::MenuItem(h, i) => Some((h, i)),
   //     _ => None,
   //   }
@@ -71,7 +73,7 @@ impl SystemTray {
   fn show_menu(&self) {
     let (x, y) = nwg::GlobalCursor::position();
     self.tray_menu.popup(x, y);  }
-  fn hello1(&self) {nwg::simple_message("HelloMsg", "Hello World!");}
+  fn load_cfg(&self) {nwg::simple_message("HelloMsg", "Hello World!");}
   fn reload(&self) {
     use nwg::TrayNotificationFlags as f_tray;
     let mut msg_title  :String = "".to_string();
@@ -87,15 +89,19 @@ impl SystemTray {
     };
     flags |= f_tray::LARGE_ICON; // todo: fails without this, must have SM_CXICON x SM_CYICON?
     self.tray.show(&msg_content, Some(&msg_title), Some(flags), Some(&self.icon));}
-  fn exit(&self) {nwg::stop_thread_dispatch();}
+  fn exit(&self) {
+    let handlers = self.handlers_dyn.borrow();
+    for handler in handlers.iter() {nwg::unbind_event_handler(&handler);}
+    nwg::stop_thread_dispatch();}
 }
 
 pub mod system_tray_ui {
-  use native_windows_gui::{self as nwg, MousePressEvent};
   use super::*;
+  use core::cmp;
   use std::rc::Rc;
   use std::cell::RefCell;
   use std::ops::{Deref, DerefMut};
+  use native_windows_gui::{self as nwg, MousePressEvent};
 
   pub struct SystemTrayUi {
     inner      	: Rc<SystemTray>,
@@ -124,12 +130,35 @@ pub mod system_tray_ui {
         .                  	  build(       &mut d.tray        	)?                          	;
       nwg::Menu            	::builder().parent(&d.window)     	.popup(true)/*context menu*/	//
         .                  	  build(       &mut d.tray_menu   	)?                          	;
-      nwg::MenuItem        	::builder().parent(&d.tray_menu)  	.text("&1 Hello")           	//
-        .                  	  build(       &mut d.tray_item1  	)?                          	;
+      nwg::Menu            	::builder().parent(&d.tray_menu)  	.text("&F Load config")     	//
+        .                  	  build(       &mut d.tray_1cfg_m   	)?                          	;
       nwg::MenuItem        	::builder().parent(&d.tray_menu)  	.text("&R Reload config")   	//
         .                  	  build(       &mut d.tray_2reload	)?                          	;
       nwg::MenuItem        	::builder().parent(&d.tray_menu)  	.text("&X Exit\t‹⎈␠⎋")      	//
-        .                  	  build(       &mut d.tray_item3  	)?                          	;
+        .                  	  build(       &mut d.tray_3exit  	)?                          	;
+
+      {let mut tray_item_dyn	= d.tray_item_dyn.borrow_mut(); //extra scope to drop borrowed mut
+       let mut handlers_dyn 	= d.handlers_dyn .borrow_mut();
+      const menu_acc:&str = "ASDFGQWERTZXCVBYUIOPHJKLNM";
+      if (app_data.cfg_p).len() > 0 {
+        for (i, cfg_p) in app_data.cfg_p.iter().enumerate() {
+          let i_acc = match i { // menu accelerators from 1–0 then A–Z starting from home row for easier presses
+            0..= 8	=> format!("&{} ",i+1),
+            9     	=> format!("&{} ",0),
+           10..=35	=> format!("&{} ",&menu_acc[(i-10)..cmp::min(i-10+1,menu_acc.len())]),
+            _     	=> format!("  "),
+          };
+          let cfg_name = &cfg_p.file_name().unwrap_or_else(||OsStr::new("")).to_string_lossy().to_string(); //kanata.kbd
+          // let menu_text	= i_acc + cfg_name; // &1 kanata.kbd
+          let menu_text   	= format!("{cfg_name}\t{i_acc}"); // kanata.kbd &1
+          let mut menu_item = Default::default();
+          nwg::MenuItem::builder().parent(&d.tray_1cfg_m).text(&menu_text).build(&mut menu_item)?;
+
+          let menu_item_h = menu_item.handle;
+          info!("got handle to menu item={:?}",menu_item_h);
+        }
+      } else {warn!("Didn't get any config paths from Kanata!")}
+      }
 
       let ui = SystemTrayUi { // Wrap-up
         inner      	: Rc::new(d),
@@ -144,9 +173,9 @@ pub mod system_tray_ui {
             E::OnMousePress(MousePressEvent::MousePressLeftUp)	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
             E::OnContextMenu/*🖰›*/                            	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
             E::OnMenuItemSelected =>
-              if        &handle == &evt_ui.tray_item1  	{SystemTray::hello1(&evt_ui);
+              if        &handle == &evt_ui.tray_1cfg_m 	{SystemTray::load_cfg(&evt_ui);
               } else if &handle == &evt_ui.tray_2reload	{SystemTray::reload(&evt_ui);
-              } else if &handle == &evt_ui.tray_item3  	{SystemTray::exit  (&evt_ui);
+              } else if &handle == &evt_ui.tray_3exit  	{SystemTray::exit  (&evt_ui);
               },
             _ => {}
           }
@@ -170,7 +199,9 @@ pub fn build_tray(cfg: &Arc<Mutex<Kanata>>) -> Result<system_tray_ui::SystemTray
   let k       	= cfg.lock();
   let paths   	= &k.cfg_paths;
   let path_cur	= &paths[0];
-  let app_data	= SystemTrayData {tooltip:path_cur.display().to_string()};
+  let app_data	= SystemTrayData {
+    tooltip   	: path_cur.display().to_string(),
+    cfg_p     	: paths.clone()};
   let app     	= SystemTray {app_data:RefCell::new(app_data), ..Default::default()};
   SystemTray::build_ui(app).context("Failed to build UI")
 }
