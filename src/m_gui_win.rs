@@ -85,20 +85,28 @@ impl SystemTray {
     } else {error!("no CFG var that contains active kanata config");
     };
   }
+  fn reload(&self,i:Option<usize>) {
     use nwg::TrayNotificationFlags as f_tray;
     let mut msg_title  :String = "".to_string();
     let mut msg_content:String = "".to_string();
     let mut flags:f_tray = f_tray::empty();
     if let Some(cfg) = CFG.get() {let mut k = cfg.lock();
-      let paths = &k.cfg_paths; let path_cur = &paths[0]; msg_content += &path_cur.display().to_string();
+      let paths = &k.cfg_paths;
+      let idx_cfg = match i {
+        Some(idx)	=> {if idx<paths.len() {idx} else {error!("Invalid config index {} while kanata has only {} configs loaded",idx+1,paths.len());k.cur_cfg_idx}},
+        None     	=> k.cur_cfg_idx};
+      let path_cur = &paths[idx_cfg]; msg_content += &path_cur.display().to_string();
       let cfg_name = &path_cur.file_name().unwrap_or_else(||OsStr::new("")).to_string_lossy().to_string();
-      if k.request_live_reload().is_err() {
-        msg_title      +=&("✗ \"".to_owned() + cfg_name + "\" NOT reloaded");warn!("{}", msg_title); flags |= f_tray::ERROR_ICON;
-      } else {msg_title+=&("🔄 \"".to_owned() + cfg_name + "\" reloaded")   ;info!("{}", msg_title)}; flags |= f_tray::USER_ICON;
+      match i {
+        Some(idx)	=> {k.request_live_reload_n(idx); msg_title+=&("🔄 \"".to_owned() + cfg_name + "\" reloaded"); flags |= f_tray::USER_ICON;}
+        None     	=> {k.request_live_reload  (   ); msg_title+=&("🔄 \"".to_owned() + cfg_name + "\" reloaded"); flags |= f_tray::USER_ICON;}
+      };
+      info!("{}", msg_title);
     }   else {msg_title+="✗ Config NOT reloaded, no CFG";warn!("{}", msg_title); flags |= f_tray::ERROR_ICON;
     };
     flags |= f_tray::LARGE_ICON; // todo: fails without this, must have SM_CXICON x SM_CYICON?
-    self.tray.show(&msg_content, Some(&msg_title), Some(flags), Some(&self.icon));}
+    self.tray.show(&msg_content, Some(&msg_title), Some(flags), Some(&self.icon));
+  }
   fn exit(&self) {
     let handlers = self.handlers_dyn.borrow();
     for handler in handlers.iter() {nwg::unbind_event_handler(&handler);}
@@ -181,9 +189,10 @@ pub mod system_tray_ui {
             E::OnWindowClose                                  	=> if &handle == &evt_ui.window {SystemTray::exit  (&evt_ui);}
             E::OnMousePress(MousePressEvent::MousePressLeftUp)	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
             E::OnContextMenu/*🖰›*/                            	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
+            E::OnMenuHover =>
+              if        &handle == &evt_ui.tray_1cfg_m	{SystemTray::check_active(&evt_ui);}
             E::OnMenuItemSelected =>
-              if        &handle == &evt_ui.tray_1cfg_m 	{SystemTray::load_cfg(&evt_ui); // likely noop since it's a menu, not a menuitem
-              } else if &handle == &evt_ui.tray_2reload	{SystemTray::reload(&evt_ui);
+              if        &handle == &evt_ui.tray_2reload	{SystemTray::reload(&evt_ui,None);
               } else if &handle == &evt_ui.tray_3exit  	{SystemTray::exit  (&evt_ui);
               } else {
                 match handle {
@@ -194,6 +203,7 @@ pub mod system_tray_ui {
                         for (j, h_cfg_j) in tray_item_dyn.iter().enumerate() {
                           if h_cfg_j.checked() {h_cfg_j.set_checked(false);} } // uncheck others
                         h_cfg.set_checked(true); // check self
+                        SystemTray::reload(&evt_ui,Some(i));
                       }
                     }
                   },
