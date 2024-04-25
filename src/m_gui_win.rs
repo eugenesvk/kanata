@@ -172,7 +172,7 @@ pub mod system_tray_ui {
             E::OnMousePress(MousePressEvent::MousePressLeftUp)	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
             E::OnContextMenu/*🖰›*/                            	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
             E::OnMenuItemSelected =>
-              if        &handle == &evt_ui.tray_1cfg_m 	{SystemTray::load_cfg(&evt_ui);
+              if        &handle == &evt_ui.tray_1cfg_m 	{SystemTray::load_cfg(&evt_ui); // likely noop since it's a menu, not a menuitem
               } else if &handle == &evt_ui.tray_2reload	{SystemTray::reload(&evt_ui);
               } else if &handle == &evt_ui.tray_3exit  	{SystemTray::exit  (&evt_ui);
               } else {
