@@ -9,15 +9,15 @@ use std::time;
 
 use super::PRESSED_KEYS;
 use crate::kanata::*;
-#[cfg(feature = "gui")]
+#[cfg(all(target_os = "windows", feature = "gui"))]
 use crate::m_gui_win::*;
-#[cfg(feature = "gui")]
+#[cfg(all(target_os = "windows", feature = "gui"))]
 extern crate native_windows_gui    as nwg;
-#[cfg(feature = "gui")]
+#[cfg(all(target_os = "windows", feature = "gui"))]
 extern crate native_windows_derive as nwd;
-#[cfg(feature = "gui")]
+#[cfg(all(target_os = "windows", feature = "gui"))]
 use nwd::NwgUi;
-#[cfg(feature = "gui")]
+#[cfg(all(target_os = "windows", feature = "gui"))]
 use nwg::NativeUi;
 
 impl Kanata {
@@ -72,7 +72,7 @@ impl Kanata {
                                                        // }
             true
         });
-        #[cfg(feature = "gui")]
+        #[cfg(all(target_os = "windows", feature = "gui"))]
         let _ui = build_tray(&_cfg)?;
 
         native_windows_gui::dispatch_thread_events(); // The event loop is also required for the low-level keyboard hook to work.
