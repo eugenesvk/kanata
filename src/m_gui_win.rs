@@ -175,6 +175,20 @@ pub mod system_tray_ui {
               if        &handle == &evt_ui.tray_1cfg_m 	{SystemTray::load_cfg(&evt_ui);
               } else if &handle == &evt_ui.tray_2reload	{SystemTray::reload(&evt_ui);
               } else if &handle == &evt_ui.tray_3exit  	{SystemTray::exit  (&evt_ui);
+              } else {
+                match handle {
+                  ControlHandle::MenuItem(parent, id) => {
+                    let tray_item_dyn	= &evt_ui.tray_item_dyn.borrow(); //
+                    for (i, h_cfg) in tray_item_dyn.iter().enumerate() {
+                      if &handle == h_cfg { //info!("CONFIG handle i={:?} {:?}",i,&handle);
+                        for (j, h_cfg_j) in tray_item_dyn.iter().enumerate() {
+                          if h_cfg_j.checked() {h_cfg_j.set_checked(false);} } // uncheck others
+                        h_cfg.set_checked(true); // check self
+                      }
+                    }
+                  },
+                  _	=> {},
+                }
               },
             _ => {}
           }
