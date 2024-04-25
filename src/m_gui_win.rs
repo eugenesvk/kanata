@@ -131,7 +131,7 @@ pub mod system_tray_ui {
       nwg::Menu            	::builder().parent(&d.window)     	.popup(true)/*context menu*/	//
         .                  	  build(       &mut d.tray_menu   	)?                          	;
       nwg::Menu            	::builder().parent(&d.tray_menu)  	.text("&F Load config")     	//
-        .                  	  build(       &mut d.tray_1cfg_m   	)?                          	;
+        .                  	  build(       &mut d.tray_1cfg_m 	)?                          	;
       nwg::MenuItem        	::builder().parent(&d.tray_menu)  	.text("&R Reload config")   	//
         .                  	  build(       &mut d.tray_2reload	)?                          	;
       nwg::MenuItem        	::builder().parent(&d.tray_menu)  	.text("&X Exit\t‹⎈␠⎋")      	//
