@@ -44,18 +44,6 @@ use winapi::shared::windef::{HWND, HMENU};
 ///  // Optionally, redraw the menu or the window containing the menu This step might be necessary depending on your application's behavior
 ///}
 impl SystemTray {
-  // fn update_menu(&self) {
-  //   self.nwg::TextInput::builder()
-  //       .text(&data.form_data)
-  //       .parent(&parent)
-  //       .build(&mut data.value)?;
-  // }
-  // pub fn hmenu_item(&self) -> Option<(HMENU, u32)> {
-  //   match &self.tray_1cfg_m.handle {
-  //     &ControlHandle::MenuItem(h, i) => Some((h, i)),
-  //     _ => None,
-  //   }
-  // }
   pub fn add_menu(&self) -> Result<(),nwg::NwgError> {
     // let title 	= self.message_title  .text();
     let menu_text	= "Add_menu New menu item!";
