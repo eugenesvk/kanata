@@ -73,8 +73,18 @@ impl SystemTray {
   fn show_menu(&self) {
     let (x, y) = nwg::GlobalCursor::position();
     self.tray_menu.popup(x, y);  }
-  fn load_cfg(&self) {nwg::simple_message("HelloMsg", "Hello World!");}
-  fn reload(&self) {
+  fn check_active(&self) {
+    if let Some(cfg) = CFG.get() {let mut k = cfg.lock();
+      let idx_cfg = k.cur_cfg_idx;
+      let tray_item_dyn	= &self.tray_item_dyn.borrow(); //
+      for (i, h_cfg_i) in tray_item_dyn.iter().enumerate() {
+        if   h_cfg_i.checked(){trace!("✓checked {} active {} eq? {} !eq? {}",i,idx_cfg,i==idx_cfg,!(i==idx_cfg));}
+        if   h_cfg_i.checked() && !(i==idx_cfg){debug!("uncheck i{} act{}",i,idx_cfg);h_cfg_i.set_checked(false);} // uncheck inactive
+        if ! h_cfg_i.checked() &&   i==idx_cfg {debug!("  check i{} act{}",i,idx_cfg);h_cfg_i.set_checked(true );} //   check   active
+      };
+    } else {error!("no CFG var that contains active kanata config");
+    };
+  }
     use nwg::TrayNotificationFlags as f_tray;
     let mut msg_title  :String = "".to_string();
     let mut msg_content:String = "".to_string();
