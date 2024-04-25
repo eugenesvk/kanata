@@ -61,13 +61,17 @@ impl SystemTray {
       let idx_cfg = match i {
         Some(idx)	=> {if idx<paths.len() {idx} else {error!("Invalid config index {} while kanata has only {} configs loaded",idx+1,paths.len());k.cur_cfg_idx}},
         None     	=> k.cur_cfg_idx};
-      let path_cur = &paths[idx_cfg]; msg_content += &path_cur.display().to_string();
+      let path_cur = &paths[idx_cfg]; let path_cur_s = path_cur.display().to_string();
+      msg_content += &path_cur_s;
       let cfg_name = &path_cur.file_name().unwrap_or_else(||OsStr::new("")).to_string_lossy().to_string();
       match i {
         Some(idx)	=> {k.request_live_reload_n(idx); msg_title+=&("🔄 \"".to_owned() + cfg_name + "\" reloaded"); flags |= f_tray::USER_ICON;}
         None     	=> {k.request_live_reload  (   ); msg_title+=&("🔄 \"".to_owned() + cfg_name + "\" reloaded"); flags |= f_tray::USER_ICON;}
       };
       info!("{}", msg_title);
+      // self.tray.set_visibility(false); // flash the icon, but might be confusing as the app isn't restarting, just reloading
+      self.tray.set_tip(&path_cur_s); // update tooltip to point to the newer config
+      // self.tray.set_visibility(true);
     }   else {msg_title+="✗ Config NOT reloaded, no CFG";warn!("{}", msg_title); flags |= f_tray::ERROR_ICON;
     };
     flags |= f_tray::LARGE_ICON; // todo: fails without this, must have SM_CXICON x SM_CYICON?
