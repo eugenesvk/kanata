@@ -138,7 +138,6 @@ pub mod system_tray_ui {
         .                  	  build(       &mut d.tray_3exit  	)?                          	;
 
       {let mut tray_item_dyn	= d.tray_item_dyn.borrow_mut(); //extra scope to drop borrowed mut
-       let mut handlers_dyn 	= d.handlers_dyn .borrow_mut();
       const menu_acc:&str = "ASDFGQWERTZXCVBYUIOPHJKLNM";
       if (app_data.cfg_p).len() > 0 {
         for (i, cfg_p) in app_data.cfg_p.iter().enumerate() {
@@ -155,9 +154,7 @@ pub mod system_tray_ui {
           if i == 0	{nwg::MenuItem::builder().parent(&d.tray_1cfg_m).text(&menu_text).check(true)	.build(&mut menu_item)?;
           } else   	{nwg::MenuItem::builder().parent(&d.tray_1cfg_m).text(&menu_text)            	.build(&mut menu_item)?;
           }
-
-          let menu_item_h = menu_item.handle;
-          info!("got handle to menu item={:?}",menu_item_h);
+          tray_item_dyn.push(menu_item);
         }
       } else {warn!("Didn't get any config paths from Kanata!")}
       }
