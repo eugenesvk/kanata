@@ -30,8 +30,15 @@ use std::path::PathBuf;
   pub tray         	: nwg::TrayNotification,
   pub tray_menu    	: nwg::Menu,
   pub tray_1cfg_m  	: nwg::Menu,
-  pub tray_2reload 	: nwg::MenuItem,
-  pub tray_3exit   	: nwg::MenuItem,
+  pub tray_2log_m  	: nwg::Menu,
+  pub tray_2log1   	: nwg::MenuItem,
+  pub tray_2log2   	: nwg::MenuItem,
+  pub tray_2log3   	: nwg::MenuItem,
+  pub tray_2log4   	: nwg::MenuItem,
+  pub tray_2log5   	: nwg::MenuItem,
+  pub tray_2log0   	: nwg::MenuItem,
+  pub tray_3reload 	: nwg::MenuItem,
+  pub tray_4exit   	: nwg::MenuItem,
 }
 use crate::lib_main::CFG;
 use winapi::shared::windef::{HWND, HMENU};
@@ -50,6 +57,9 @@ impl SystemTray {
       };
     } else {error!("no CFG var that contains active kanata config");
     };
+  }
+  fn log_lvl(&self,lvl:LevelFilter) {
+    info!("log_lvl");
   }
   fn reload(&self,i:Option<usize>) {
     use nwg::TrayNotificationFlags as f_tray;
@@ -120,10 +130,24 @@ pub mod system_tray_ui {
         .                  	  build(       &mut d.tray_menu   	)?                          	;
       nwg::Menu            	::builder().parent(&d.tray_menu)  	.text("&F Load config")     	//
         .                  	  build(       &mut d.tray_1cfg_m 	)?                          	;
+      nwg::Menu            	::builder().parent(&d.tray_menu)  	.text("&G Log level")       	//
+        .                  	  build(       &mut d.tray_2log_m 	)?                          	;
+      nwg::MenuItem        	::builder().parent(&d.tray_2log_m)	.text("&1 Error")           	//
+        .                  	  build(       &mut d.tray_2log1  	)?                          	;
+      nwg::MenuItem        	::builder().parent(&d.tray_2log_m)	.text("&2 Warn")            	//
+        .                  	  build(       &mut d.tray_2log2  	)?                          	;
+      nwg::MenuItem        	::builder().parent(&d.tray_2log_m)	.text("&3 Info")            	//
+        .                  	  build(       &mut d.tray_2log3  	)?                          	;
+      nwg::MenuItem        	::builder().parent(&d.tray_2log_m)	.text("&4 Debug")           	//
+        .                  	  build(       &mut d.tray_2log4  	)?                          	;
+      nwg::MenuItem        	::builder().parent(&d.tray_2log_m)	.text("&5 Trace")           	//
+        .                  	  build(       &mut d.tray_2log5  	)?                          	;
+      nwg::MenuItem        	::builder().parent(&d.tray_2log_m)	.text("&0 Off")             	//
+        .                  	  build(       &mut d.tray_2log0  	)?                          	;
       nwg::MenuItem        	::builder().parent(&d.tray_menu)  	.text("&R Reload config")   	//
-        .                  	  build(       &mut d.tray_2reload	)?                          	;
+        .                  	  build(       &mut d.tray_3reload	)?                          	;
       nwg::MenuItem        	::builder().parent(&d.tray_menu)  	.text("&X Exit\t‹⎈␠⎋")      	//
-        .                  	  build(       &mut d.tray_3exit  	)?                          	;
+        .                  	  build(       &mut d.tray_4exit  	)?                          	;
 
       {let mut tray_item_dyn	= d.tray_item_dyn.borrow_mut(); //extra scope to drop borrowed mut
       const menu_acc:&str = "ASDFGQWERTZXCVBYUIOPHJKLNM";
@@ -162,8 +186,14 @@ pub mod system_tray_ui {
             E::OnMenuHover =>
               if        &handle == &evt_ui.tray_1cfg_m	{SystemTray::check_active(&evt_ui);}
             E::OnMenuItemSelected =>
-              if        &handle == &evt_ui.tray_2reload	{SystemTray::reload(&evt_ui,None);
-              } else if &handle == &evt_ui.tray_3exit  	{SystemTray::exit  (&evt_ui);
+              if        &handle == &evt_ui.tray_3reload	{SystemTray::reload(&evt_ui,None);
+              } else if &handle == &evt_ui.tray_4exit  	{SystemTray::exit  (&evt_ui);
+              } else if &handle == &evt_ui.tray_2log1  	{info!("tray_2log1");SystemTray::log_lvl(&evt_ui,LevelFilter::Error);
+              } else if &handle == &evt_ui.tray_2log2  	{info!("tray_2log2");SystemTray::log_lvl(&evt_ui,LevelFilter::Warn);
+              } else if &handle == &evt_ui.tray_2log3  	{info!("tray_2log3");SystemTray::log_lvl(&evt_ui,LevelFilter::Info);
+              } else if &handle == &evt_ui.tray_2log4  	{info!("tray_2log4");SystemTray::log_lvl(&evt_ui,LevelFilter::Debug);
+              } else if &handle == &evt_ui.tray_2log5  	{info!("tray_2log5");SystemTray::log_lvl(&evt_ui,LevelFilter::Trace);
+              } else if &handle == &evt_ui.tray_2log0  	{info!("tray_2log0");SystemTray::log_lvl(&evt_ui,LevelFilter::Off);
               } else {
                 match handle {
                   ControlHandle::MenuItem(parent, id) => {
