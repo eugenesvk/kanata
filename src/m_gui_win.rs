@@ -26,6 +26,8 @@ use nwg::{NativeUi,ControlHandle};
   ///              	Store dynamically created tray menu items' handlers
   pub handlers_dyn 	: RefCell<Vec<nwg::EventHandler>>,
   ///              	Store embedded-in-the-binary resources like icons not to load them from a file
+  pub icon_dyn     	: RefCell<HashMap<PathBuf,nwg::Icon>>,
+  ///              	Store embedded-in-the-binary resources like icons not to load them from a file
   pub embed        	: nwg::EmbedResource,
   pub icon         	: nwg::Icon,
   pub window       	: nwg::MessageWindow,
@@ -101,6 +103,7 @@ impl SystemTray {
         Some(idx)	=> {if idx<paths.len() {idx} else {error!("Invalid config index {} while kanata has only {} configs loaded",idx+1,paths.len());k.cur_cfg_idx}},
         None     	=> k.cur_cfg_idx};
       let path_cur = &paths[idx_cfg]; let path_cur_s = path_cur.display().to_string();
+      let path_cur_cc = path_cur.clone();
       msg_content += &path_cur_s;
       let cfg_name = &path_cur.file_name().unwrap_or_else(||OsStr::new("")).to_string_lossy().to_string();
       match i {
@@ -111,6 +114,10 @@ impl SystemTray {
       // self.tray.set_visibility(false); // flash the icon, but might be confusing as the app isn't restarting, just reloading
       self.tray.set_tip(&path_cur_s); // update tooltip to point to the newer config
       // self.tray.set_visibility(true);
+
+      let icon_dyn = self.icon_dyn.borrow();
+      if let Some(icon) = icon_dyn.get(&path_cur_cc) {self.tray.set_icon(&icon); //
+      } else { warn!("couldn't set icon to test {}",path_cur_cc.display().to_string());}
     }   else {msg_title+="✗ Config NOT reloaded, no CFG";warn!("{}", msg_title); flags |= f_tray::ERROR_ICON;
     };
     flags |= f_tray::LARGE_ICON; // todo: fails without this, must have SM_CXICON x SM_CYICON?
@@ -165,6 +172,7 @@ pub mod system_tray_ui {
         .                  	  build(       &mut d.tray_3exit  	)?                          	;
 
       {let mut tray_item_dyn	= d.tray_item_dyn.borrow_mut(); //extra scope to drop borrowed mut
+       let mut icon_dyn       = d.icon_dyn     .borrow_mut();
       const menu_acc:&str = "ASDFGQWERTZXCVBYUIOPHJKLNM";
       if (app_data.cfg_p).len() > 0 {
         for (i, cfg_p) in app_data.cfg_p.iter().enumerate() {
@@ -181,7 +189,16 @@ pub mod system_tray_ui {
           if i == 0	{nwg::MenuItem::builder().parent(&d.tray_1cfg_m).text(&menu_text).check(true)	.build(&mut menu_item)?;
           } else   	{nwg::MenuItem::builder().parent(&d.tray_1cfg_m).text(&menu_text)            	.build(&mut menu_item)?;
           }
-          tray_item_dyn.push(menu_item);
+          tray_item_dyn.push(menu_item); // add icons if exists, hashed by config path
+          if i == 0	{
+            let mut temp_icon = Default::default();
+            nwg::Icon::builder().source_embed(Some(&d.embed)).source_embed_str(Some("iconMain")).strict(true).build(&mut temp_icon).unwrap();
+            let _ = icon_dyn.insert(cfg_p.clone(),temp_icon);
+          } else if let Some(ico_p) = &d.get_icon_p(&cfg_p) {
+            let mut temp_icon = Default::default();
+            nwg::Icon::builder().source_file(Some(&ico_p)).strict(false).build(&mut temp_icon).unwrap();
+            let _ = icon_dyn.insert(cfg_p.clone(),temp_icon);
+          }
         }
       } else {warn!("Didn't get any config paths from Kanata!")}
       }
