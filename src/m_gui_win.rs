@@ -1,6 +1,9 @@
 #![allow(unused_imports,unused_variables,unreachable_code,dead_code,non_upper_case_globals)]
 // #![allow(non_upper_case_globals)]
 
+use std::env::{var_os,current_exe};
+use std::path::{Path,PathBuf};
+use std::collections::HashMap;
 use std::ffi::OsStr;
 use crate::{Kanata,kanata};
 use parking_lot::Mutex;
@@ -12,7 +15,6 @@ use core::cell::RefCell;
 use nwd::NwgUi;
 use nwg::{NativeUi,ControlHandle};
 
-use std::path::PathBuf;
 #[derive(Default,Debug,Clone)] pub struct SystemTrayData {
   pub tooltip:String,
   pub cfg_p  :Vec<PathBuf>,
@@ -33,12 +35,49 @@ use std::path::PathBuf;
   pub tray_2reload 	: nwg::MenuItem,
   pub tray_3exit   	: nwg::MenuItem,
 }
+pub fn get_appdata() -> Option<PathBuf> {var_os("APPDATA").map(PathBuf::from)}
+pub fn get_user_home() -> Option<PathBuf> {var_os("USERPROFILE").map(PathBuf::from)}
+pub fn get_xdg_home() -> Option<PathBuf> {var_os("XDG_CONFIG_HOME").map(PathBuf::from)}
+
 use crate::lib_main::CFG;
 use winapi::shared::windef::{HWND, HMENU};
 impl SystemTray {
   fn show_menu(&self) {
     let (x, y) = nwg::GlobalCursor::position();
     self.tray_menu.popup(x, y);  }
+  fn get_icon_p<P: AsRef<Path>>(&self, s:P    ) -> Option<String> {self.get_icon_p_impl(s.as_ref())}
+  fn get_icon_p_impl           (&self, p:&Path) -> Option<String> {
+    // let mut icon_file:PathBuf = [pre,name,ext].iter().collect();
+    // info!("searching for an icon in path=¦{:?}¦ n=¦{:?}¦ ext=¦{:?}¦ pre=¦{:?}¦",p,name,ext,pre);
+    let mut icon_file = PathBuf::from(p);
+    icon_file  .set_extension("ico");
+    if ! icon_file.is_file() {icon_file.clear();icon_file.push(p);
+      icon_file.set_extension("kbd.ico");}
+    if ! icon_file.is_file() {icon_file.clear();
+      // let pre_p	= &p.parent()   .unwrap_or_else(||Path::new(""));
+      let blank   	= Path::new("");
+      let nameext 	= &p.file_name().unwrap_or_else(||OsStr::new(""));
+      // let ext  	= &p.extension().unwrap_or_else(||OsStr::new(""));
+      // let name 	= &p.file_stem().unwrap_or_else(||OsStr::new(""));
+      let     cur_exe  = current_exe  ().unwrap_or_else(|_|PathBuf::new());
+      let     xdg_cfg  = get_xdg_home ().unwrap_or_else(||PathBuf::new());
+      let     app_data = get_appdata  ().unwrap_or_else(||PathBuf::new());
+      let mut user_cfg = get_user_home().unwrap_or_else(||PathBuf::new());
+      user_cfg.push(".config");
+      'p: for  p_par in [cur_exe,xdg_cfg,app_data,user_cfg] {
+        'k:for p_kan in ["kanata","kanata-tray"] {
+          for  p_icn in ["","icon","img","icons"] {
+            if ! (p_par == blank) {icon_file.push(p_par.clone());} else {break 'k}
+            icon_file.push(p_kan);icon_file.push(p_icn); // folders
+            icon_file.push(nameext); //file
+            icon_file.set_extension("ico");info!("testing icon from {:?}",icon_file);
+            if ! icon_file.is_file() {icon_file.clear();} else {break 'p} }  }     }
+    }
+    if ! icon_file.is_file() {info!("✗ no icon file found");
+      return None
+    } else {info!("✓ found icon file at: {}",icon_file.display().to_string());
+      return Some(icon_file.display().to_string())}
+  }
   fn check_active(&self) {
     if let Some(cfg) = CFG.get() {let mut k = cfg.lock();
       let idx_cfg = k.cur_cfg_idx;
