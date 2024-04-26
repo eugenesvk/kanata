@@ -18,20 +18,22 @@ use std::path::PathBuf;
   pub cfg_p  :Vec<PathBuf>,
 }
 #[derive(Default)] pub struct SystemTray {
-  pub app_data     	: RefCell<SystemTrayData>,
-  ///              	Store dynamically created tray menu items
-  pub tray_item_dyn	: RefCell<Vec<nwg::MenuItem>>,
-  ///              	Store dynamically created tray menu items' handlers
-  pub handlers_dyn 	: RefCell<Vec<nwg::EventHandler>>,
-  ///              	Store embedded-in-the-binary resources like icons not to load them from a file
-  pub embed        	: nwg::EmbedResource,
-  pub icon         	: nwg::Icon,
-  pub window       	: nwg::MessageWindow,
-  pub tray         	: nwg::TrayNotification,
-  pub tray_menu    	: nwg::Menu,
-  pub tray_1cfg_m  	: nwg::Menu,
-  pub tray_2reload 	: nwg::MenuItem,
-  pub tray_3exit   	: nwg::MenuItem,
+  pub app_data        	: RefCell<SystemTrayData>,
+  ///                 	Store dynamically created tray menu items
+  pub tray_item_dyn   	: RefCell<Vec<nwg::MenuItem>>,
+  ///                 	Store dynamically created tray menu items' tooltips
+  pub tray_item_tt_dyn	: RefCell<Vec<nwg::Tooltip>>,
+  ///                 	Store dynamically created tray menu items' handlers
+  pub handlers_dyn    	: RefCell<Vec<nwg::EventHandler>>,
+  ///                 	Store embedded-in-the-binary resources like icons not to load them from a file
+  pub embed           	: nwg::EmbedResource,
+  pub icon            	: nwg::Icon,
+  pub window          	: nwg::MessageWindow,
+  pub tray            	: nwg::TrayNotification,
+  pub tray_menu       	: nwg::Menu,
+  pub tray_1cfg_m     	: nwg::Menu,
+  pub tray_2reload    	: nwg::MenuItem,
+  pub tray_3exit      	: nwg::MenuItem,
 }
 use crate::lib_main::CFG;
 use winapi::shared::windef::{HWND, HMENU};
@@ -82,6 +84,11 @@ impl SystemTray {
     for handler in handlers.iter() {nwg::unbind_event_handler(&handler);}
     nwg::stop_thread_dispatch();}
 }
+/// Building a tooltip and add tooltips at the same time
+fn build_tooltip(tt: &mut nwg::Tooltip, mi1: &nwg::MenuItem,) -> Result<(), nwg::NwgError>{
+  nwg::Tooltip::builder().register(mi1,"A test button").build(tt)?;
+  Ok(())
+}
 
 pub mod system_tray_ui {
   use super::*;
@@ -125,7 +132,8 @@ pub mod system_tray_ui {
       nwg::MenuItem        	::builder().parent(&d.tray_menu)  	.text("&X Exit\t‹⎈␠⎋")      	//
         .                  	  build(       &mut d.tray_3exit  	)?                          	;
 
-      {let mut tray_item_dyn	= d.tray_item_dyn.borrow_mut(); //extra scope to drop borrowed mut
+      {let mut tray_item_dyn   	= d.tray_item_dyn   .borrow_mut(); //extra scope to drop borrowed mut
+       // let mut tray_item_tt_dyn	= d.tray_item_tt_dyn.borrow_mut();
       const menu_acc:&str = "ASDFGQWERTZXCVBYUIOPHJKLNM";
       if (app_data.cfg_p).len() > 0 {
         for (i, cfg_p) in app_data.cfg_p.iter().enumerate() {
@@ -135,6 +143,7 @@ pub mod system_tray_ui {
            10..=35	=> format!("&{} ",&menu_acc[(i-10)..cmp::min(i-10+1,menu_acc.len())]),
             _     	=> format!("  "),
           };
+          let cfg_p_s = &cfg_p.display().to_string();
           let cfg_name = &cfg_p.file_name().unwrap_or_else(||OsStr::new("")).to_string_lossy().to_string(); //kanata.kbd
           // let menu_text	= i_acc + cfg_name; // &1 kanata.kbd
           let menu_text   	= format!("{cfg_name}\t{i_acc}"); // kanata.kbd &1
@@ -142,7 +151,11 @@ pub mod system_tray_ui {
           if i == 0	{nwg::MenuItem::builder().parent(&d.tray_1cfg_m).text(&menu_text).check(true)	.build(&mut menu_item)?;
           } else   	{nwg::MenuItem::builder().parent(&d.tray_1cfg_m).text(&menu_text)            	.build(&mut menu_item)?;
           }
-          tray_item_dyn.push(menu_item);
+          // let mut menu_item_tt = Default::default();
+          // build_tooltip(&mut menu_item_tt, &menu_item)?; //todo: panics src\controls\tooltip.rs:297:26: INTERNAL ERROR: Tooltip handle is not HWND!
+          // nwg::Tooltip::builder().register(&menu_item,"A test menu item").build(&mut menu_item_tt)?;
+          tray_item_dyn   .push(menu_item);
+          // tray_item_tt_dyn.push(menu_item_tt);
         }
       } else {warn!("Didn't get any config paths from Kanata!")}
       }
@@ -159,8 +172,20 @@ pub mod system_tray_ui {
             E::OnWindowClose                                  	=> if &handle == &evt_ui.window {SystemTray::exit  (&evt_ui);}
             E::OnMousePress(MousePressEvent::MousePressLeftUp)	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
             E::OnContextMenu/*🖰›*/                            	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
-            E::OnMenuHover =>
-              if        &handle == &evt_ui.tray_1cfg_m	{SystemTray::check_active(&evt_ui);}
+            E::OnMenuHover                                    	=> if &handle == &evt_ui.tray_1cfg_m	{SystemTray::check_active(&evt_ui);
+              } else { match handle {
+                ControlHandle::MenuItem(parent, id) => {
+                  let tray_item_dyn	= &evt_ui.tray_item_dyn.borrow(); //
+                  for (i, h_cfg) in tray_item_dyn.iter().enumerate() {
+                    if &handle == h_cfg {info!("CONFIG handle i={:?} {:?}",i,&handle);
+                      let mut menu_item_tt = Default::default();
+                      nwg::Tooltip::builder().register(h_cfg,"A test menu item").build(&mut menu_item_tt).unwrap();
+                    }
+                  }
+                },
+                _	=> {},
+              };
+            },
             E::OnMenuItemSelected =>
               if        &handle == &evt_ui.tray_2reload	{SystemTray::reload(&evt_ui,None);
               } else if &handle == &evt_ui.tray_3exit  	{SystemTray::exit  (&evt_ui);
