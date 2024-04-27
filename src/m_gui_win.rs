@@ -65,7 +65,7 @@ impl SystemTray {
     let mut user_cfg	= get_user_home().unwrap_or_else(| |PathBuf::new(  )); user_cfg.push(".config");
     let     icn_ext 	= &icn_p.extension().unwrap_or_else(||OsStr::new("")).to_string_lossy().to_string();
     let is_icn_ext_valid = if ! IMG_EXT.iter().any(|&i| {i==icn_ext}) {warn!("user extension \"{}\" isn't valid!",icn_ext); false} else {trace!("icn_ext={:?}",icn_ext);true};
-    let parents = [Path::new(""),icn_p,pre_p,&cur_exe,&xdg_cfg,&app_data,&user_cfg]; // empty path to allow no prefixes when icon path is explictily set in case it's a full path already
+    let parents = [Path::new(""),pre_p,&cur_exe,&xdg_cfg,&app_data,&user_cfg]; // empty path to allow no prefixes when icon path is explictily set in case it's a full path already
     let f_name = [icn_p.as_os_str(),nameext];
     for        p_par in parents 	{trace!("{}p_par={:?}"	,""        	,p_par);
       for      p_kan in CFG_FD  	{trace!("{}p_kan={:?}"	,"  "      	,p_kan);
