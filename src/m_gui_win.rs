@@ -27,7 +27,7 @@ use nwg::{NativeUi,ControlHandle};
   ///              	Store dynamically created tray menu items' handlers
   pub handlers_dyn 	: RefCell<Vec<nwg::EventHandler>>,
   ///              	Store embedded-in-the-binary resources like icons not to load them from a file
-  pub icon_dyn     	: RefCell<HashMap<PathBuf,nwg::Icon>>,
+  pub icon_dyn     	: RefCell<HashMap<PathBuf,Option<nwg::Icon>>>,
   ///              	Store embedded-in-the-binary resources like icons not to load them from a file
   pub embed        	: nwg::EmbedResource,
   pub icon         	: nwg::Icon,
@@ -67,20 +67,20 @@ impl SystemTray {
     let is_icn_ext_valid = if ! IMG_EXT.iter().any(|&i| {i==icn_ext}) {warn!("user extension \"{}\" isn't valid!",icn_ext); false} else {trace!("icn_ext={:?}",icn_ext);true};
     let parents = [Path::new(""),icn_p,pre_p,&cur_exe,&xdg_cfg,&app_data,&user_cfg]; // empty path to allow no prefixes when icon path is explictily set in case it's a full path already
     let f_name = [icn_p.as_os_str(),nameext];
-    for        p_par in parents 	{info!("{}p_par={:?}"	,""        	,p_par);
-      for      p_kan in CFG_FD  	{info!("{}p_kan={:?}"	,"  "      	,p_kan);
-        for    p_icn in ASSET_FD	{info!("{}p_icn={:?}"	,"    "    	,p_icn);
-          for     nm in f_name  	{info!("{}   nm={:?}"	,"      "  	,nm);
-            for  ext in IMG_EXT 	{info!("{}  ext={:?}"	,"        "	,ext);
+    for        p_par in parents 	{trace!("{}p_par={:?}"	,""        	,p_par);
+      for      p_kan in CFG_FD  	{trace!("{}p_kan={:?}"	,"  "      	,p_kan);
+        for    p_icn in ASSET_FD	{trace!("{}p_icn={:?}"	,"    "    	,p_icn);
+          for     nm in f_name  	{trace!("{}   nm={:?}"	,"      "  	,nm);
+            for  ext in IMG_EXT 	{trace!("{}  ext={:?}"	,"        "	,ext);
               if !(p_par == blank_p){icon_file.push(p_par);} // folders
               if ! p_kan.is_empty() {icon_file.push(p_kan);}
               if ! p_icn.is_empty() {icon_file.push(p_icn);}
               if !    nm.is_empty() {icon_file.push(nm   );}
               if !(   nm == icn_p  ){icon_file.push(ext); // no icon name passed, iterate extensions
-              } else if ! is_icn_ext_valid {icon_file.push(ext);} else{info!("skip ext");} // replace invalid icon extension
+              } else if ! is_icn_ext_valid {icon_file.push(ext);} else{trace!("skip ext");} // replace invalid icon extension
               if icon_file == blank_p {continue;}
-              info!("loading icon from {:?}",icon_file);
-              if ! icon_file.is_file() {icon_file.clear();} else {info!("✓ found icon file at: {}",icon_file.display().to_string());
+              trace!("testing icon file {:?}",icon_file);
+              if ! icon_file.is_file() {icon_file.clear();} else {info!("✓ found icon file: {}",icon_file.display().to_string());
                 return Some(icon_file.display().to_string())
               } } } } } }
     info!("✗ no icon file found");return None
@@ -120,9 +120,31 @@ impl SystemTray {
       self.tray.set_tip(&path_cur_s); // update tooltip to point to the newer config
       // self.tray.set_visibility(true);
 
-      let icon_dyn = self.icon_dyn.borrow();
-      if let Some(icon) = icon_dyn.get(&path_cur_cc) {self.tray.set_icon(&icon); //
-      } else { warn!("couldn't set icon to test {}",path_cur_cc.display().to_string());}
+      let mut icon_dyn = self.icon_dyn.borrow_mut();
+      if icon_dyn.contains_key(&path_cur_cc) {
+        if let Some(icon) = icon_dyn.get(&path_cur_cc).unwrap() {self.tray.set_icon(&icon); //
+        } else {info!("this config has no associated icon, using default: {}",path_cur_cc.display().to_string());
+          self.tray.set_icon(&self.icon)}
+      } else {
+        //todo: after success on live reload
+        let app_data = self.app_data.borrow();
+        let cfg_icon_p = if let Some(cfg_icon) = &app_data.cfg_icon {cfg_icon} else {""};
+        if let Some(ico_p) = &self.get_icon_p(&cfg_icon_p, &path_cur_cc) {
+          let mut temp_icon_bitmap = Default::default();
+          if let Ok(()) = nwg::Bitmap::builder().source_file(Some(&ico_p)).strict(false).build(&mut temp_icon_bitmap) {
+            info!("✓ Using an icon from this config: {}",path_cur_cc.display().to_string());
+            let temp_icon = temp_icon_bitmap.copy_as_icon();
+            let _ = icon_dyn.insert(path_cur_cc.clone(),Some(temp_icon));
+            let temp_icon = temp_icon_bitmap.copy_as_icon();
+            self.tray.set_icon(&temp_icon);
+          } else {
+            warn!("✗ Invalid/no icon from this config: {}",path_cur_cc.display().to_string());
+            self.tray.set_icon(&self.icon);
+          }
+        } else {warn!("✗ Invalid icon path from this config: {}",path_cur_cc.display().to_string());
+            self.tray.set_icon(&self.icon);
+        }
+      }
     }   else {msg_title+="✗ Config NOT reloaded, no CFG";warn!("{}", msg_title); flags |= f_tray::ERROR_ICON;
     };
     flags |= f_tray::LARGE_ICON; // todo: fails without this, must have SM_CXICON x SM_CYICON?
@@ -195,15 +217,23 @@ pub mod system_tray_ui {
           if i == 0	{nwg::MenuItem::builder().parent(&d.tray_1cfg_m).text(&menu_text).check(true)	.build(&mut menu_item)?;
           } else   	{nwg::MenuItem::builder().parent(&d.tray_1cfg_m).text(&menu_text)            	.build(&mut menu_item)?;
           }
-          tray_item_dyn.push(menu_item); // add icons if exists, hashed by config path
-          if i == 0	{
-            let mut temp_icon = Default::default();
-            nwg::Icon::builder().source_embed(Some(&d.embed)).source_embed_str(Some("iconMain")).strict(true).build(&mut temp_icon).unwrap();
-            let _ = icon_dyn.insert(cfg_p.clone(),temp_icon);
-          } else if let Some(ico_p) = &d.get_icon_p(&cfg_icon_p, &cfg_p) {
-            let mut temp_icon = Default::default();
-            nwg::Icon::builder().source_file(Some(&ico_p)).strict(false).build(&mut temp_icon).unwrap();
-            let _ = icon_dyn.insert(cfg_p.clone(),temp_icon);
+          tray_item_dyn.push(menu_item);
+          if i == 0	{ // add icons if exists, hashed by config path (for active config, others will create on load)
+            if let Some(ico_p) = &d.get_icon_p(&cfg_icon_p, &cfg_p) {
+              let mut temp_icon_bitmap = Default::default();
+              if let Ok(()) = nwg::Bitmap::builder().source_file(Some(&ico_p)).strict(false).build(&mut temp_icon_bitmap) {
+                debug!("✓ main 0 config: using icon for {:?}",cfg_p);
+                let temp_icon = temp_icon_bitmap.copy_as_icon();
+                let _ = icon_dyn.insert(cfg_p.clone(),Some(temp_icon));
+                let temp_icon = temp_icon_bitmap.copy_as_icon();
+                d.tray.set_icon(&temp_icon);
+              } else {info!("✗ main 0 icon ✓ icon path, using DEFAULT icon for {:?}",cfg_p);}
+            } else {
+              debug!("✗ main 0 config: using DEFAULT icon for {:?}",cfg_p);
+              let mut temp_icon = Default::default();
+              nwg::Icon::builder().source_embed(Some(&d.embed)).source_embed_str(Some("iconMain")).strict(true).build(&mut temp_icon)?;
+              let _ = icon_dyn.insert(cfg_p.clone(),Some(temp_icon));
+            }
           }
         }
       } else {warn!("Didn't get any config paths from Kanata!")}
