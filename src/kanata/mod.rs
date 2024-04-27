@@ -125,6 +125,51 @@ pub struct Kanata {
     tcp_server_address: Option<SocketAddrWrapper>, //
 }
 
+// Functions to send keys except those that fall in the ignorable range.
+//
+// POTENTIAL PROBLEM - G-keys:
+// Some keys are ignored because they are *probably* unused,
+// or otherwise are probably in an unergonomic, far away key position,
+// so if you're using kanata, you can now stop using those keys and
+// do something better!
+//
+// I should probably let people turn this off if they really want to,
+// but I don't like how that would require extra code.
+// I'll defer to YAGNI and add docs, and let people report problems if
+// they want a fix 🐝.
+//
+// The keys ignored are intentionally the upper numbers of KEY_MACROX.
+// The Linux input-event-codes.h file mentions G1-G18 and S1-S30
+// as keys that might use these codes.
+//
+// Logitech still makes devices with G-keys
+// but the S-keys are apparently from the
+// "Microsoft SideWinder X6 Keyboard"
+// which appears to no longer be in production.
+//
+// Thus based on my reading, 18 is the highest macro key
+// that can be assumed to be used by devices still in production.
+const KEY_IGNORE_MIN: u16 = 0x2a4; // KEY_MACRO21
+const KEY_IGNORE_MAX: u16 = 0x2ad; // KEY_MACRO30
+fn write_key(kb: &mut KbdOut, osc: OsCode, val: KeyValue) -> Result<(), std::io::Error> {
+    match u16::from(osc) {
+        KEY_IGNORE_MIN..=KEY_IGNORE_MAX => Ok(()),
+        _ => kb.write_key(osc, val),
+    }
+}
+fn press_key(kb: &mut KbdOut, osc: OsCode) -> Result<(), std::io::Error> {
+    match u16::from(osc) {
+        KEY_IGNORE_MIN..=KEY_IGNORE_MAX => Ok(()),
+        _ => kb.press_key(osc),
+    }
+}
+fn release_key(kb: &mut KbdOut, osc: OsCode) -> Result<(), std::io::Error> {
+    match u16::from(osc) {
+        KEY_IGNORE_MIN..=KEY_IGNORE_MAX => Ok(()),
+        _ => kb.release_key(osc),
+    }
+}
+
 #[derive(PartialEq, Clone, Copy)]
 pub enum Axis {
     Vertical,
@@ -854,7 +899,7 @@ impl Kanata {
                 continue;
             }
             log::debug!(" ↑ {:?} @handle_keystate_changes Δ prev vs current", k);
-            if let Err(e) = self.kbd_out.release_key(k.into()) {
+            if let Err(e) = release_key(&mut self.kbd_out, k.into()) {
                 bail!("failed to release key: {:?}", e);
             }
         }
@@ -873,7 +918,7 @@ impl Kanata {
             match &mut self.sequence_state {
                 None => {
                     log::debug!("↓  {:?} @ sequence_state None", k);
-                    if let Err(e) = self.kbd_out.press_key(k.into()) {
+                    if let Err(e) = press_key(&mut self.kbd_out, k.into()) {
                         bail!("failed to press key: {:?}", e);
                     }
                 }
@@ -899,7 +944,7 @@ impl Kanata {
                     state.sequence.push(pushed_into_seq);
                     match state.sequence_input_mode {
                         SequenceInputMode::VisibleBackspaced => {
-                            self.kbd_out.press_key(osc)?;
+                            press_key(&mut self.kbd_out, osc)?;
                         }
                         SequenceInputMode::HiddenSuppressed
                         | SequenceInputMode::HiddenDelayType => {}
@@ -936,8 +981,8 @@ impl Kanata {
                                 SequenceInputMode::HiddenDelayType => {
                                     for code in state.sequence.iter().copied() {
                                         if let Some(osc) = OsCode::from_u16(code) {
-                                            self.kbd_out.press_key(osc)?;
-                                            self.kbd_out.release_key(osc)?;
+                                            press_key(&mut self.kbd_out, osc)?;
+                                            release_key(&mut self.kbd_out, osc)?;
                                         }
                                     }
                                 }
@@ -959,29 +1004,22 @@ impl Kanata {
                                 // Release all keys since they might modify the behaviour of backspace into an undesirable behaviour, for example deleting more characters than it should.
                                 layout.states.retain(|s| match s {
                                     State::NormalKey { keycode, .. } => {
-                                        let _ = self.kbd_out.release_key(keycode.into()); // Ignore the error, ugly to return it from retain, and this is very unlikely to happen anyway.
+                                        let _ = release_key(&mut self.kbd_out, keycode.into()); // Ignore the error, ugly to return it from retain, and this is very unlikely to happen anyway.
                                         false
                                     }
                                     _ => true,
                                 });
-                                for k in state.sequence.iter() {
-                                    // Check for pressed modifiers and don't input backspaces for those since they don't output characters that can be backspaced.
+                                for k in state.sequence.iter() { // Check for pressed modifiers and don't input backspaces for those since they don't output characters that can be backspaced.
                                     let kc = OsCode::from(*k & MASK_KEYCODES);
-                                    if matches!(
-                                        kc,
-                                        OsCode::KEY_LEFTSHIFT
-                                            | OsCode::KEY_RIGHTSHIFT
-                                            | OsCode::KEY_LEFTMETA
-                                            | OsCode::KEY_RIGHTMETA
-                                            | OsCode::KEY_LEFTCTRL
-                                            | OsCode::KEY_RIGHTCTRL
-                                            | OsCode::KEY_LEFTALT
-                                            | OsCode::KEY_RIGHTALT
-                                    ) {
-                                        continue;
-                                    } // Known bug: most non-characters-outputting keys are not listed. I'm too lazy to list them all. Just use character-outputting keys (and modifiers) in sequences please! Or switch to a different input mode? It doesn't really make sense to use non-typing characters other than modifiers does it? Since those would probably be further away from the home row, so why use them? If one desired to fix this, a shorter list of keys would probably be the list of keys that **do** output characters than those that don't.
-                                    self.kbd_out.press_key(OsCode::KEY_BACKSPACE)?;
-                                    self.kbd_out.release_key(OsCode::KEY_BACKSPACE)?;
+                                    match kc { // Known bug: most non-characters-outputting keys are not
+                                        OsCode::KEY_LEFTSHIFT  | OsCode::KEY_RIGHTSHIFT
+                                        | OsCode::KEY_LEFTMETA | OsCode::KEY_RIGHTMETA
+                                        | OsCode::KEY_LEFTCTRL | OsCode::KEY_RIGHTCTRL
+                                        | OsCode::KEY_LEFTALT  | OsCode::KEY_RIGHTALT => continue,
+                                        osc if matches!(u16::from(osc),KEY_IGNORE_MIN..=KEY_IGNORE_MAX) => {continue}
+                                        _ => {self.kbd_out.press_key  (OsCode::KEY_BACKSPACE)?;
+                                              self.kbd_out.release_key(OsCode::KEY_BACKSPACE)?;}
+                                    }
                                 }
                             }
                         }
@@ -1221,8 +1259,8 @@ impl Kanata {
                             {
                                 for (key_action, osc) in keys_for_cmd_output(_cmd) {
                                     match key_action {
-                                        KeyAction::Press => self.kbd_out.press_key(osc)?,
-                                        KeyAction::Release => self.kbd_out.release_key(osc)?,
+                                        KeyAction::Press => press_key(&mut self.kbd_out, osc)?,
+                                        KeyAction::Release => release_key(&mut self.kbd_out, osc)?,
                                     }
                                 }
                             }
@@ -1304,14 +1342,14 @@ impl Kanata {
                                     cw.maybe_add_lsft(cur_keys);
                                     if cur_keys.len() > prev_len {
                                         do_caps_word = true;
-                                        self.kbd_out.press_key(OsCode::KEY_LEFTSHIFT)?;
+                                        press_key(&mut self.kbd_out, OsCode::KEY_LEFTSHIFT)?;
                                     }
                                 }
                             }
                             // Release key in case the most recently pressed key is still pressed.
-                            self.kbd_out.release_key(osc)?;
-                            self.kbd_out.press_key(osc)?;
-                            self.kbd_out.release_key(osc)?;
+                            release_key(&mut self.kbd_out, osc)?;
+                            press_key(&mut self.kbd_out, osc)?;
+                            release_key(&mut self.kbd_out, osc)?;
                             if do_caps_word {
                                 self.kbd_out.release_key(OsCode::KEY_LEFTSHIFT)?;
                             }
@@ -1513,7 +1551,7 @@ impl Kanata {
                         || self.unmodded_keys.contains(&kc)
                     {
                         log::debug!("repeat    {:?}", KeyCode::from(osc));
-                        if let Err(e) = self.kbd_out.write_key(osc, KeyValue::Repeat) {
+                        if let Err(e) = write_key(&mut self.kbd_out, osc, KeyValue::Repeat) {
                             bail!("could not write key {:?}", e)
                         }
                         return Ok(());
@@ -1544,7 +1582,7 @@ impl Kanata {
                 || self.unmodded_keys.contains(&kc)
             {
                 log::debug!("repeat    {:?}", KeyCode::from(osc));
-                if let Err(e) = self.kbd_out.write_key(osc, KeyValue::Repeat) {
+                if let Err(e) = write_key(&mut self.kbd_out, osc, KeyValue::Repeat) {
                     bail!("could not write key {:?}", e)
                 }
                 return Ok(());
@@ -1960,8 +1998,8 @@ fn cancel_sequence(state: &SequenceState, kbd_out: &mut KbdOut) -> Result<()> {
         SequenceInputMode::HiddenDelayType => {
             for code in state.sequence.iter().copied() {
                 if let Some(osc) = OsCode::from_u16(code) {
-                    kbd_out.press_key(osc)?;
-                    kbd_out.release_key(osc)?;
+                    press_key(kbd_out, osc)?;
+                    release_key(kbd_out, osc)?;
                 }
             }
         }
