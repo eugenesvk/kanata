@@ -89,7 +89,7 @@ impl SystemTray {
     debug!("✗ no icon file found");return None
   }
   fn check_active(&self) {
-    if let Some(cfg) = CFG.get() {let mut k = cfg.lock();
+    if let Some(cfg) = CFG.get() {let k = cfg.lock();
       let idx_cfg = k.cur_cfg_idx;
       let tray_item_dyn	= &self.tray_item_dyn.borrow(); //
       for (i, h_cfg_i) in tray_item_dyn.iter().enumerate() {
