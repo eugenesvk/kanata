@@ -80,10 +80,10 @@ impl SystemTray {
               } else if ! is_icn_ext_valid {icon_file.push(ext);} else{trace!("skip ext");} // replace invalid icon extension
               if icon_file == blank_p {continue;}
               trace!("testing icon file {:?}",icon_file);
-              if ! icon_file.is_file() {icon_file.clear();} else {info!("✓ found icon file: {}",icon_file.display().to_string());
+              if ! icon_file.is_file() {icon_file.clear();} else {debug!("✓ found icon file: {}",icon_file.display().to_string());
                 return Some(icon_file.display().to_string())
               } } } } } }
-    info!("✗ no icon file found");return None
+    debug!("✗ no icon file found");return None
   }
   fn check_active(&self) {
     if let Some(cfg) = CFG.get() {let mut k = cfg.lock();
