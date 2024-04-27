@@ -298,7 +298,7 @@ pub fn build_tray(cfg: &Arc<Mutex<Kanata>>) -> Result<system_tray_ui::SystemTray
   let app_data	= SystemTrayData {
     tooltip   	: path_cur.display().to_string(),
     cfg_p     	: paths.clone(),
-    cfg_icon  	: cfg_icon.clone()};
+    cfg_icon  	: cfg_icon.clone(),};
   let app     	= SystemTray {app_data:RefCell::new(app_data), ..Default::default()};
   SystemTray::build_ui(app).context("Failed to build UI")
 }
