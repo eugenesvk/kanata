@@ -147,7 +147,7 @@ pub fn str_to_oscode(s: &str) -> Option<OsCode> {
     "Semicolon"|"scln"|"︔"=>OsCode::KEY_SEMICOLON,"Comma"|"comm"|"⸴"=>OsCode::KEY_COMMA,"period"|"．"=>OsCode::KEY_DOT,
     "Slash"|"⁄"=>OsCode::KEY_SLASH,"Backslash"|"bksl"|"⧵"|"＼"=>OsCode::KEY_BACKSLASH,
     // Modifiers
-    "ShiftLeft"|"lshift"|"lshft"|"lsft"|"shft"|"sft"|"‹⇧"	=> OsCode::KEY_LEFTSHIFT,"ShiftRight"|"rshift"|"rshft"|"rsft"|"⇧›"	=> OsCode::KEY_RIGHTSHIFT,
+    "ShiftLeft"|"lshift"|"lshft"|"lsft"|"shft"|"sft"|"‹⇧"	=> OsCode::KEY_LEFTSHIFT,"ShiftRight"|"RightShift"|"rshift"|"rshft"|"rsft"|"⇧›"	=> OsCode::KEY_RIGHTSHIFT,
     "ControlLeft"|"lctrl"|"lctl"|"ctl"|"‹⎈"|"‹⌃"         	=> OsCode::KEY_LEFTCTRL ,"ControlRight"|"rctrl"|"rctl"|"⎈›"|"⌃›"  	=> OsCode::KEY_RIGHTCTRL,
     "MetaLeft"|"lmeta"|"lmet"|"met"|"‹◆"|"‹⌘"|"‹❖"       	=> OsCode::KEY_LEFTMETA ,"MetaRight"|"rmeta"|"rmet"|"◆›"|"⌘›"|"❖›"	=> OsCode::KEY_RIGHTMETA,     // Also known as Windows, GUI, Comand, Super
     "AltLeft"|"lalt"|"alt"|"‹⎇"|"‹⌥"                     	=> OsCode::KEY_LEFTALT,"AltRight"|"ralt"|"⎇›"|"⌥›"                	=> OsCode::KEY_RIGHTALT,
