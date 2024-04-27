@@ -16,9 +16,9 @@ use nwd::NwgUi;
 use nwg::{NativeUi,ControlHandle};
 
 #[derive(Default,Debug,Clone)] pub struct SystemTrayData {
-  pub tooltip:String,
-  pub cfg_p  :Vec<PathBuf>,
-  pub cfg_icon  :Option<String>,
+  pub tooltip 	:String,
+  pub cfg_p   	:Vec<PathBuf>,
+  pub cfg_icon	:Option<String>,
 }
 #[derive(Default)] pub struct SystemTray {
   pub app_data     	: RefCell<SystemTrayData>,
