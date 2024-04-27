@@ -55,7 +55,7 @@ impl SystemTray {
    where                I:AsRef<str>,   P:AsRef<Path> {self.get_icon_p_impl(i.as_ref(),s.as_ref())}
   fn get_icon_p_impl(&self, icn:&str, p:&Path) -> Option<String> {
     let mut icon_file = PathBuf::new();
-    let     blank   	= Path::new("");
+    let     blank_p 	= Path::new("");
     let     icn_p   	= Path::new(&icn);
     let     pre_p   	=  p.parent    ().unwrap_or_else(| |Path   ::new(""));
     let     nameext 	= &p.file_name ().unwrap_or_else(| |OsStr  ::new(""));
@@ -64,25 +64,26 @@ impl SystemTray {
     let     app_data	= get_appdata  ().unwrap_or_else(| |PathBuf::new(  ));
     let mut user_cfg	= get_user_home().unwrap_or_else(| |PathBuf::new(  )); user_cfg.push(".config");
     let     icn_ext 	= &icn_p.extension().unwrap_or_else(||OsStr::new("")).to_string_lossy().to_string();
-    'p: for    p_par in [pre_p,&cur_exe,&xdg_cfg,&app_data,&user_cfg] {trace!("checkin p_par={:?}",p_par);
-      'k:for   p_kan in CFG_FD {trace!("checkin p_kan={:?}",p_kan);
-        for    p_icn in ASSET_FD {trace!("checkin p_icn={:?}",p_icn);
-          for  p_ext in IMG_EXT {trace!("checkin p_ext={:?}",p_ext);
-            if ! (p_par == blank) {icon_file.push(p_par);} else {break 'k}
-            icon_file.push(p_kan);icon_file.push(p_icn); // folders
-            icon_file.push(nameext); //file
-            if     p_par == icn_p // checking user profided path directly
-              &&   p_kan  .is_empty()
-              &&   p_icn  .is_empty()
-              && ! icn_ext.is_empty() {
-              if ! IMG_EXT.iter().any(|&i| {trace!("{}=={} {}",i,icn_ext,i==icn_ext);i==icn_ext}) {icon_file.set_extension(p_ext);warn!("user extension \"{}\" isn't valid!",icn_ext)} else {trace!("icn_ext={:?}",icn_ext);}
-            } else {icon_file.set_extension(p_ext);}
-            debug!("loading icon from {:?}",icon_file);
-            if ! icon_file.is_file() {icon_file.clear();} else {break 'p} } } } }
-    if ! icon_file.is_file() {info!("✗ no icon file found");
-      return None
-    } else {info!("✓ found icon file at: {}",icon_file.display().to_string());
-      return Some(icon_file.display().to_string())}
+    let is_icn_ext_valid = if ! IMG_EXT.iter().any(|&i| {i==icn_ext}) {warn!("user extension \"{}\" isn't valid!",icn_ext); false} else {trace!("icn_ext={:?}",icn_ext);true};
+    let parents = [Path::new(""),icn_p,pre_p,&cur_exe,&xdg_cfg,&app_data,&user_cfg]; // empty path to allow no prefixes when icon path is explictily set in case it's a full path already
+    let f_name = [icn_p.as_os_str(),nameext];
+    for        p_par in parents 	{info!("{}p_par={:?}"	,""        	,p_par);
+      for      p_kan in CFG_FD  	{info!("{}p_kan={:?}"	,"  "      	,p_kan);
+        for    p_icn in ASSET_FD	{info!("{}p_icn={:?}"	,"    "    	,p_icn);
+          for     nm in f_name  	{info!("{}   nm={:?}"	,"      "  	,nm);
+            for  ext in IMG_EXT 	{info!("{}  ext={:?}"	,"        "	,ext);
+              if !(p_par == blank_p){icon_file.push(p_par);} // folders
+              if ! p_kan.is_empty() {icon_file.push(p_kan);}
+              if ! p_icn.is_empty() {icon_file.push(p_icn);}
+              if !    nm.is_empty() {icon_file.push(nm   );}
+              if !(   nm == icn_p  ){icon_file.push(ext); // no icon name passed, iterate extensions
+              } else if ! is_icn_ext_valid {icon_file.push(ext);} else{info!("skip ext");} // replace invalid icon extension
+              if icon_file == blank_p {continue;}
+              info!("loading icon from {:?}",icon_file);
+              if ! icon_file.is_file() {icon_file.clear();} else {info!("✓ found icon file at: {}",icon_file.display().to_string());
+                return Some(icon_file.display().to_string())
+              } } } } } }
+    info!("✗ no icon file found");return None
   }
   fn check_active(&self) {
     if let Some(cfg) = CFG.get() {let mut k = cfg.lock();
