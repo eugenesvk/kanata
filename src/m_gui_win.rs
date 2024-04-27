@@ -18,6 +18,7 @@ use nwg::{NativeUi,ControlHandle};
 #[derive(Default,Debug,Clone)] pub struct SystemTrayData {
   pub tooltip:String,
   pub cfg_p  :Vec<PathBuf>,
+  pub cfg_icon  :Option<String>,
 }
 #[derive(Default)] pub struct SystemTray {
   pub app_data     	: RefCell<SystemTrayData>,
@@ -41,40 +42,43 @@ pub fn get_appdata() -> Option<PathBuf> {var_os("APPDATA").map(PathBuf::from)}
 pub fn get_user_home() -> Option<PathBuf> {var_os("USERPROFILE").map(PathBuf::from)}
 pub fn get_xdg_home() -> Option<PathBuf> {var_os("XDG_CONFIG_HOME").map(PathBuf::from)}
 
+const CFG_FD: [&str; 3] = ["","kanata","kanata-tray"]; // blank "" allow checking directly for user passed values
+const ASSET_FD: [&str; 4] = ["","icon","img","icons"];
+const IMG_EXT: [&str; 7] = ["ico","jpg","jpeg","png","bmp","dds","tiff"];
 use crate::lib_main::CFG;
 use winapi::shared::windef::{HWND, HMENU};
 impl SystemTray {
   fn show_menu(&self) {
     let (x, y) = nwg::GlobalCursor::position();
     self.tray_menu.popup(x, y);  }
-  fn get_icon_p<P: AsRef<Path>>(&self, s:P    ) -> Option<String> {self.get_icon_p_impl(s.as_ref())}
-  fn get_icon_p_impl           (&self, p:&Path) -> Option<String> {
-    // let mut icon_file:PathBuf = [pre,name,ext].iter().collect();
-    // info!("searching for an icon in path=¦{:?}¦ n=¦{:?}¦ ext=¦{:?}¦ pre=¦{:?}¦",p,name,ext,pre);
-    let mut icon_file = PathBuf::from(p);
-    icon_file  .set_extension("ico");
-    if ! icon_file.is_file() {icon_file.clear();icon_file.push(p);
-      icon_file.set_extension("kbd.ico");}
-    if ! icon_file.is_file() {icon_file.clear();
-      // let pre_p	= &p.parent()   .unwrap_or_else(||Path::new(""));
-      let blank   	= Path::new("");
-      let nameext 	= &p.file_name().unwrap_or_else(||OsStr::new(""));
-      // let ext  	= &p.extension().unwrap_or_else(||OsStr::new(""));
-      // let name 	= &p.file_stem().unwrap_or_else(||OsStr::new(""));
-      let     cur_exe  = current_exe  ().unwrap_or_else(|_|PathBuf::new());
-      let     xdg_cfg  = get_xdg_home ().unwrap_or_else(||PathBuf::new());
-      let     app_data = get_appdata  ().unwrap_or_else(||PathBuf::new());
-      let mut user_cfg = get_user_home().unwrap_or_else(||PathBuf::new());
-      user_cfg.push(".config");
-      'p: for  p_par in [cur_exe,xdg_cfg,app_data,user_cfg] {
-        'k:for p_kan in ["kanata","kanata-tray"] {
-          for  p_icn in ["","icon","img","icons"] {
-            if ! (p_par == blank) {icon_file.push(p_par.clone());} else {break 'k}
+  fn get_icon_p<I,P>(&self,   i:I   , s:P    ) -> Option<String>
+   where                I:AsRef<str>,   P:AsRef<Path> {self.get_icon_p_impl(i.as_ref(),s.as_ref())}
+  fn get_icon_p_impl(&self, icn:&str, p:&Path) -> Option<String> {
+    let mut icon_file = PathBuf::new();
+    let     blank   	= Path::new("");
+    let     icn_p   	= Path::new(&icn);
+    let     pre_p   	=  p.parent    ().unwrap_or_else(| |Path   ::new(""));
+    let     nameext 	= &p.file_name ().unwrap_or_else(| |OsStr  ::new(""));
+    let     cur_exe 	= current_exe  ().unwrap_or_else(|_|PathBuf::new(  ));
+    let     xdg_cfg 	= get_xdg_home ().unwrap_or_else(| |PathBuf::new(  ));
+    let     app_data	= get_appdata  ().unwrap_or_else(| |PathBuf::new(  ));
+    let mut user_cfg	= get_user_home().unwrap_or_else(| |PathBuf::new(  )); user_cfg.push(".config");
+    let     icn_ext 	= &icn_p.extension().unwrap_or_else(||OsStr::new("")).to_string_lossy().to_string();
+    'p: for    p_par in [pre_p,&cur_exe,&xdg_cfg,&app_data,&user_cfg] {trace!("checkin p_par={:?}",p_par);
+      'k:for   p_kan in CFG_FD {trace!("checkin p_kan={:?}",p_kan);
+        for    p_icn in ASSET_FD {trace!("checkin p_icn={:?}",p_icn);
+          for  p_ext in IMG_EXT {trace!("checkin p_ext={:?}",p_ext);
+            if ! (p_par == blank) {icon_file.push(p_par);} else {break 'k}
             icon_file.push(p_kan);icon_file.push(p_icn); // folders
             icon_file.push(nameext); //file
-            icon_file.set_extension("ico");info!("testing icon from {:?}",icon_file);
-            if ! icon_file.is_file() {icon_file.clear();} else {break 'p} }  }     }
-    }
+            if     p_par == icn_p // checking user profided path directly
+              &&   p_kan  .is_empty()
+              &&   p_icn  .is_empty()
+              && ! icn_ext.is_empty() {
+              if ! IMG_EXT.iter().any(|&i| {trace!("{}=={} {}",i,icn_ext,i==icn_ext);i==icn_ext}) {icon_file.set_extension(p_ext);warn!("user extension \"{}\" isn't valid!",icn_ext)} else {trace!("icn_ext={:?}",icn_ext);}
+            } else {icon_file.set_extension(p_ext);}
+            debug!("loading icon from {:?}",icon_file);
+            if ! icon_file.is_file() {icon_file.clear();} else {break 'p} } } } }
     if ! icon_file.is_file() {info!("✗ no icon file found");
       return None
     } else {info!("✓ found icon file at: {}",icon_file.display().to_string());
@@ -174,6 +178,7 @@ pub mod system_tray_ui {
       {let mut tray_item_dyn	= d.tray_item_dyn.borrow_mut(); //extra scope to drop borrowed mut
        let mut icon_dyn       = d.icon_dyn     .borrow_mut();
       const menu_acc:&str = "ASDFGQWERTZXCVBYUIOPHJKLNM";
+      let cfg_icon_p = if let Some(cfg_icon) = &app_data.cfg_icon {cfg_icon} else {""};
       if (app_data.cfg_p).len() > 0 {
         for (i, cfg_p) in app_data.cfg_p.iter().enumerate() {
           let i_acc = match i { // menu accelerators from 1–0 then A–Z starting from home row for easier presses
@@ -194,7 +199,7 @@ pub mod system_tray_ui {
             let mut temp_icon = Default::default();
             nwg::Icon::builder().source_embed(Some(&d.embed)).source_embed_str(Some("iconMain")).strict(true).build(&mut temp_icon).unwrap();
             let _ = icon_dyn.insert(cfg_p.clone(),temp_icon);
-          } else if let Some(ico_p) = &d.get_icon_p(&cfg_p) {
+          } else if let Some(ico_p) = &d.get_icon_p(&cfg_icon_p, &cfg_p) {
             let mut temp_icon = Default::default();
             nwg::Icon::builder().source_file(Some(&ico_p)).strict(false).build(&mut temp_icon).unwrap();
             let _ = icon_dyn.insert(cfg_p.clone(),temp_icon);
@@ -257,10 +262,12 @@ pub mod system_tray_ui {
 pub fn build_tray(cfg: &Arc<Mutex<Kanata>>) -> Result<system_tray_ui::SystemTrayUi> {
   let k       	= cfg.lock();
   let paths   	= &k.cfg_paths;
+  let cfg_icon	= &k.win_tray_icon;
   let path_cur	= &paths[0];
   let app_data	= SystemTrayData {
     tooltip   	: path_cur.display().to_string(),
-    cfg_p     	: paths.clone()};
+    cfg_p     	: paths.clone(),
+    cfg_icon  	: cfg_icon.clone()};
   let app     	= SystemTray {app_data:RefCell::new(app_data), ..Default::default()};
   SystemTray::build_ui(app).context("Failed to build UI")
 }
