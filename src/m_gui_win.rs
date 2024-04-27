@@ -111,23 +111,38 @@ impl SystemTray {
       let path_cur_cc = path_cur.clone();
       msg_content += &path_cur_s;
       let cfg_name = &path_cur.file_name().unwrap_or_else(||OsStr::new("")).to_string_lossy().to_string();
+      if log_enabled!(Debug) {let cfg_icon = &k.win_tray_icon;debug!("pre reload win_tray_icon={:?}",cfg_icon);}
       match i {
-        Some(idx)	=> {k.request_live_reload_n(idx); msg_title+=&("🔄 \"".to_owned() + cfg_name + "\" reloaded"); flags |= f_tray::USER_ICON;}
-        None     	=> {k.request_live_reload  (   ); msg_title+=&("🔄 \"".to_owned() + cfg_name + "\" reloaded"); flags |= f_tray::USER_ICON;}
+        Some(idx)	=> {if let Ok(()) = k.live_reload_n(idx) {
+          msg_title+=&("🔄 \"".to_owned() + cfg_name + "\" loaded"); flags |= f_tray::USER_ICON;
+          } else {
+          msg_title+=&("🔄 \"".to_owned() + cfg_name + "\" NOT loaded"); flags |= f_tray::ERROR_ICON | f_tray::LARGE_ICON;
+          self.tray.show(&msg_content, Some(&msg_title), Some(flags), Some(&self.icon));
+          return
+          }
+        }
+        None	=> {if let Ok(()) = k.live_reload  (   ) {
+          msg_title+=&("🔄 \"".to_owned() + cfg_name + "\" reloaded"); flags |= f_tray::USER_ICON;
+          } else {
+          msg_title+=&("🔄 \"".to_owned() + cfg_name + "\" NOT reloaded"); flags |= f_tray::ERROR_ICON | f_tray::LARGE_ICON;
+          self.tray.show(&msg_content, Some(&msg_title), Some(flags), Some(&self.icon));
+          return
+          }
+        }
       };
-      info!("{}", msg_title);
+      let cfg_icon	= &k.win_tray_icon; debug!("pos reload win_tray_icon={:?}",cfg_icon);
+      let mut app_data = self.app_data.borrow_mut();
+      app_data.cfg_icon = cfg_icon.clone();
       // self.tray.set_visibility(false); // flash the icon, but might be confusing as the app isn't restarting, just reloading
       self.tray.set_tip(&path_cur_s); // update tooltip to point to the newer config
       // self.tray.set_visibility(true);
 
-      let mut icon_dyn = self.icon_dyn.borrow_mut();
+      let mut icon_dyn = self.icon_dyn.borrow_mut(); // update the tray icon
       if icon_dyn.contains_key(&path_cur_cc) {
         if let Some(icon) = icon_dyn.get(&path_cur_cc).unwrap() {self.tray.set_icon(&icon); //
         } else {info!("this config has no associated icon, using default: {}",path_cur_cc.display().to_string());
           self.tray.set_icon(&self.icon)}
       } else {
-        //todo: after success on live reload
-        let app_data = self.app_data.borrow();
         let cfg_icon_p = if let Some(cfg_icon) = &app_data.cfg_icon {cfg_icon} else {""};
         if let Some(ico_p) = &self.get_icon_p(&cfg_icon_p, &path_cur_cc) {
           let mut temp_icon_bitmap = Default::default();
@@ -137,8 +152,7 @@ impl SystemTray {
             let _ = icon_dyn.insert(path_cur_cc.clone(),Some(temp_icon));
             let temp_icon = temp_icon_bitmap.copy_as_icon();
             self.tray.set_icon(&temp_icon);
-          } else {
-            warn!("✗ Invalid/no icon from this config: {}",path_cur_cc.display().to_string());
+          } else {warn!("✗ Invalid/no icon from this config: {}",path_cur_cc.display().to_string());
             self.tray.set_icon(&self.icon);
           }
         } else {warn!("✗ Invalid icon path from this config: {}",path_cur_cc.display().to_string());
