@@ -5,6 +5,7 @@ use std::env::{var_os,current_exe};
 use std::path::{Path,PathBuf};
 use std::collections::HashMap;
 use std::ffi::OsStr;
+use log::Level::Debug;
 use crate::{Kanata,kanata};
 use parking_lot::Mutex;
 use anyhow::{Result,Context};
@@ -67,11 +68,11 @@ impl SystemTray {
     let is_icn_ext_valid = if ! IMG_EXT.iter().any(|&i| {i==icn_ext}) {warn!("user extension \"{}\" isn't valid!",icn_ext); false} else {trace!("icn_ext={:?}",icn_ext);true};
     let parents = [Path::new(""),pre_p,&cur_exe,&xdg_cfg,&app_data,&user_cfg]; // empty path to allow no prefixes when icon path is explictily set in case it's a full path already
     let f_name = [icn_p.as_os_str(),nameext];
-    for        p_par in parents 	{trace!("{}p_par={:?}"	,""        	,p_par);
-      for      p_kan in CFG_FD  	{trace!("{}p_kan={:?}"	,"  "      	,p_kan);
-        for    p_icn in ASSET_FD	{trace!("{}p_icn={:?}"	,"    "    	,p_icn);
-          for     nm in f_name  	{trace!("{}   nm={:?}"	,"      "  	,nm);
-            for  ext in IMG_EXT 	{trace!("{}  ext={:?}"	,"        "	,ext);
+    'p:for        p_par in parents	{trace!("{}p_par={:?}"	,""        	,p_par);
+      for      p_kan in CFG_FD    	{trace!("{}p_kan={:?}"	,"  "      	,p_kan);
+        for    p_icn in ASSET_FD  	{trace!("{}p_icn={:?}"	,"    "    	,p_icn);
+          for     nm in f_name    	{trace!("{}   nm={:?}"	,"      "  	,nm);
+            for  ext in IMG_EXT   	{trace!("{}  ext={:?}"	,"        "	,ext);
               if !(p_par == blank_p){icon_file.push(p_par);} // folders
               if ! p_kan.is_empty() {icon_file.push(p_kan);}
               if ! p_icn.is_empty() {icon_file.push(p_icn);}
@@ -80,7 +81,9 @@ impl SystemTray {
               } else if ! is_icn_ext_valid {icon_file.push(ext);} else{trace!("skip ext");} // replace invalid icon extension
               if icon_file == blank_p {continue;}
               trace!("testing icon file {:?}",icon_file);
-              if ! icon_file.is_file() {icon_file.clear();} else {debug!("✓ found icon file: {}",icon_file.display().to_string());
+              if ! icon_file.is_file() {icon_file.clear();
+                if p_par == blank_p && p_kan.is_empty() && p_icn.is_empty() && nm == icn_p {trace!("skipping further iters {:?}",nm); continue 'p}
+              } else {info!("✓ found icon file: {}",icon_file.display().to_string());
                 return Some(icon_file.display().to_string())
               } } } } } }
     debug!("✗ no icon file found");return None
