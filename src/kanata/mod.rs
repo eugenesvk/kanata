@@ -924,17 +924,19 @@ impl Kanata {
                 }
                 Some(state) => {
                     state.ticks_until_timeout = state.sequence_timeout;
-                    // Transform to OsCode and convert modifiers other than altgr/ralt (same key different names) to the left version, since that's how chords get transformed when building up sequences.
-                    let osc = match OsCode::from(*k) {
-                        OsCode::KEY_RIGHTSHIFT => OsCode::KEY_LEFTSHIFT,
-                        OsCode::KEY_RIGHTMETA => OsCode::KEY_LEFTMETA,
-                        OsCode::KEY_RIGHTCTRL => OsCode::KEY_LEFTCTRL,
-                        osc => osc,
-                    };
-
-                    // Modify the upper unused bits of the u16 to signify that the key is activated alongside a modifier.
+                    let osc = OsCode::from(*k);
                     let pushed_into_seq = {
-                        let mut base = u16::from(osc);
+                        // Transform to OsCode and convert modifiers other than altgr/ralt
+                        // (same key different names) to the left version, since that's
+                        // how chords get transformed when building up sequences.
+                        let mut base = u16::from(match osc {
+                            OsCode::KEY_RIGHTSHIFT => OsCode::KEY_LEFTSHIFT,
+                            OsCode::KEY_RIGHTMETA => OsCode::KEY_LEFTMETA,
+                            OsCode::KEY_RIGHTCTRL => OsCode::KEY_LEFTCTRL,
+                            osc => osc,
+                        });
+                        // Modify the upper unused bits of the u16 to signify that the key
+                        // is activated alongside a modifier.
                         for k in cur_keys.iter().copied() {
                             base |= mod_mask_for_keycode(k);
                         }
@@ -962,9 +964,9 @@ impl Kanata {
                         {
                             let mut no_valid_seqs = true;
                             for i in (0..state.sequence.len()).rev() {
-                                // If applicable, check again with modifier bits unset.
-                                // Safety: proper bounds are immediately above. Note - can't use iter_mut due to borrowing issues.
-                                *unsafe { state.sequence.get_unchecked_mut(i) } &= MASK_KEYCODES;
+                                // Note: proper bounds are immediately above.
+                                // Can't use iter_mut due to borrowing issues.
+                                state.sequence[i] &= MASK_KEYCODES;
                                 res = self.sequences.get_or_descendant_exists(&state.sequence);
                                 if res != NotInTrie {
                                     no_valid_seqs = false;
@@ -980,7 +982,9 @@ impl Kanata {
                             match state.sequence_input_mode {
                                 SequenceInputMode::HiddenDelayType => {
                                     for code in state.sequence.iter().copied() {
+                                        let code = code & MASK_KEYCODES;
                                         if let Some(osc) = OsCode::from_u16(code) {
+                                            // BUG: chorded_hidden_delay_type
                                             press_key(&mut self.kbd_out, osc)?;
                                             release_key(&mut self.kbd_out, osc)?;
                                         }
