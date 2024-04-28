@@ -187,6 +187,8 @@ pub struct Kanata {
     pub switch_max_key_timing: u16,
     #[cfg(feature = "tcp_server")]
     tcp_server_address: Option<SocketAddrWrapper>,
+    #[cfg(all(target_os = "windows", feature = "gui"))]
+    pub win_tray_icon: Option<String>,
 }
 
 #[derive(PartialEq, Clone, Copy)]
@@ -353,6 +355,8 @@ impl Kanata {
             switch_max_key_timing: cfg.switch_max_key_timing,
             #[cfg(feature = "tcp_server")]
             tcp_server_address: args.tcp_server_address.clone(),
+            #[cfg(all(target_os = "windows", feature = "gui"))]
+            win_tray_icon: cfg.options.win_tray_icon,
         })
     }
 
@@ -443,6 +447,8 @@ impl Kanata {
             switch_max_key_timing: cfg.switch_max_key_timing,
             #[cfg(feature = "tcp_server")]
             tcp_server_address: None,
+            #[cfg(all(target_os = "windows", feature = "gui"))]
+            win_tray_icon: None,
         })
     }
 
