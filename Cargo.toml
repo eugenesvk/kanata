@@ -104,7 +104,7 @@ interception_driver = ["kanata-interception", "kanata-parser/interception_driver
 simulated_output = ["indoc"]
 wasm = [ "instant/wasm-bindgen" ]
 simulated_input = ["indoc"]
-passthru_ahk = []
+passthru_ahk = ["simulated_input","simulated_output"]
 
 [profile.release]
 opt-level = "z"
