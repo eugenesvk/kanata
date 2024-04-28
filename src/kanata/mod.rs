@@ -58,7 +58,7 @@ mod macos;
 #[cfg(target_os = "macos")]
 use macos::*;
 
-output_logic;
+mod output_logic;
 use output_logic::*;
 
 #[cfg(target_os = "unknown")]
