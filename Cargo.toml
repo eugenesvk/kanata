@@ -106,7 +106,7 @@ simulated_output = ["indoc"]
 wasm = [ "instant/wasm-bindgen" ]
 simulated_input = ["indoc"]
 passthru_ahk = ["simulated_input","simulated_output","win_dbg_logger"]
-gui = ["native-windows-derive", "embed-resource", "indoc", "regex","lazy_static","win_dbg_logger","win_dbg_logger/simple_shared"]
+gui = ["win_manifest","native-windows-derive", "embed-resource", "indoc", "regex","lazy_static","win_dbg_logger","win_dbg_logger/simple_shared"]
 
 [profile.release]
 opt-level = "z"
