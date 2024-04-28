@@ -9,9 +9,6 @@ use simplelog::*;
 
 use std::path::PathBuf;
 
-#[cfg(test)]
-mod tests;
-
 #[derive(Parser, Debug)]
 #[command(author, version, verbatim_doc_comment)]
 /// kanata: an advanced software key remapper
