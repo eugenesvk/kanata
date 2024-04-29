@@ -31,7 +31,6 @@ impl Kanata {
                 panic!("Could not attach to console");
             }
         };
-        native_windows_gui::init().context("Failed to init Native Windows GUI")?;
 
         let (preprocess_tx, preprocess_rx) = sync_channel(100);
         start_event_preprocessor(preprocess_rx, tx);
@@ -72,8 +71,6 @@ impl Kanata {
                                                        // }
             true
         });
-        #[cfg(all(target_os = "windows", feature = "gui"))]
-        let _ui = build_tray(&_cfg)?;
 
         native_windows_gui::dispatch_thread_events(); // The event loop is also required for the low-level keyboard hook to work.
         // if *IS_TERM  {
