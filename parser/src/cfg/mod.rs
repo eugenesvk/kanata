@@ -662,7 +662,7 @@ pub fn parse_cfg_raw_string(
             false
         }
     };
-    let layer_strings = spanned_root_exprs
+    let layer_strings = spanned_root_exprs //[(deflayer A..),(deflayer B..),..]
         .iter()
         .filter(|expr| deflayer_filter(&&expr.t))
         .map(|expr| expr.span.file_content()[expr.span.clone()].to_string())
@@ -920,10 +920,13 @@ fn gen_first_atom_filter_spanned(a: &str) -> impl Fn(&&Spanned<Vec<SExpr>>) -> b
     }
 }
 
+pub use std::any        ::type_name             ; // for type_of
+pub fn print_type_of<T>(_:&T)                 { println!("{}", type_name::<T>());}
+// pub fn print_type_of<T>(_:&T)                 { println!("{}", type_name::<T>());}
 /// Consumes the first element and returns the rest of the iterator. Returns `Ok` if the first
 /// element is an atom and equals `expected_first`.
 fn check_first_expr<'a>(
-    mut exprs: impl Iterator<Item = &'a SExpr>,
+    mut exprs: impl Iterator<Item = &'a SExpr>, // + std::fmt::Debug,
     expected_first: &str,
 ) -> Result<impl Iterator<Item = &'a SExpr>> {
     let first_atom = exprs
@@ -1028,6 +1031,11 @@ fn parse_layer_indexes(exprs: &[SpannedLayerExprs], expected_len: usize) -> Resu
     let mut layer_indexes = HashMap::default();
     let mut layer_icons = HashMap::default();
     for (i, expr_type) in exprs.iter().enumerate() {
+        // let a:i8 = expr_type; // &SpannedLayerExprs
+        // let aaa = e.t.iter().peekable();
+        // let aaa = expr_type.peek();
+        // println!("aaa {:?}",aaa);
+        // println!("expr_type {:?}",expr_type);
         let mut icon:Option<String> = None;
         let (mut subexprs, expr, do_element_count_check) = match expr_type {
             #[cfg(any(not(target_os = "windows"), not(feature = "gui")))]
@@ -1077,6 +1085,7 @@ fn parse_layer_indexes(exprs: &[SpannedLayerExprs], expected_len: usize) -> Resu
                 third_list_count = 1;
                 let third_list_1st = &third_list[0];
                 if let Some(third_list_1st_s) = &third_list[0].atom(None) {
+                    println!("✗✗✗ 3rd list={:?}, 1st={:?}", third_list, third_list_1st_s);
                     if *third_list_1st_s != DEFLAYER_ICON {
                         bail!("deflayer with a list as its 3rd element only accepts {DEFLAYER_ICON} as its 1st element, not {third_list_1st_s}");
                     } else {
