@@ -315,8 +315,7 @@ pub type MappedKeys = HashSet<OsCode>;
 pub struct LayerInfo {
     pub name: String,
     pub cfg_text: String,
-    #[cfg(all(target_os = "windows", feature = "gui"))]
-    pub layer_icon: Option<String>,
+    pub icon: Option<String>,
 }
 
 #[allow(clippy::type_complexity)] // return type is not pub
@@ -671,7 +670,7 @@ pub fn parse_cfg_raw_string(
     let layer_info: Vec<LayerInfo> = layer_names
         .into_iter()
         .zip(layer_strings)
-        .map(|(name, cfg_text)| LayerInfo { name: name.clone(), cfg_text, layer_icon: layer_icons.get(&name).unwrap_or(&None).clone()})
+        .map(|(name, cfg_text)| LayerInfo { name: name.clone(), cfg_text, icon: layer_icons.get(&name).unwrap_or(&None).clone()})
         .collect();
 
     let defsrc_layer = create_defsrc_layer();
@@ -1031,20 +1030,9 @@ fn parse_layer_indexes(exprs: &[SpannedLayerExprs], expected_len: usize) -> Resu
     let mut layer_indexes = HashMap::default();
     let mut layer_icons = HashMap::default();
     for (i, expr_type) in exprs.iter().enumerate() {
-        // let a:i8 = expr_type; // &SpannedLayerExprs
-        // let aaa = e.t.iter().peekable();
-        // let aaa = expr_type.peek();
-        // println!("aaa {:?}",aaa);
-        // println!("expr_type {:?}",expr_type);
         let mut icon:Option<String> = None;
         let (mut subexprs, expr, do_element_count_check) = match expr_type {
-            #[cfg(any(not(target_os = "windows"), not(feature = "gui")))]
-            SpannedLayerExprs::DefsrcMapping(e) => {(check_first_expr(e.t.iter(), DEFLAYER)?           , e, true)}
-            #[cfg(all(target_os = "windows", feature = "gui"))]
             SpannedLayerExprs::DefsrcMapping(e) => {(check_first_expr(e.t.iter(), DEFLAYER)?.peekable(), e, true)}
-            #[cfg(any(not(target_os = "windows"), not(feature = "gui")))]
-            SpannedLayerExprs::CustomMapping(e) => {(check_first_expr(e.t.iter(), DEFLAYER_MAPPED)?, e, false)}
-            #[cfg(all(target_os = "windows", feature = "gui"))]
             SpannedLayerExprs::CustomMapping(e) => {(check_first_expr(e.t.iter(), DEFLAYER_MAPPED)?.peekable(), e, false)
             }
         };
@@ -1078,16 +1066,14 @@ fn parse_layer_indexes(exprs: &[SpannedLayerExprs], expected_len: usize) -> Resu
             bail_expr!(layer_expr, "duplicate layer name: {}", layer_name);
         }
 
-        let mut third_list_count = 0;
-        #[cfg(all(target_os = "windows", feature = "gui"))]
-        if let Some(third) = subexprs.peek() {println!("next is list? = {:?} {:?}",third.list(None),third);
+        let mut cfg_third =  0;
+        if let Some(third) = subexprs.peek() {
             if let Some(third_list) = third.list(None) {
-                third_list_count = 1;
+                cfg_third = 1;
                 let third_list_1st = &third_list[0];
                 if let Some(third_list_1st_s) = &third_list[0].atom(None) {
-                    println!("✗✗✗ 3rd list={:?}, 1st={:?}", third_list, third_list_1st_s);
                     if ! DEFLAYER_ICON.iter().any(|&i| {i==*third_list_1st_s}) {
-                        bail!("deflayer with a list as its 3rd element only accepts {DEFLAYER_ICON:?} as its 1st element, not {third_list_1st_s}");
+                        bail!("deflayer with a list as its 3rd element expects it to start with one of {DEFLAYER_ICON:?}, not {third_list_1st_s}");
                     } else {
                         if let Some(third_list_2nd_s) = &third_list[1].atom(None) {
                             icon = Some(third_list_2nd_s.to_string());
@@ -1096,7 +1082,7 @@ fn parse_layer_indexes(exprs: &[SpannedLayerExprs], expected_len: usize) -> Resu
                         }
                     }
                 } else {
-                    bail!("deflayer with a list as its 3rd element only accepts {DEFLAYER_ICON:?} as its 1st element, not {third_list_1st:?}");
+                    bail!("deflayer with a list as its 3rd element expects it to start with one of {DEFLAYER_ICON:?}, not {third_list_1st:?}");
                 }
             }
             subexprs.next(); // advance over the 3rd list
@@ -1117,13 +1103,15 @@ fn parse_layer_indexes(exprs: &[SpannedLayerExprs], expected_len: usize) -> Resu
             }
         }
         if do_element_count_check {
-            let num_actions = expr.t.len() - 2 - third_list_count;
+            let num_actions = expr.t.len() - 2 - cfg_third;
+            let dbg_cfg_third = if cfg_third == 1 {" (excluding 1 config)"} else {""};
             if num_actions != expected_len {
                 bail_span!(
                     expr,
-                    "Layer {} has {} item(s), but requires {} to match defsrc",
+                    "Layer {} has {} item(s){}, but requires {} to match defsrc",
                     layer_name,
                     num_actions,
+                    dbg_cfg_third,
                     expected_len
                 )
             }
@@ -2845,27 +2833,16 @@ fn parse_layers(
             LayerExprs::DefsrcMapping(layer) => {
                 // Parse actions in the layer and place them appropriately according
                 // to defsrc mapping order.
-                #[cfg(all(target_os = "windows", feature = "gui"))]
                 let skip = if layer.len() >= 3 && parse_action_as_cfg(&layer[2]) {3} else {2}; // skip the 3rd list that's used to configure a layer rather than define an action
-                #[cfg(all(target_os = "windows", feature = "gui"))]
                 for (i, ac) in layer.iter().skip(skip).enumerate() {
-                    let ac = parse_action(ac, s)?;
-                    layers_cfg[layer_level][0][s.mapping_order[i]] = *ac;
-                }
-                #[cfg(any(not(target_os = "windows"), not(feature = "gui")))]
-                for (i, ac) in layer.iter().skip(2).enumerate() {
                     let ac = parse_action(ac, s)?;
                     layers_cfg[layer_level][0][s.mapping_order[i]] = *ac;
                 }
             }
             LayerExprs::CustomMapping(layer) => {
-                #[cfg(all(target_os = "windows", feature = "gui"))]
                 let skip = if layer.len() >= 3 && parse_action_as_cfg(&layer[2]) {3} else {2}; // skip the 3rd list that's used to configure a layer rather than define an action
                 // Parse actions as input -> output triplets
-                #[cfg(all(target_os = "windows", feature = "gui"))]
                 let mut pairs = layer[skip..].chunks_exact(2);
-                #[cfg(any(not(target_os = "windows"), not(feature = "gui")))]
-                let mut pairs = layer[2..].chunks_exact(2);
                 let mut layer_mapped_keys = HashSet::default();
                 let mut defsrc_anykey_used = false;
                 let mut unmapped_anykey_used = false;
