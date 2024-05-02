@@ -41,6 +41,8 @@ impl  PathExt for PathBuf {fn add_ext(&mut self, ext_o:impl AsRef<std::path::Pat
   pub handlers_dyn 	: RefCell<Vec<nwg::EventHandler>>,
   ///              	Store dynamically created icons to not load them from a file every time
   pub icon_dyn     	: RefCell<HashMap<PathBuf,Option<nwg::Icon>>>,
+  ///              	Store dynamically created icons to not load them from a file every time (bitmap format needed to set MenuItem's icons)
+  pub img_dyn      	: RefCell<HashMap<PathBuf,Option<nwg::Bitmap>>>,
   ///              	Store 'icon_dyn' hashmap key for the currently active icon ('cfg_path:layer_name' format)
   pub icon_active  	: RefCell<Option<PathBuf>>,
   ///              	Store embedded-in-the-binary resources like icons not to load them from a file
@@ -349,6 +351,7 @@ pub mod system_tray_ui {
 
       {let mut tray_item_dyn	= d.tray_item_dyn.borrow_mut(); //extra scope to drop borrowed mut
        let mut icon_dyn     	= d.icon_dyn     .borrow_mut();
+       let mut img_dyn      	= d.img_dyn      .borrow_mut();
        let mut icon_active  	= d.icon_active  .borrow_mut();
       const menu_acc:&str = "ASDFGQWERTZXCVBYUIOPHJKLNM";
       // let cfg_icon_p = // todo remove
@@ -371,7 +374,6 @@ pub mod system_tray_ui {
           if i == 0	{nwg::MenuItem::builder().parent(&d.tray_1cfg_m).text(&menu_text).check(true)	.build(&mut menu_item)?;
           } else   	{nwg::MenuItem::builder().parent(&d.tray_1cfg_m).text(&menu_text)            	.build(&mut menu_item)?;
           }
-          tray_item_dyn.push(menu_item);
           if i == 0	{ // add icons if exists, hashed by config path (for active config, others will create on load)
             if let Some(ico_p) = &d.get_icon_p(&layer0_icon_s, &app_data.layer0_name, &cfg_icon_s, &cfg_p, &app_data.icon_match_layer_name) {
               let mut cfg_layer_pkey = PathBuf::new(); // path key
@@ -393,7 +395,14 @@ pub mod system_tray_ui {
               let _ = icon_dyn.insert(cfg_p.clone(),Some(temp_icon));
               *icon_active = Some(cfg_p.clone());
             }
+            // Set tray menu config item icons, ignores layers since these are per config
+            if let Some(temp_icon_bitmap) = set_menu_item_cfg_icon(&mut menu_item, &cfg_icon_s, &cfg_p) {
+              let _ = img_dyn.insert(cfg_p.clone(),Some(temp_icon_bitmap));
+            } else {
+              let _ = img_dyn.insert(cfg_p.clone(),None);
+            }
           }
+          tray_item_dyn.push(menu_item);
         }
       } else {warn!("Didn't get any config paths from Kanata!")}
       }
@@ -439,6 +448,18 @@ pub mod system_tray_ui {
       ui.handler_def.borrow_mut().push(nwg::full_bind_event_handler(&ui.window.handle, handle_events));
       return Ok(ui);
     }
+  }
+
+  fn set_menu_item_cfg_icon(menu_item:&mut nwg::MenuItem, cfg_icon_s:&str, cfg_p:&PathBuf) -> Option<nwg::Bitmap>{
+    if let Some(ico_p) = get_icon_p("","", &cfg_icon_s, &cfg_p, &false) {
+      let cfg_pkey_s = cfg_p.display().to_string();
+      let mut temp_icon_bitmap = Default::default();
+      if let Ok(()) = nwg::Bitmap::builder().source_file(Some(&ico_p)).strict(false).size(Some((24,24))).build(&mut temp_icon_bitmap) {
+        debug!("✓ main 0 config: using icon for {}",cfg_pkey_s);
+        menu_item.set_bitmap(Some(&temp_icon_bitmap)); return Some(temp_icon_bitmap)
+      } else {debug!("✗ main 0 icon ✓ icon path, will be using DEFAULT icon for {:?}",cfg_p);}
+    }
+    menu_item.set_bitmap(None); None
   }
 
   impl Drop for SystemTrayUi { /// To make sure that everything is freed without issues, the default handler must be unbound.
