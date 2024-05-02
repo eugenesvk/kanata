@@ -1379,15 +1379,8 @@ fn parse_action(expr: &SExpr, s: &ParserState) -> Result<&'static KanataAction> 
 fn parse_action_as_cfg(expr: &SExpr) -> bool {
     if let Some(expr_list) = expr.list(None) {
         if let Some(expr_list_1st) = &expr_list[0].atom(None) {
-            if ! DEFLAYER_ICON.iter().any(|&i| {i==*expr_list_1st}) {
-                return false
-            } else {
-                if expr_list[1].atom(None).is_some() {
-                    return true
-                } else {
-                    return false
-                }
-            }
+            if ! DEFLAYER_ICON.iter().any(|&i| {i==*expr_list_1st}) {return false
+            } else { return expr_list[1].atom(None).is_some(); }
         }
     }
     false
