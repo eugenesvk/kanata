@@ -216,7 +216,7 @@ impl SystemTray {
         let cfg_name = &path_cur.file_name().unwrap_or_else(||OsStr::new("")).to_string_lossy().to_string();
         let cfg_icon_s  	= layer_icon.clone().unwrap_or("✗".to_string());
         let layer_icon_s	= cfg_icon.clone().unwrap_or("✗".to_string());
-        info!("✓ layer changed to ‘{}’ with icon ‘{}’ @ ‘{}’ tray_icon ‘{}’",layer_name,layer_icon_s,cfg_name,cfg_icon_s);
+        debug!("✓ layer changed to ‘{}’ with icon ‘{}’ @ ‘{}’ tray_icon ‘{}’",layer_name,layer_icon_s,cfg_name,cfg_icon_s);
       }
 
       {let app_data = self.app_data.borrow_mut();
