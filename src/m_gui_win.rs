@@ -334,9 +334,9 @@ pub mod system_tray_ui {
        let mut icon_dyn     	= d.icon_dyn     .borrow_mut();
        let mut icon_active  	= d.icon_active  .borrow_mut();
       const menu_acc:&str = "ASDFGQWERTZXCVBYUIOPHJKLNM";
-      let cfg_icon_p =
-        if let Some(layer0_icon) = &app_data.layer0_icon {debug!("layer0_icon");layer0_icon} else {
-        if let Some(cfg_icon   ) = &app_data.cfg_icon    {debug!("cfg_icon"   );cfg_icon   } else {""}};
+      // let cfg_icon_p = // todo remove
+        // if let Some(layer0_icon) = &app_data.layer0_icon {debug!("layer0_icon");layer0_icon} else {
+        // if let Some(cfg_icon   ) = &app_data.cfg_icon    {debug!("cfg_icon"   );cfg_icon   } else {""}};
       let layer0_icon_s = &app_data.layer0_icon.clone().unwrap_or("".to_string());
       let cfg_icon_s    = &app_data.cfg_icon.clone().unwrap_or("".to_string());
       if (app_data.cfg_p).len() > 0 {
