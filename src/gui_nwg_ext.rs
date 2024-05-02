@@ -1,14 +1,17 @@
+#![allow(non_snake_case,non_upper_case_globals,non_camel_case_types,unused_imports,unused_mut,unused_variables,dead_code,unused_assignments,unused_macros)]
 // based on https://github.com/lynxnb/wsl-usb-manager/blob/master/src/gui/nwg_ext.rs
 use native_windows_gui as nwg;
 
 use windows_sys::Win32::Foundation::HANDLE;
-use windows_sys::Win32::Graphics::Gdi::DeleteObject;
+use windows_sys::Win32::Graphics::Gdi::{DeleteObject,HBRUSH};
 use windows_sys::Win32::UI::Shell::{
     SHGetStockIconInfo, SHGSI_ICON, SHGSI_SMALLICON, SHSTOCKICONID, SHSTOCKICONINFO,
 };
 use windows_sys::Win32::UI::WindowsAndMessaging::{
-    CopyImage, DestroyIcon, GetIconInfoExW, SetMenuItemInfoW, HMENU, ICONINFOEXW, IMAGE_BITMAP,
-    LR_CREATEDIBSECTION, MENUITEMINFOW, MF_BYCOMMAND, MIIM_BITMAP,
+  CopyImage, DestroyIcon, GetIconInfoExW, SetMenuInfo, SetMenuItemInfoW, SetMenuItemBitmaps,
+  HMENU, ICONINFOEXW, IMAGE_BITMAP,
+  LR_CREATEDIBSECTION, MENUINFO, MENUITEMINFOW, MF_BYCOMMAND, MIIM_BITMAP,MIM_STYLE,MIM_BACKGROUND
+    ,MNS_NOTIFYBYPOS,MNS_CHECKORBMP,MNS_AUTODISMISS,MF_BYPOSITION,MENU_ITEM_FLAGS
 };
 
 /// Extends [`nwg::Bitmap`] with additional functionality.
@@ -88,6 +91,46 @@ impl BitmapEx for nwg::Bitmap {
         }
     }
 }
+
+/// Extends [`nwg::Menu`] with additional functionality.
+pub trait MenuEx {fn set_bitmap(&self, bitmap: Option<&nwg::Bitmap>);}
+impl MenuEx for nwg::Menu { /// Sets a bitmap to be displayed on a menu. Pass `None` to remove the bitmap
+  fn set_bitmap(&self, bitmap: Option<&nwg::Bitmap>) {
+    let (hmenu_par, hmenu) = self.handle.hmenu().unwrap();
+    let hbitmap = match bitmap {Some(b) => b.handle as HANDLE, None => 0,};
+    let menu_info = MENUINFO {
+      cbSize                	: std::mem::size_of::<MENUINFO>() as u32,
+      fMask                 	: MIM_BACKGROUND	,//
+       //MIM_STYLE          	get/set member dwStyle
+       //MIM_BACKGROUND     	get/set member hbrBack
+       //MIM_HELPID         	get/set member dwContextHelpID
+       //MIM_MAXHEIGHT      	get/set member cyMax
+       //MIM_MENUDATA       	get/set member dwMenuData
+       //MIM_APPLYTOSUBMENUS	Settings apply to the menu and all of its submenus. SetMenuInfo uses this flag and GetMenuInfo ignores this flag
+      dwStyle               	: MNS_NOTIFYBYPOS	,//
+       //MNS_NOTIFYBYPOS    	Menu owner receives WM_MENUCOMMAND instead of WM_COMMAND message when the user makes a selection. (header style, no effect on individual sub menus)
+       //MNS_AUTODISMISS    	Menu automatically ends when mouse is outside the menu for approximately 10 seconds.
+       //MNS_CHECKORBMP     	Same space is reserved for check mark & bitmap, which are aligned and mutually exclusive (check beats bit). Used for menus where some items use checkmarks and some use bitmaps
+       //MNS_NOCHECK        	No   space is reserved to the left of an item for a check mark. The item can still be selected, but the check mark will not appear next to the item.
+       //MNS_MODELESS       	No menu modal message loop while active
+       //MNS_DRAGDROP       	Menu items are OLE drop targets or drag sources. Menu owner receives WM_MENUDRAG and WM_MENUGETOBJECT messages
+      cyMax                 	: 0                	,//|0| pixels  max menu↕ (0=screen↕), if exceeds, use scroll bars
+      hbrBack               	: hbitmap as HBRUSH	,//handle to the brush to be used for the menu's background
+      dwContextHelpID       	: 0                	,//context help identifier
+      dwMenuData            	: 0                	,//application-defined value
+    };
+    unsafe {SetMenuInfo(hmenu as HMENU, &menu_info as *const _,);}
+
+    // unsafe {SetMenuItemBitmaps(
+    //   hmenu        	as HMENU,
+    //   0,           	// uposition                        	as u32,
+    //   MF_BYPOSITION	as MENU_ITEM_FLAGS,                 	// uflags	as MENU_ITEM_FLAGS,
+    //   hbitmap      	, // as *const _, //hbitmapunchecked	         	as HBITMAP,
+    //   hbitmap      	, // as *const _, //hbitmapchecked  	         	as HBITMAP
+    // );}
+  }
+}
+
 
 /// Extends [`nwg::MenuItem`] with additional functionality.
 pub trait MenuItemEx {
