@@ -12,7 +12,7 @@ use anyhow::{Result,Context};
 extern crate native_windows_gui    as nwg;
 extern crate native_windows_derive as nwd;
 use std::sync::Arc;
-use core::cell::RefCell;
+use core::cell::{Cell,RefCell};
 use nwd::NwgUi;
 use nwg::{NativeUi,ControlHandle};
 
@@ -53,6 +53,8 @@ impl  PathExt for PathBuf {fn add_ext(&mut self, ext_o:impl AsRef<std::path::Pat
   pub tray_1cfg_m  	: nwg::Menu,
   pub tray_2reload 	: nwg::MenuItem,
   pub tray_3exit   	: nwg::MenuItem,
+  pub img_reload   	: nwg::Bitmap,
+  pub img_exit     	: nwg::Bitmap,
 }
 pub fn get_appdata() -> Option<PathBuf> {var_os("APPDATA").map(PathBuf::from)}
 pub fn get_user_home() -> Option<PathBuf> {var_os("USERPROFILE").map(PathBuf::from)}
@@ -296,6 +298,9 @@ pub mod system_tray_ui {
   use std::cell::RefCell;
   use std::ops::{Deref, DerefMut};
   use native_windows_gui::{self as nwg, MousePressEvent};
+  use crate::gui_nwg_ext::{BitmapEx, MenuItemEx, MenuEx};
+  use windows_sys::Win32::UI::{Controls::LVSCW_AUTOSIZE_USEHEADER,
+    Shell::{SIID_SHIELD,SIID_DELETE,SIID_DOCASSOC}}; //SIID_HELP SIID_FIND
 
   pub struct SystemTrayUi {
     inner      	: Rc<SystemTray>,
@@ -332,6 +337,15 @@ pub mod system_tray_ui {
         .                  	  build(       &mut d.tray_2reload	)?                          	;
       nwg::MenuItem        	::builder().parent(&d.tray_menu)  	.text("&X Exit\t‹⎈␠⎋")      	//
         .                  	  build(       &mut d.tray_3exit  	)?                          	;
+
+      let mut tmp_bitmap = Default::default();
+      nwg::Bitmap::builder().source_embed(Some(&d.embed)).source_embed_str(Some("imgReload")).strict(true).size(Some((24,24)))
+        .build(&mut tmp_bitmap)?;
+      let img_exit  	= nwg::Bitmap::from_system_icon(SIID_DELETE);
+      d.tray_2reload	.set_bitmap(Some(&tmp_bitmap));
+      d.tray_3exit  	.set_bitmap(Some(&img_exit));
+      d.img_reload  	= tmp_bitmap;
+      d.img_exit    	= img_exit;
 
       {let mut tray_item_dyn	= d.tray_item_dyn.borrow_mut(); //extra scope to drop borrowed mut
        let mut icon_dyn     	= d.icon_dyn     .borrow_mut();
