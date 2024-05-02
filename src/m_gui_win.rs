@@ -25,7 +25,6 @@ impl  PathExt for PathBuf {fn add_ext(&mut self, ext_o:impl AsRef<std::path::Pat
     None => self.set_extension(ext_o.as_ref())};  }
 }
 
-// todo: refactor my layer filler into a separate function
 #[derive(Default,Debug,Clone)] pub struct SystemTrayData { // todo: check that on config reload this is updated from the new config data
   pub tooltip              	:String,
   pub cfg_p                	:Vec<PathBuf>,
