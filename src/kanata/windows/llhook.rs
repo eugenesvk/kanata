@@ -10,7 +10,7 @@ use std::time;
 use super::PRESSED_KEYS;
 use crate::kanata::*;
 #[cfg(all(target_os = "windows", feature = "gui"))]
-use crate::m_gui_win::*;
+use crate::gui_win::*;
 #[cfg(all(target_os = "windows", feature = "gui"))]
 extern crate native_windows_gui    as nwg;
 #[cfg(all(target_os = "windows", feature = "gui"))]
