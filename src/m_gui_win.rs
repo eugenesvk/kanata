@@ -69,6 +69,7 @@ impl SystemTray {
   fn show_menu(&self) {
     let (x, y) = nwg::GlobalCursor::position();
     self.tray_menu.popup(x, y);  }
+  /// Find an icon file that matches a given config icon name for a layer `lyr_icn` or a layer name `lyr_nm` (if `match_name` is `true`) or a given config icon name for the whole config `cfg_p` or a config file name at various locations (where config file is, where executable is, in user config folders)
   fn get_icon_p<S1,S2,S3,P>(&self,lyr_icn:S1,  lyr_nm:S2  ,cfg_icn:S3   ,   cfg_p:P    , match_name:&bool) -> Option<String>
    where                       S1:AsRef<str>,S2:AsRef<str>,S3:AsRef<str>, P:AsRef<Path> {
     self.get_icon_p_impl(lyr_icn.as_ref(),lyr_nm.as_ref(),cfg_icn.as_ref(),cfg_p.as_ref(),match_name)}
@@ -129,6 +130,7 @@ impl SystemTray {
     } else {error!("no CFG var that contains active kanata config");
     };
   }
+  /// Reload config file, currently active (`i=None`) or matching a given `i` index
   fn reload_cfg(&self,i:Option<usize>) {
     use nwg::TrayNotificationFlags as f_tray;
     let mut msg_title  	= "".to_string();
@@ -195,7 +197,7 @@ impl SystemTray {
     flags |= f_tray::LARGE_ICON; // todo: fails without this, must have SM_CXICON x SM_CYICON?
     self.tray.show(&msg_content, Some(&msg_title), Some(flags), Some(&self.icon));
   }
-
+  /// Update tray icon data on layer change
   fn reload_layer_icon(&self) {
     if let Some(cfg) = CFG.get() {if let Some(k) = cfg.try_lock() {
       let paths      	= &k.cfg_paths;
@@ -227,6 +229,7 @@ impl SystemTray {
     } else {warn!("✗ Layer indicator NOT changed, no CFG");
     };
   }
+  /// Update tray icon data given various config/layer info
   fn update_tray_icon(&self,cfg_layer_pkey:PathBuf, cfg_layer_pkey_s:&str,layer_name:&str,layer_icon:&Option<String>,
     path_cur_cc:PathBuf, clear:bool) {
     let mut icon_dyn    = self.icon_dyn   .borrow_mut(); // update the tray icon
