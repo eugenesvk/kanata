@@ -190,7 +190,7 @@ impl SystemTray {
           info!("{e:?} {cfg_p:?}");
           let mut img_dyn	= self.img_dyn.borrow_mut();
           img_dyn.insert(cfg_p.clone(),None);
-          if i==idx_cfg {self.tray_1cfg_m.set_bitmap(None);} // update currently active config's icon in the combo menu
+          if is_active {self.tray_1cfg_m.set_bitmap(None);} // can't update active menu, so remove combo menu icon
         };
         // 2 if wrong GUI checkmark, correct it
         if   h_cfg_i.checked(){trace!("✓checked {} active {} eq? {} !eq? {}",i,idx_cfg,is_active,!(i==idx_cfg));}
