@@ -187,7 +187,7 @@ impl SystemTray {
         let cfg_p = &k.cfg_paths[i]; trace!("     →→→→ i={i:?} {:?} cfg_p={cfg_p:?}",h_cfg_i.handle);
         let is_active = i==idx_cfg;
         if let Err(e) = self.update_tray_icon_cfg(&mut h_cfg_i,&cfg_p,is_active){
-          info!("{e:?} {cfg_p:?}");
+          debug!("{e:?} {cfg_p:?}");
           let mut img_dyn	= self.img_dyn.borrow_mut();
           img_dyn.insert(cfg_p.clone(),None);
           if is_active {self.tray_1cfg_m.set_bitmap(None);} // can't update active menu, so remove combo menu icon
