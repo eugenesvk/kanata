@@ -513,6 +513,7 @@ dependencies = [
  "simplelog",
  "win_dbg_logger",
  "winapi",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
