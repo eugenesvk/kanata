@@ -243,7 +243,7 @@ impl SystemTray {
       self.tray.set_tip(&cfg_layer_pkey_s); // update tooltip to point to the newer config
       // self.tray.set_visibility(true);
       }
-      let clear = if i.is_none() {true} else {false};
+      let clear = i.is_none();
       self.update_tray_icon(cfg_layer_pkey,&cfg_layer_pkey_s,&layer_name,&layer_icon,path_cur_cc, clear)
     }   else {msg_title+="✗ Config NOT reloaded, no CFG";warn!("{}", msg_title); flags |= f_tray::ERROR_ICON;
     };
