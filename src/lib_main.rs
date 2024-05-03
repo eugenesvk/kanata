@@ -3,6 +3,10 @@ use anyhow::{bail, Result};
 use clap::{Parser};
 #[cfg(all(target_os = "windows", feature = "gui"))]
 use clap::{CommandFactory,error::ErrorKind};
+#[cfg(all(target_os = "windows", feature = "gui"))]
+use anyhow::Context;
+#[cfg(all(target_os = "windows", feature = "gui"))]
+extern crate native_windows_gui    as nwg;
 use kanata_parser::cfg;
 use crate::*;
 use log::info;
@@ -235,21 +239,15 @@ fn main_impl() -> Result<()> {
     (None, None, None)
   };
 
-  #[cfg(all(target_os = "windows", feature = "gui"))]
-  extern crate native_windows_gui    as nwg;
   #[cfg(any(not(target_os = "windows"), not(feature = "gui")))]
   Kanata::start_processing_loop(cfg_arc.clone(), rx, ntx, args.nodelay); // 2 handles keyboard events while also maintaining `tick()` calls to keyberon
 
   #[cfg(all(target_os = "windows", feature = "gui"))]
-  use anyhow::Context;
-  #[cfg(all(target_os = "windows", feature = "gui"))]
-  native_windows_gui::init().context("Failed to init Native Windows GUI")?;
+  nwg::init().context("Failed to init Native Windows GUI")?;
   #[cfg(all(target_os = "windows", feature = "gui"))]
   let ui = build_tray(&cfg_arc)?;
   #[cfg(all(target_os = "windows", feature = "gui"))]
-  let noticer:&nwg::Notice = &ui.layer_notice;
-  #[cfg(all(target_os = "windows", feature = "gui"))]
-  let gui_tx = noticer.sender();
+  let gui_tx = ui.layer_notice.sender();
   #[cfg(all(target_os = "windows", feature = "gui"))]
   Kanata::start_processing_loop(cfg_arc.clone(), rx, ntx, gui_tx, args.nodelay);
 
