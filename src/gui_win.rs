@@ -8,7 +8,7 @@ use std::ffi::OsStr;
 use log::Level::*;
 use crate::{Kanata,kanata};
 use parking_lot::Mutex;
-use anyhow::{Result,Context};
+use anyhow::{Result,Context,bail};
 extern crate native_windows_gui    as nwg;
 extern crate native_windows_derive as nwd;
 use std::sync::Arc;
@@ -134,7 +134,7 @@ impl SystemTray {
     };
   }
   /// Reload config file, currently active (`i=None`) or matching a given `i` index
-  fn reload_cfg(&self,i:Option<usize>) {
+  fn reload_cfg(&self,i:Option<usize>) -> Result<()> {
     use nwg::TrayNotificationFlags as f_tray;
     let mut msg_title  	= "".to_string();
     let mut msg_content	= "".to_string();
@@ -164,7 +164,7 @@ impl SystemTray {
           } else {
           msg_title+=&("🔄 \"".to_owned() + cfg_name + "\" NOT loaded"); flags |= f_tray::ERROR_ICON | f_tray::LARGE_ICON;
           self.tray.show(&msg_content, Some(&msg_title), Some(flags), Some(&self.icon));
-          return
+          bail!("{msg_content}");
           }
         }
         None	=> {if let Ok(()) = k.live_reload  (   gui_tx) {
@@ -172,7 +172,7 @@ impl SystemTray {
           } else {
           msg_title+=&("🔄 \"".to_owned() + cfg_name + "\" NOT reloaded"); flags |= f_tray::ERROR_ICON | f_tray::LARGE_ICON;
           self.tray.show(&msg_content, Some(&msg_title), Some(flags), Some(&self.icon));
-          return
+          bail!("{msg_content}");
           }
         }
       };
@@ -202,6 +202,7 @@ impl SystemTray {
     };
     flags |= f_tray::LARGE_ICON; // todo: fails without this, must have SM_CXICON x SM_CYICON?
     self.tray.show(&msg_content, Some(&msg_title), Some(flags), Some(&self.icon));
+    Ok(())
   }
   /// Update tray icon data on layer change
   fn reload_layer_icon(&self) {
@@ -424,7 +425,7 @@ pub mod system_tray_ui {
             E::OnMenuHover =>
               if        &handle == &evt_ui.tray_1cfg_m	{SystemTray::check_active(&evt_ui);}
             E::OnMenuItemSelected =>
-              if        &handle == &evt_ui.tray_2reload	{SystemTray::reload_cfg(&evt_ui,None);
+              if        &handle == &evt_ui.tray_2reload	{let _ = SystemTray::reload_cfg(&evt_ui,None);
               } else if &handle == &evt_ui.tray_3exit  	{SystemTray::exit  (&evt_ui);
               } else {
                 match handle {
@@ -432,10 +433,12 @@ pub mod system_tray_ui {
                     let tray_item_dyn	= &evt_ui.tray_item_dyn.borrow(); //
                     for (i, h_cfg) in tray_item_dyn.iter().enumerate() {
                       if &handle == h_cfg { //info!("CONFIG handle i={:?} {:?}",i,&handle);
-                        for (j, h_cfg_j) in tray_item_dyn.iter().enumerate() {
-                          if h_cfg_j.checked() {h_cfg_j.set_checked(false);} } // uncheck others
-                        h_cfg.set_checked(true); // check self
-                        SystemTray::reload_cfg(&evt_ui,Some(i));
+                        // if SystemTray::reload_cfg(&evt_ui,Some(i)).is_ok() {
+                          for (j, h_cfg_j) in tray_item_dyn.iter().enumerate() {
+                            if h_cfg_j.checked() {h_cfg_j.set_checked(false);} } // uncheck others
+                          h_cfg.set_checked(true); // check self
+                        let _ = SystemTray::reload_cfg(&evt_ui,Some(i)); // depends on future fix in kanata that would revert index on failed config changes
+                        // } else {info!("OnMenuItemSelected: checkmarks not changed since config wasn't reloaded");}
                       }
                     }
                   },
