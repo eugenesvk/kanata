@@ -451,7 +451,7 @@ impl Kanata {
             // self.cur_cfg_idx = backup_cfg_idx; // restore index on fail when. TODO: add when a similar reversion is added to other custom actions
             // return Err(e)
         // }
-        self.do_live_reload(&None,gui_tx)?
+        self.do_live_reload(&None,gui_tx)?;
         Ok(())
     }
     fn do_live_reload(&mut self, _tx: &Option<Sender<ServerMessage>>,
