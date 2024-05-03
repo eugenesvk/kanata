@@ -437,6 +437,7 @@ impl Kanata {
     #[cfg(all(target_os = "windows", feature = "gui"))]
     pub fn live_reload_n(&mut self,n:usize,gui_tx:nwg::NoticeSender) -> Result<()> { // can't use in CustomAction::LiveReloadNum(n) due to 2nd mut borrow
         self.live_reload_requested = true;
+        // let backup_cfg_idx = self.cur_cfg_idx;
         match self.cfg_paths.get(n) {
             Some(path) => {
                 self.cur_cfg_idx = n;
@@ -446,8 +447,12 @@ impl Kanata {
                 log::error!("Requested live reload of config file number {}, but only {} config files were passed", n+1, self.cfg_paths.len());
             }
         }
-      self.do_live_reload(&None,gui_tx)?;
-      Ok(())
+        // if let Err(e) = self.do_live_reload(&None,gui_tx) {
+            // self.cur_cfg_idx = backup_cfg_idx; // restore index on fail when. TODO: add when a similar reversion is added to other custom actions
+            // return Err(e)
+        // }
+        self.do_live_reload(&None,gui_tx)?
+        Ok(())
     }
     fn do_live_reload(&mut self, _tx: &Option<Sender<ServerMessage>>,
         #[cfg(all(target_os = "windows", feature = "gui"))] gui_tx:nwg::NoticeSender) -> Result<()> {
