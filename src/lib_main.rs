@@ -258,7 +258,10 @@ fn main_impl() -> Result<()> {
   #[cfg(target_os = "linux")]
   sd_notify::notify(true, &[sd_notify::NotifyState::Ready])?;
 
+  #[cfg(any(not(target_os = "windows"), not(feature = "gui")))]
   Kanata::event_loop(cfg_arc, tx)?; // 1 only listens for keyboard events
+  #[cfg(all(target_os = "windows", feature = "gui"))]
+  Kanata::event_loop(cfg_arc, tx, ui)?; // 1 only listens for keyboard events
 
   Ok(())
 }
