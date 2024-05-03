@@ -153,6 +153,8 @@ impl MenuEx for nwg::Menu { /// Sets a bitmap to be displayed on a menu. Pass `N
       );
     }
   }
+  /*
+  fn set_bitmap_test(&self, bitmap: Option<&nwg::Bitmap>) {
     let (hmenu_par, hmenu) = self.handle.hmenu().unwrap();
     let hbitmap = match bitmap {Some(b) => b.handle as HANDLE, None => 0,};
     let menu_info = MENUINFO {
@@ -177,15 +179,8 @@ impl MenuEx for nwg::Menu { /// Sets a bitmap to be displayed on a menu. Pass `N
       dwMenuData            	: 0                	,//application-defined value
     };
     unsafe {SetMenuInfo(hmenu as HMENU, &menu_info as *const _,);}
-
-    // unsafe {SetMenuItemBitmaps(
-    //   hmenu        	as HMENU,
-    //   0,           	// uposition                        	as u32,
-    //   MF_BYPOSITION	as MENU_ITEM_FLAGS,                 	// uflags	as MENU_ITEM_FLAGS,
-    //   hbitmap      	, // as *const _, //hbitmapunchecked	         	as HBITMAP,
-    //   hbitmap      	, // as *const _, //hbitmapchecked  	         	as HBITMAP
-    // );}
   }
+  */
 }
 
 
