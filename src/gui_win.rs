@@ -453,10 +453,10 @@ pub mod system_tray_ui {
   fn set_menu_item_cfg_icon(menu_item:&mut nwg::MenuItem, cfg_icon_s:&str, cfg_p:&PathBuf) -> Option<nwg::Bitmap>{
     if let Some(ico_p) = get_icon_p("","", &cfg_icon_s, &cfg_p, &false) {
       let cfg_pkey_s = cfg_p.display().to_string();
-      let mut temp_icon_bitmap = Default::default();
-      if let Ok(()) = nwg::Bitmap::builder().source_file(Some(&ico_p)).strict(false).size(Some((24,24))).build(&mut temp_icon_bitmap) {
+      let mut cfg_icon_bitmap = Default::default();
+      if let Ok(()) = nwg::Bitmap::builder().source_file(Some(&ico_p)).strict(false).size(Some((24,24))).build(&mut cfg_icon_bitmap) {
         debug!("✓ main 0 config: using icon for {}",cfg_pkey_s);
-        menu_item.set_bitmap(Some(&temp_icon_bitmap)); return Some(temp_icon_bitmap)
+        menu_item.set_bitmap(Some(&cfg_icon_bitmap)); return Some(cfg_icon_bitmap)
       } else {debug!("✗ main 0 icon ✓ icon path, will be using DEFAULT icon for {:?}",cfg_p);}
     }
     menu_item.set_bitmap(None); None
