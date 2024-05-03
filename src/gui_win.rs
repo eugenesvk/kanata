@@ -164,7 +164,7 @@ impl SystemTray {
       let mut tray_item_dyn	= self.tray_item_dyn	.borrow_mut();
       for (i, mut h_cfg_i) in tray_item_dyn.iter_mut().enumerate() {
         // 1 if missing an icon, read config to get one
-        let cfg_p = &k.cfg_paths[i]; trace!("     →→→→ i={i:?} {:?} cfg_p={cfg_p:?}",h_cfg_i.handle); // change to trace todo
+        let cfg_p = &k.cfg_paths[i]; trace!("     →→→→ i={i:?} {:?} cfg_p={cfg_p:?}",h_cfg_i.handle);
         let is_active = i==idx_cfg;
         if let Err(e) = self.update_tray_icon_cfg(&mut h_cfg_i,&cfg_p,is_active){
           info!("{e:?} {cfg_p:?}");
