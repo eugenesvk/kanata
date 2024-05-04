@@ -1122,15 +1122,13 @@ fn parse_layer_indexes(exprs: &[SpannedLayerExprs], expected_len: usize) -> Resu
             }
         }
         if do_element_count_check {
-            let num_actions = expr.t.len() - 2 - cfg_third;
-            let dbg_cfg_third = if cfg_third == 1 {" (excluding 1 config)"} else {""};
+            let num_actions = expr.t.len() - 2;
             if num_actions != expected_len {
                 bail_span!(
                     expr,
-                    "Layer {} has {} item(s){}, but requires {} to match defsrc",
+                    "Layer {} has {} item(s), but requires {} to match defsrc",
                     layer_name,
                     num_actions,
-                    dbg_cfg_third,
                     expected_len
                 )
             }
@@ -1401,14 +1399,6 @@ fn parse_action(expr: &SExpr, s: &ParserState) -> Result<&'static KanataAction> 
             };
             e
         })
-}
-
-/// Check if an `SExpr` is a layer config.
-fn parse_action_as_cfg(expr: &SExpr) -> bool {
-            expr.list(None).and_then(|l| l[0].atom(None))
-    .and_then(|l0| if ! DEFLAYER_ICON.iter().any(|&i| {i == l0}) {None
-    } else {expr.list(None).and_then(|l| l[1].atom(None))})
-    .is_some()
 }
 
 /// Returns a single custom action in the proper wrapped type.
@@ -2842,16 +2832,14 @@ fn parse_layers(
             LayerExprs::DefsrcMapping(layer) => {
                 // Parse actions in the layer and place them appropriately according
                 // to defsrc mapping order.
-                let skip = if layer.len() >= 3 && parse_action_as_cfg(&layer[2]) {3} else {2}; // skip the 3rd list that's used to configure a layer rather than define an action
-                for (i, ac) in layer.iter().skip(skip).enumerate() {
+                for (i, ac) in layer.iter().skip(2).enumerate() {
                     let ac = parse_action(ac, s)?;
                     layers_cfg[layer_level][0][s.mapping_order[i]] = *ac;
                 }
             }
             LayerExprs::CustomMapping(layer) => {
-                let skip = if layer.len() >= 3 && parse_action_as_cfg(&layer[2]) {3} else {2}; // skip the 3rd list that's used to configure a layer rather than define an action
-                // Parse actions as input -> output triplets
-                let mut pairs = layer[skip..].chunks_exact(2);
+                // Parse actions as input output pairs
+                let mut pairs = layer[2..].chunks_exact(2);
                 let mut layer_mapped_keys = HashSet::default();
                 let mut defsrc_anykey_used = false;
                 let mut unmapped_anykey_used = false;
