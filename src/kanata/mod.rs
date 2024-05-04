@@ -57,6 +57,9 @@ mod unknown;
 #[cfg(target_os = "unknown")]
 use unknown::*;
 
+#[cfg(all(target_os = "windows", feature = "gui"))]
+use crate::lib_main::GUI_TX;
+
 mod caps_word;
 pub use caps_word::*;
 
@@ -539,6 +542,9 @@ impl Kanata {
                 }
             }
         }
+        #[cfg(all(target_os = "windows", feature = "gui"))]
+        if let Some(gui_tx) = GUI_TX.get() {gui_tx.notice();
+        } else {error!("no ‘GUI_TX’ var that can notify GUI thread of layer changes");}
         Ok(())
     }
 
@@ -1638,6 +1644,9 @@ impl Kanata {
                     }
                 }
             }
+            #[cfg(all(target_os = "windows", feature = "gui"))]
+            if let Some(gui_tx) = GUI_TX.get() {gui_tx.notice();
+            } else {error!("no ‘GUI_TX’ var that can notify GUI thread of layer changes");}
         }
     }
 
