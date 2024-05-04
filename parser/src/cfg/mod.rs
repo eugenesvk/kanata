@@ -1,3 +1,4 @@
+#![allow(non_snake_case,non_upper_case_globals,non_camel_case_types,unused_imports,unused_mut,unused_variables,dead_code,unused_assignments,unused_macros)]
 //! This parses the configuration language to create a `kanata_keyberon::layout::Layout` as well as
 //! associated metadata to help with processing.
 //!
