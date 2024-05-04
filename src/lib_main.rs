@@ -6,7 +6,7 @@ use clap::{CommandFactory,error::ErrorKind};
 use kanata_parser::cfg;
 use crate::*;
 use log::info;
-use simplelog::*;
+use simplelog::{format_description, *};
 
 use std::path::PathBuf;
 
@@ -143,7 +143,7 @@ fn cli_init() -> Result<ValidatedArgs> {
   if let Err(e) = log_cfg.set_time_offset_to_local() {
     eprintln!("WARNING: could not set log TZ to local: {e:?}");
   };
-  log_cfg.set_time_format_rfc3339();
+  log_cfg.set_time_format_custom(format_description!(version=2,"[minute]:[second].[subsecond digits:3]"));
   #[cfg(all(not(target_os = "windows"), not(feature = "gui")))]
     CombinedLogger::init(vec![TermLogger::new(log_lvl,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,
     )]).expect("logger can init");
