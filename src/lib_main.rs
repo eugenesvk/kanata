@@ -198,6 +198,10 @@ fn cli_init() -> Result<ValidatedArgs> {
   })
 }
 
+#[cfg(all(target_os = "windows", feature = "gui"))]
+use native_windows_gui    as nwg;
+#[cfg(all(target_os = "windows", feature = "gui"))]
+pub static GUI_TX:OnceLock<nwg::NoticeSender> = OnceLock::new();
 fn main_impl() -> Result<()> {
   let args = cli_init()?; // parse CLI arguments and initialize logging
   #[cfg(not(feature = "passthru_ahk"))]
@@ -245,11 +249,11 @@ fn main_impl() -> Result<()> {
 
   #[cfg(all(target_os = "windows", feature = "gui"))] {
   use anyhow::Context;
-  use native_windows_gui    as nwg;
   nwg::init().context("Failed to init Native Windows GUI")?;
   let ui = build_tray(&cfg_arc)?;
-  let gui_tx = ui.layer_notice.sender();
-  Kanata::start_processing_loop(cfg_arc.clone(), rx, ntx, gui_tx, args.nodelay);
+  let gui_tx = ui.layer_notice.sender(); // allows notifying GUI on layer changes
+  if GUI_TX.set(gui_tx).is_err() {warn!("Someone else set our ‘GUI_TX’");};
+  Kanata::start_processing_loop(cfg_arc.clone(), rx, ntx, args.nodelay);
   if let (Some(server), Some(nrx)) = (server, nrx) {#[allow(clippy::unit_arg)]Kanata::start_notification_loop(nrx, server.connections);}
   Kanata::event_loop(cfg_arc, tx, ui)?; // 1 only listens for keyboard events
   }
