@@ -1101,7 +1101,7 @@ fn parse_layer_indexes(exprs: &[SpannedLayerExprs], expected_len: usize) -> Resu
                 (name.to_owned(),Some(icon.to_owned()))
             }
         };
-        if layer_indexes.get(&layer_name).is_some() {
+        if layer_indexes.contains_key(&layer_name) {
             bail_expr!(layer_expr, "duplicate layer name: {}", layer_name);
         }
 
