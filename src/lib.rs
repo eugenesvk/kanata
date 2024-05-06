@@ -7,7 +7,6 @@ use std::str::FromStr;
 pub mod kanata;
 pub mod oskbd;
 pub mod tcp_server;
-pub mod lib_main;
 #[cfg(all(target_os = "windows", feature = "gui"))]
 #[path="gui/[gui].rs"] pub mod gui;
 
