@@ -8,6 +8,8 @@
 )]
 //! Implements the glue between OS input/output and keyberon state management.
 
+#[cfg(all(target_os = "windows", feature = "gui"))]
+use crate::gui::win::*;
 use anyhow::{bail, Result};
 use log::*;
 use parking_lot::Mutex;
@@ -65,9 +67,6 @@ use output_logic::*;
 mod unknown;
 #[cfg(target_os = "unknown")]
 use unknown::*;
-
-#[cfg(all(target_os = "windows", feature = "gui"))]
-use crate::gui::GUI_TX;
 
 mod caps_word;
 pub use caps_word::*;
@@ -502,8 +501,7 @@ impl Kanata {
             }
         }
         #[cfg(all(target_os = "windows", feature = "gui"))]
-        if let Some(gui_tx) = GUI_TX.get() {gui_tx.notice();
-        } else {error!("no GUI_TX to notify GUI thread of layer changes");}
+        send_gui_notice();
         Ok(())
     }
 
@@ -1548,8 +1546,7 @@ impl Kanata {
                 }
             }
             #[cfg(all(target_os = "windows", feature = "gui"))]
-            if let Some(gui_tx) = GUI_TX.get() {gui_tx.notice();
-            } else {error!("no GUI_TX to notify GUI thread of layer changes");}
+            send_gui_notice();
         }
     }
 
