@@ -8,7 +8,7 @@ pub mod kanata;
 pub mod oskbd;
 pub mod tcp_server;
 #[cfg(all(target_os = "windows", feature = "gui"))]
-#[path="gui/[gui].rs"] pub mod gui;
+pub mod gui;
 
 pub use kanata::*;
 pub use tcp_server::TcpServer;
