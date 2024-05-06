@@ -33,8 +33,10 @@ test:
 fmt:
   cargo fmt --all
 
-gui:
-  cargo fmt --all
+guic:
+  cargo check              --features=gui
+guif:
+  cargo fmt    --all
   cargo clippy --all --fix --features=gui -- -D warnings
 
 use_cratesio_deps:
