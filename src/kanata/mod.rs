@@ -975,51 +975,6 @@ impl Kanata {
                 }
             }
         }
-                    // Check for and handle valid termination.
-                    if let HasValue((i, j)) = res {
-                        log::debug!("sequence complete; tapping fake key");
-                        match state.sequence_input_mode {
-                            SequenceInputMode::HiddenSuppressed
-                            | SequenceInputMode::HiddenDelayType => {}
-                            SequenceInputMode::VisibleBackspaced => {
-                                // Release all keys since they might modify the behaviour of backspace into an undesirable behaviour, for example deleting more characters than it should.
-                                layout.states.retain(|s| match s {
-                                    State::NormalKey { keycode, .. } => {
-                                        let _ = release_key(&mut self.kbd_out, keycode.into()); // Ignore the error, ugly to return it from retain, and this is very unlikely to happen anyway.
-                                        false
-                                    }
-                                    _ => true,
-                                });
-                                for k in state.sequence.iter() { // Check for pressed modifiers and don't input backspaces for those since they don't output characters that can be backspaced.
-                                    let kc = OsCode::from(*k & MASK_KEYCODES);
-                                    match kc { // Known bug: most non-characters-outputting keys are not
-                                        OsCode::KEY_LEFTSHIFT  | OsCode::KEY_RIGHTSHIFT
-                                        | OsCode::KEY_LEFTMETA | OsCode::KEY_RIGHTMETA
-                                        | OsCode::KEY_LEFTCTRL | OsCode::KEY_RIGHTCTRL
-                                        | OsCode::KEY_LEFTALT  | OsCode::KEY_RIGHTALT => continue,
-                                        osc if matches!(u16::from(osc),KEY_IGNORE_MIN..=KEY_IGNORE_MAX) => {continue}
-                                        _ => {self.kbd_out.press_key  (OsCode::KEY_BACKSPACE)?;
-                                              self.kbd_out.release_key(OsCode::KEY_BACKSPACE)?;}
-                                    }
-                                }
-                            }
-                        }
-
-                        for k in state.sequence.iter() {
-                            // Make sure to unpress any keys that were pressed as part of the sequence so that the keyberon internal sequence mechanism can do press+unpress of them.
-                            let kc = KeyCode::from(OsCode::from(*k & MASK_KEYCODES));
-                            layout.states.retain(|s| match s {
-                                State::NormalKey { keycode, .. } => kc != *keycode,
-                                _ => true,
-                            });
-                        }
-                        layout.event(Event::Press(i, j));
-                        layout.event(Event::Release(i, j));
-                        self.sequence_state = None;
-                    }
-                }
-            }
-        }
         // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs handle_keystate_changes cur_keys",(start.elapsed()).as_micros());
 
         match custom_event {

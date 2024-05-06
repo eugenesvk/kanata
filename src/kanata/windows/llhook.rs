@@ -1,6 +1,4 @@
 #![allow(non_snake_case)]
-use core::cell::RefCell;
-use anyhow::Context;
 use parking_lot::Mutex;
 use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender as Sender, TryRecvError};
@@ -9,20 +7,10 @@ use std::time;
 
 use super::PRESSED_KEYS;
 use crate::kanata::*;
-#[cfg(all(target_os = "windows", feature = "gui"))]
-use crate::gui_win::*;
-#[cfg(all(target_os = "windows", feature = "gui"))]
-extern crate native_windows_gui    as nwg;
-#[cfg(all(target_os = "windows", feature = "gui"))]
-extern crate native_windows_derive as nwd;
-#[cfg(all(target_os = "windows", feature = "gui"))]
-use nwd::NwgUi;
-#[cfg(all(target_os = "windows", feature = "gui"))]
-use nwg::NativeUi;
 
 impl Kanata {
     /// Initialize the callback that is passed to the Windows low level hook to receive key events and run the native_windows_gui event loop.
-    pub fn event_loop(_cfg: Arc<Mutex<Self>>, tx: Sender<KeyEvent>, #[cfg(all(target_os = "windows", feature = "gui"))] ui:crate::gui::system_tray_ui::SystemTrayUi) -> Result<()> {
+    pub fn event_loop(_cfg: Arc<Mutex<Self>>, tx: Sender<KeyEvent>, #[cfg(all(target_os = "windows", feature = "gui"))] ui:crate::gui::system_tray_ui::SystemTrayUi,) -> Result<()> {
         #[cfg(not(feature = "gui"))]
         unsafe {
             // Display debug and panic output when launched from a terminal.
@@ -76,10 +64,6 @@ impl Kanata {
         let _ui = ui; // prevents thread from panicking on exiting via a GUI
 
         native_windows_gui::dispatch_thread_events(); // The event loop is also required for the low-level keyboard hook to work.
-        // if *IS_TERM  {
-          // eprintln!("\nPress enter to exit"); // moved from main to not panic on a disconnected channel
-          // let _ = std::io::stdin().read_line(&mut String::new());
-        // }
         Ok(())
     }
 }
