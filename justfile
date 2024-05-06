@@ -33,6 +33,10 @@ test:
 fmt:
   cargo fmt --all
 
+gui:
+  cargo fmt --all
+  cargo clippy --all --fix --features=gui -- -D warnings
+
 use_cratesio_deps:
   sed -i 's/^# \(kanata-\(keyberon\|parser\|tcp-protocol\) = ".*\)$/\1/' Cargo.toml parser/Cargo.toml
   sed -i 's/^\(kanata-\(keyberon\|parser\|tcp-protocol\) = .*path.*\)$/# \1/' Cargo.toml parser/Cargo.toml
