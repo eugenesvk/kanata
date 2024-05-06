@@ -15,7 +15,7 @@ use std::sync::Arc;
 use core::cell::{Cell,RefCell};
 use nwd::NwgUi;
 use nwg::{NativeUi,ControlHandle};
-use crate::gui_nwg_ext::{BitmapEx, MenuItemEx, MenuEx};
+use crate::gui::win_nwg_ext::{BitmapEx, MenuItemEx, MenuEx};
 use kanata_parser::cfg;
 
 trait PathExt             {fn add_ext(&mut self, ext_o:impl AsRef<std::path::Path>);}
@@ -68,7 +68,7 @@ const CFG_FD: [&str; 3] = ["","kanata","kanata-tray"]; // blank "" allow checkin
 const ASSET_FD: [&str; 4] = ["","icon","img","icons"];
 const IMG_EXT: [&str; 7] = ["ico","jpg","jpeg","png","bmp","dds","tiff"];
 const PRE_LAYER:&str = "\n🗍: "; // : invalid path marker, so should be safe to use as a separator
-use crate::lib_main::CFG;
+use crate::gui::CFG;
 use winapi::shared::windef::{HWND, HMENU};
 /// Find an icon file that matches a given config icon name for a layer `lyr_icn` or a layer name `lyr_nm` (if `match_name` is `true`) or a given config icon name for the whole config `cfg_p` or a config file name at various locations (where config file is, where executable is, in user config folders)
 fn get_icon_p<S1,S2,S3,P>(lyr_icn:S1,  lyr_nm:S2  ,cfg_icn:S3   ,   cfg_p:P    , match_name:&bool) -> Option<String>
