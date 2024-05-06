@@ -11,12 +11,13 @@
 #[cfg(all(target_os = "windows", feature = "gui"))]
 use crate::gui::win::*;
 use anyhow::{bail, Result};
+use kanata_parser::sequences::*;
 use log::*;
 use parking_lot::Mutex;
 use std::sync::mpsc::{Receiver, Sender as ASender, SyncSender as Sender, TryRecvError};
 
 use kanata_keyberon::key_code::*;
-use kanata_keyberon::layout::*;
+use kanata_keyberon::layout::{CustomEvent, Event, Layout, State};
 
 use std::path::PathBuf;
 #[cfg(not(feature = "passthru_ahk"))]
@@ -41,6 +42,9 @@ mod dynamic_macro;
 use dynamic_macro::*;
 
 mod key_repeat;
+
+mod sequences;
+use sequences::*;
 
 #[cfg(feature = "cmd")]
 mod cmd;
@@ -181,13 +185,6 @@ pub struct MoveMouseAccelState {
     pub accel_increment: f64,
     pub min_distance: u16,
     pub max_distance: u16,
-}
-
-pub struct SequenceState {
-    pub sequence: Vec<u16>,
-    pub sequence_input_mode: SequenceInputMode,
-    pub ticks_until_timeout: u16,
-    pub sequence_timeout: u16,
 }
 
 use once_cell::sync::Lazy;
@@ -904,6 +901,37 @@ impl Kanata {
         }
         // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs handle_keystate_changes prev_keys",(start.elapsed()).as_micros());
 
+        if cur_keys.is_empty() && !self.prev_keys.is_empty() {
+            if let Some(state) = &mut self.sequence_state {
+                use kanata_parser::trie::GetOrDescendentExistsResult::*;
+                state.overlapped_sequence.push(KEY_OVERLAP_MARKER);
+                match self
+                    .sequences
+                    .get_or_descendant_exists(&state.overlapped_sequence)
+                {
+                    HasValue((i, j)) => {
+                        do_successful_sequence_termination(
+                            &mut self.kbd_out,
+                            state,
+                            layout,
+                            i,
+                            j,
+                            EndSequenceType::Overlap,
+                        )?;
+                        self.sequence_state = None;
+                    }
+                    NotInTrie => {
+                        // Overwrite overlapped with non-overlapped tracking
+                        state.overlapped_sequence.clear();
+                        state
+                            .overlapped_sequence
+                            .extend(state.sequence.iter().copied());
+                    }
+                    InTrie => {}
+                }
+            }
+        }
+
         // Press keys that exist in the current state but are missing from the previous state. Comment above regarding Vec/HashSet also applies here.
         log::trace!("{cur_keys:?}");
         for k in cur_keys.iter() {
@@ -922,76 +950,16 @@ impl Kanata {
                     }
                 }
                 Some(state) => {
-                    state.ticks_until_timeout = state.sequence_timeout;
-                    let osc = OsCode::from(*k);
-                    let pushed_into_seq = {
-                        // Transform to OsCode and convert modifiers other than altgr/ralt
-                        // (same key different names) to the left version, since that's
-                        // how chords get transformed when building up sequences.
-                        let mut base = u16::from(match osc {
-                            OsCode::KEY_RIGHTSHIFT => OsCode::KEY_LEFTSHIFT,
-                            OsCode::KEY_RIGHTMETA => OsCode::KEY_LEFTMETA,
-                            OsCode::KEY_RIGHTCTRL => OsCode::KEY_LEFTCTRL,
-                            osc => osc,
-                        });
-                        // Modify the upper unused bits of the u16 to signify that the key
-                        // is activated alongside a modifier.
-                        for k in cur_keys.iter().copied() {
-                            base |= mod_mask_for_keycode(k);
-                        }
-                        base
-                    };
-
-                    state.sequence.push(pushed_into_seq);
-                    match state.sequence_input_mode {
-                        SequenceInputMode::VisibleBackspaced => {
-                            press_key(&mut self.kbd_out, osc)?;
-                        }
-                        SequenceInputMode::HiddenSuppressed
-                        | SequenceInputMode::HiddenDelayType => {}
-                    }
-                    log::debug!("sequence got {k:?}");
-
-                    use kanata_parser::sequences::*;
-                    use kanata_parser::trie::GetOrDescendentExistsResult::*;
-
-                    // Check for invalid sequence termination.
-                    let mut res = self.sequences.get_or_descendant_exists(&state.sequence);
-                    if res == NotInTrie {
-                        let is_invalid_termination = if self.sequence_backtrack_modcancel
-                            && (pushed_into_seq & MASK_MODDED > 0)
-                        {
-                            let mut no_valid_seqs = true;
-                            for i in (0..state.sequence.len()).rev() {
-                                // Note: proper bounds are immediately above.
-                                // Can't use iter_mut due to borrowing issues.
-                                state.sequence[i] &= MASK_KEYCODES;
-                                res = self.sequences.get_or_descendant_exists(&state.sequence);
-                                if res != NotInTrie {
-                                    no_valid_seqs = false;
-                                    break;
-                                }
-                            }
-                            no_valid_seqs
-                        } else {
-                            true
-                        };
-                        if is_invalid_termination {
-                            log::debug!("got invalid sequence; exiting sequence mode");
-                            match state.sequence_input_mode {
-                                SequenceInputMode::HiddenDelayType => {
-                                    for code in state.sequence.iter().copied() {
-                                        let code = code & MASK_KEYCODES;
-                                        if let Some(osc) = OsCode::from_u16(code) {
-                                            // BUG: chorded_hidden_delay_type
-                                            press_key(&mut self.kbd_out, osc)?;
-                                            release_key(&mut self.kbd_out, osc)?;
-                                        }
-                                    }
-                                }
-                                SequenceInputMode::HiddenSuppressed
-                                | SequenceInputMode::VisibleBackspaced => {}
-                            }
+                    let clear_sequence_state = do_sequence_press_logic(
+                        state,
+                        k,
+                        get_mod_mask_for_cur_keys(cur_keys),
+                        &mut self.kbd_out,
+                        &self.sequences,
+                        self.sequence_backtrack_modcancel,
+                        layout,
+                    )?;
+                    if clear_sequence_state {
                             self.sequence_state = None;
                             continue;
                         }
@@ -1327,6 +1295,7 @@ impl Kanata {
                                 log::debug!("entering sequence mode");
                                 self.sequence_state = Some(SequenceState {
                                     sequence: vec![],
+                                    overlapped_sequence: vec![],
                                     sequence_input_mode: *input_mode,
                                     ticks_until_timeout: *timeout,
                                     sequence_timeout: *timeout,
@@ -1941,21 +1910,6 @@ fn update_kbd_out(_cfg: &CfgOptions, _kbd_out: &KbdOut) -> Result<()> {
     Ok(())
 }
 
-fn cancel_sequence(state: &SequenceState, kbd_out: &mut KbdOut) -> Result<()> {
-    match state.sequence_input_mode {
-        SequenceInputMode::HiddenDelayType => {
-            for code in state.sequence.iter().copied() {
-                if let Some(osc) = OsCode::from_u16(code) {
-                    press_key(kbd_out, osc)?;
-                    release_key(kbd_out, osc)?;
-                }
-            }
-        }
-        SequenceInputMode::HiddenSuppressed | SequenceInputMode::VisibleBackspaced => {}
-    }
-    Ok(())
-}
-
 pub fn handle_fakekey_action<'a, const C: usize, const R: usize, T>(
     action: FakeKeyAction,
     layout: &mut Layout<'a, C, R, T>,
@@ -2012,7 +1966,7 @@ where
             } => {
                 debug!("fake: {} ", OsCode::from(fake_key));
             }
-            // State::NormalKey       	{coord: (NORMAL_KEY_ROW, y),..}
+            // State::NormalKey         {coord: (NORMAL_KEY_ROW, y),..}
             State::LayerModifier {
                 coord: (NORMAL_KEY_ROW, y),
                 ..
