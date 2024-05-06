@@ -94,7 +94,10 @@ pub struct Kanata {
     pub move_mouse_state_horizontal: Option<MoveMouseState>, // Horizontal mouse movement state. Is Some(...) when horizontal mouse movement is active and None otherwise.
     pub move_mouse_speed_modifiers: Vec<u16>, // A list of mouse speed modifiers in percentages by which mouse travel distance is scaled.
     pub sequence_backtrack_modcancel: bool, // The user configuration for backtracking to find valid sequences. See <../../docs/sequence-adding-chords-ideas.md> for more info.
-    pub sequence_state: Option<SequenceState>, // Tracks sequence progress. Is Some(...) when in sequence mode and None otherwise.
+    pub sequence_always_on: bool, // The user configuration for sequences be permanently on.
+    pub sequence_input_mode: SequenceInputMode, // Default sequence input mode for use with always-on.
+    pub sequence_timeout: u16, // Default sequence timeout for use with always-on.
+    pub sequence_state: SequenceState, // Tracks sequence progress. Is Some(...) when in sequence mode and None otherwise.
     pub sequences: cfg::KeySeqsToFKeys,        // Valid sequences defined in the user configuration.
     pub dynamic_macros: HashMap<u16, Vec<DynamicMacroItem>>, // Stores the user recored dynamic macros.
     pub dynamic_macro_replay_state: Option<DynamicMacroReplayState>, // Tracks the progress of an active dynamic macro. Is Some(...) when a dynamic macro is being replayed and None otherwise.
@@ -259,7 +262,10 @@ impl Kanata {
             move_mouse_state_horizontal: None,
             move_mouse_speed_modifiers: Vec::new(),
             sequence_backtrack_modcancel: cfg.options.sequence_backtrack_modcancel,
-            sequence_state: None,
+            sequence_always_on: cfg.options.sequence_always_on,
+            sequence_input_mode: cfg.options.sequence_input_mode,
+            sequence_timeout: cfg.options.sequence_timeout,
+            sequence_state: SequenceState::new(),
             sequences: cfg.sequences,
             last_tick: instant::Instant::now(),
             time_remainder: 0,
@@ -362,7 +368,10 @@ impl Kanata {
             move_mouse_state_horizontal: None,
             move_mouse_speed_modifiers: Vec::new(),
             sequence_backtrack_modcancel: cfg.options.sequence_backtrack_modcancel,
-            sequence_state: None,
+            sequence_always_on: cfg.options.sequence_always_on,
+            sequence_input_mode: cfg.options.sequence_input_mode,
+            sequence_timeout: cfg.options.sequence_timeout,
+            sequence_state: SequenceState::new(),
             sequences: cfg.sequences,
             last_tick: instant::Instant::now(),
             time_remainder: 0,
@@ -435,6 +444,9 @@ impl Kanata {
         #[cfg(target_os = "windows")]
         set_win_altgr_behaviour(cfg.options.windows_altgr);
         self.sequence_backtrack_modcancel = cfg.options.sequence_backtrack_modcancel;
+        self.sequence_always_on = cfg.options.sequence_always_on;
+        self.sequence_input_mode = cfg.options.sequence_input_mode;
+        self.sequence_timeout = cfg.options.sequence_timeout;
         self.layout = cfg.layout;
         self.key_outputs = cfg.key_outputs;
         self.layer_info = cfg.layer_info;
@@ -756,12 +768,11 @@ impl Kanata {
     }
 
     fn tick_sequence_state(&mut self) -> Result<()> {
-        if let Some(state) = &mut self.sequence_state {
+        if let Some(state) = self.sequence_state.get_active() {
             state.ticks_until_timeout -= 1;
             if state.ticks_until_timeout == 0 {
                 log::debug!("sequence timeout; exiting sequence state");
                 cancel_sequence(state, &mut self.kbd_out)?;
-                self.sequence_state = None;
             }
         }
         Ok(())
@@ -902,7 +913,7 @@ impl Kanata {
         // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs handle_keystate_changes prev_keys",(start.elapsed()).as_micros());
 
         if cur_keys.is_empty() && !self.prev_keys.is_empty() {
-            if let Some(state) = &mut self.sequence_state {
+            if let Some(state) = self.sequence_state.get_active() {
                 use kanata_parser::trie::GetOrDescendentExistsResult::*;
                 state.overlapped_sequence.push(KEY_OVERLAP_MARKER);
                 match self
@@ -918,7 +929,6 @@ impl Kanata {
                             j,
                             EndSequenceType::Overlap,
                         )?;
-                        self.sequence_state = None;
                     }
                     NotInTrie => {
                         // Overwrite overlapped with non-overlapped tracking
@@ -942,29 +952,29 @@ impl Kanata {
             // Note - keyberon can return duplicates of a key in the keycodes() iterator. Instead of trying to fix it in the keyberon library, It seems better to fix it in the kanata logic. Keyberon iterates over its internal state array with very simple filtering logic when calling keycodes(). It would be troublesome to add deduplication logic there and is easier to add here since we already have allocations and logic.
             self.prev_keys.push(*k);
             self.last_pressed_key = *k;
-            match &mut self.sequence_state {
-                None => {
-                    log::debug!("↓  {:?} @ sequence_state None", k);
-                    if let Err(e) = press_key(&mut self.kbd_out, k.into()) {
-                        bail!("failed to press key: {:?}", e);
-                    }
-                }
-                Some(state) => {
-                    let clear_sequence_state = do_sequence_press_logic(
-                        state,
-                        k,
-                        get_mod_mask_for_cur_keys(cur_keys),
-                        &mut self.kbd_out,
-                        &self.sequences,
-                        self.sequence_backtrack_modcancel,
-                        layout,
-                    )?;
-                    if clear_sequence_state {
-                            self.sequence_state = None;
-                            continue;
-                        }
-                    }
 
+            if self.sequence_always_on && self.sequence_state.is_inactive() {
+                self.sequence_state
+                    .activate(self.sequence_input_mode, self.sequence_timeout);
+            }
+
+            if let Some(state) = self.sequence_state.get_active() {
+                do_sequence_press_logic(
+                    state,
+                    k,
+                    get_mod_mask_for_cur_keys(cur_keys),
+                    &mut self.kbd_out,
+                    &self.sequences,
+                    self.sequence_backtrack_modcancel,
+                    layout,
+                )?;
+            } else {
+                log::debug!("key press     {:?}", k);
+                if let Err(e) = press_key(&mut self.kbd_out, k.into()) {
+                    bail!("failed to press key: {:?}", e);
+                }
+            }
+        }
                     // Check for and handle valid termination.
                     if let HasValue((i, j)) = res {
                         log::debug!("sequence complete; tapping fake key");
@@ -1280,26 +1290,18 @@ impl Kanata {
                             std::thread::sleep(time::Duration::from_millis((*delay).into()));
                         }
                         CustomAction::SequenceCancel => {
-                            if self.sequence_state.is_some() {
-                                log::debug!("exiting sequence");
-                                let state = self.sequence_state.as_ref().unwrap();
+                            if let Some(state) = self.sequence_state.get_active() {
+                                log::debug!("pressed cancel sequence key");
                                 cancel_sequence(state, &mut self.kbd_out)?;
-                                self.sequence_state = None;
                             }
                         }
                         CustomAction::SequenceLeader(timeout, input_mode) => {
-                            if self.sequence_state.is_none()
-                                || self.sequence_state.as_ref().unwrap().sequence_input_mode
-                                    == SequenceInputMode::HiddenSuppressed
-                            {
+                            if self.sequence_state.is_inactive() {
                                 log::debug!("entering sequence mode");
-                                self.sequence_state = Some(SequenceState {
-                                    sequence: vec![],
-                                    overlapped_sequence: vec![],
-                                    sequence_input_mode: *input_mode,
-                                    ticks_until_timeout: *timeout,
-                                    sequence_timeout: *timeout,
-                                });
+                                self.sequence_state.activate(*input_mode, *timeout);
+                            } else if *input_mode == SequenceInputMode::HiddenSuppressed {
+                                log::debug!("retriggering sequence mode");
+                                self.sequence_state.activate(*input_mode, *timeout);
                             }
                         }
                         CustomAction::Repeat => {
@@ -1775,7 +1777,7 @@ impl Kanata {
             && self.layout.b().active_sequences.is_empty()
             && self.layout.b().tap_dance_eager.is_none()
             && self.layout.b().action_queue.is_empty()
-            && self.sequence_state.is_none()
+            && self.sequence_state.is_inactive()
             && self.scroll_state.is_none()
             && self.hscroll_state.is_none()
             && self.move_mouse_state_vertical.is_none()
