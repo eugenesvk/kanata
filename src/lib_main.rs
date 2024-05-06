@@ -1,8 +1,6 @@
 #![allow(non_upper_case_globals)]
 use anyhow::{bail, Result};
 use clap::{Parser};
-#[cfg(all(target_os = "windows", feature = "gui"))]
-use clap::{CommandFactory,error::ErrorKind};
 use kanata_parser::cfg;
 use crate::*;
 use log::info;
@@ -101,29 +99,7 @@ kanata.kbd in the current working directory and
 
 /// Parse CLI arguments and initialize logging.
 fn cli_init() -> Result<ValidatedArgs> {
-  #[cfg(all(not(target_os = "windows"), not(feature = "gui")))]
   let args = Args::parse();
-  #[cfg(all(    target_os = "windows",      feature = "gui" ))]
-  let args = match Args::try_parse() {
-    Ok (args )   	=> args,
-    Err(e)       	=> {
-      if *IS_TERM	{ // init loggers without config so '-help' "error" or real ones can be printed
-        let mut log_cfg = ConfigBuilder::new();
-        CombinedLogger::init(vec![TermLogger::new(LevelFilter::Debug,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,),
-          log_win::windbg_simple_combo(LevelFilter::Debug),]).expect("logger can init");
-      } else {log_win::init();log::set_max_level(LevelFilter::Debug);} // doesn't panic
-      match e.kind() {
-        ErrorKind::DisplayHelp	=> {
-          let mut cmd = lib_main::Args::command();
-          let help = cmd.render_help();
-          info!("{help}");
-          log::set_max_level(LevelFilter::Off);
-          return Err(anyhow!(""))
-        },
-        _	=> return Err(e.into()),
-      }
-    }
-  };
 
   #[cfg(target_os = "macos")]
   if args.list {
@@ -198,19 +174,12 @@ fn cli_init() -> Result<ValidatedArgs> {
   })
 }
 
-#[cfg(all(target_os = "windows", feature = "gui"))]
-use native_windows_gui    as nwg;
-#[cfg(all(target_os = "windows", feature = "gui"))]
-pub static GUI_TX:OnceLock<nwg::NoticeSender> = OnceLock::new();
 fn main_impl() -> Result<()> {
   let args = cli_init()?; // parse CLI arguments and initialize logging
   #[cfg(not(feature = "passthru_ahk"))]
   let cfg_arc = Kanata::new_arc(&args)?; // new configuration from a file
   #[cfg(feature = "passthru_ahk")]
   let cfg_arc = Kanata::new_arc(&args, None)?; // new configuration from a file
-
-  #[cfg(all(    target_os = "windows",      feature = "gui" ))]
-  if CFG.set(cfg_arc.clone()).is_err() {warn!("Someone else set our ‘CFG’");}; // store a clone of cfg so that we can ask it to reset itself
 
   if !args.nodelay {
     info!("Sleeping for 2s. Please release all keys and don't press additional ones. Run kanata with --help to see how understand more and how to disable this sleep.");
@@ -239,24 +208,11 @@ fn main_impl() -> Result<()> {
     (None, None, None)
   };
 
-  #[cfg(any(not(target_os = "windows"), not(feature = "gui")))] {
   Kanata::start_processing_loop(cfg_arc.clone(), rx, ntx, args.nodelay); // 2 handles keyboard events while also maintaining `tick()` calls to keyberon
   if let (Some(server), Some(nrx)) = (server, nrx) {#[allow(clippy::unit_arg)]Kanata::start_notification_loop(nrx, server.connections);}
   #[cfg(target_os = "linux")]
   sd_notify::notify(true, &[sd_notify::NotifyState::Ready])?;
   Kanata::event_loop(cfg_arc, tx)?; // 1 only listens for keyboard events
-  }
-
-  #[cfg(all(target_os = "windows", feature = "gui"))] {
-  use anyhow::Context;
-  nwg::init().context("Failed to init Native Windows GUI")?;
-  let ui = build_tray(&cfg_arc)?;
-  let gui_tx = ui.layer_notice.sender(); // allows notifying GUI on layer changes
-  if GUI_TX.set(gui_tx).is_err() {warn!("Someone else set our ‘GUI_TX’");};
-  Kanata::start_processing_loop(cfg_arc.clone(), rx, ntx, args.nodelay);
-  if let (Some(server), Some(nrx)) = (server, nrx) {#[allow(clippy::unit_arg)]Kanata::start_notification_loop(nrx, server.connections);}
-  Kanata::event_loop(cfg_arc, tx, ui)?; // 1 only listens for keyboard events
-  }
 
   Ok(())
 }
@@ -269,19 +225,4 @@ pub fn lib_main_cli() -> Result<()> {
   eprintln!("\nPress enter to exit");
   let _ = std::io::stdin().read_line(&mut String::new());
   ret
-}
-
-#[cfg(all(    target_os = "windows",      feature = "gui" ))]
-use parking_lot::Mutex;
-#[cfg(all(    target_os = "windows",      feature = "gui" ))]
-use std::sync::{Arc, OnceLock};
-#[cfg(all(    target_os = "windows",      feature = "gui" ))]
-pub static CFG: OnceLock<Arc<Mutex<Kanata>>> = OnceLock::new();
-
-#[cfg(all(    target_os = "windows",      feature = "gui" ))]
-pub fn lib_main_gui() {
-  let _attach_console = *IS_CONSOLE;
-  let ret = main_impl();
-  if let Err(ref e) = ret {log::error!("{e}\n");}
-  unsafe {FreeConsole();}
 }
