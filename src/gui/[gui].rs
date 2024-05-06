@@ -15,7 +15,7 @@ fn cli_init() -> Result<ValidatedArgs> {
       } else {log_win::init();log::set_max_level(LevelFilter::Debug);} // doesn't panic
       match e.kind() {
         ErrorKind::DisplayHelp	=> {
-          let mut cmd = lib_main::Args::command();
+          let mut cmd = Args::command();
           let help = cmd.render_help();
           info!("{help}");
           log::set_max_level(LevelFilter::Off);
