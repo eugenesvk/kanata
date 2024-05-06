@@ -7,7 +7,26 @@ use native_windows_gui    as nwg;
 
 /// Parse CLI arguments and initialize logging.
 fn cli_init() -> Result<ValidatedArgs> {
-    let args = Args::parse();
+    let args = match Args::try_parse() {
+      Ok (args )      => args,
+      Err(e)          => {
+        if *IS_TERM   { // init loggers without config so '-help' "error" or real ones can be printed
+          let mut log_cfg = ConfigBuilder::new();
+          CombinedLogger::init(vec![TermLogger::new(LevelFilter::Debug,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,),
+            log_win::windbg_simple_combo(LevelFilter::Debug),]).expect("logger can init");
+        } else {log_win::init();log::set_max_level(LevelFilter::Debug);} // doesn't panic
+        match e.kind() {
+          ErrorKind::DisplayHelp  => {
+            let mut cmd = Args::command();
+            let help = cmd.render_help();
+            info!("{help}");
+            log::set_max_level(LevelFilter::Off);
+            return Err(anyhow!(""))
+          },
+          _   => return Err(e.into()),
+        }
+      }
+    };
 
     #[cfg(target_os = "macos")]
     if args.list {
