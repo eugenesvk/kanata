@@ -3,6 +3,7 @@ use anyhow::{anyhow, Context};
 use clap::{error::ErrorKind, CommandFactory};
 use kanata_state_machine::gui::*;
 use kanata_state_machine::*;
+use native_windows_gui    as nwg;
 
 /// Parse CLI arguments and initialize logging.
 fn cli_init() -> Result<ValidatedArgs> {
@@ -27,13 +28,9 @@ fn cli_init() -> Result<ValidatedArgs> {
         eprintln!("WARNING: could not set log TZ to local: {e:?}");
     };
     log_cfg.set_time_format_custom(format_description!(version=2,"[minute]:[second].[subsecond digits:3]"));
-    #[cfg(all(not(target_os = "windows"), not(feature = "gui")))]
-        CombinedLogger::init(vec![TermLogger::new(log_lvl,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,
-        )]).expect("logger can init");
-    #[cfg(all(    target_os = "windows",      feature = "gui" ))]
     if *IS_TERM {
         CombinedLogger::init(vec![TermLogger::new(log_lvl,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,),
-            log_win::windbg_simple_combo(log_lvl),]).expect("logger can init");
+        log_win::windbg_simple_combo(log_lvl),]).expect("logger can init");
     } else {CombinedLogger::init(vec![log_win::windbg_simple_combo(log_lvl),]).expect("logger can init");}
     log::info!("kanata v{} starting", env!("CARGO_PKG_VERSION"));
     #[cfg(all(not(feature = "interception_driver"), target_os = "windows"))]
@@ -81,8 +78,6 @@ fn cli_init() -> Result<ValidatedArgs> {
     })
 }
 
-
-pub static GUI_TX:OnceLock<nwg::NoticeSender> = OnceLock::new();
 fn main_impl() -> Result<()> {
     let args = cli_init()?; // parse CLI arguments and initialize logging
     #[cfg(not(feature = "passthru_ahk"))]
