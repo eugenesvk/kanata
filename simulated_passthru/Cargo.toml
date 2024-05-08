@@ -63,4 +63,5 @@ default         	= ["simulated_output","tcp_server","perf_logging"] # todo remov
 simulated_output	= ["kanata/simulated_output"]
 simulated_input 	= ["kanata/simulated_input"]
 passthru_ahk    	= ["kanata/passthru_ahk"]
+tcp_server      	= []
 perf_logging    	= []
