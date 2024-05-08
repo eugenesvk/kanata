@@ -59,9 +59,9 @@ kanata-interception = { version = "0.2.0", optional = true }
 win_dbg_logger = "0.1.0"
 
 [features]
-default         	= ["simulated_output","tcp_server","perf_logging"] # todo remove perf/pass
+default         	= ["simulated_output","tcp_server"]
+tcp_server      	= ["kanata/tcp_server"]
 simulated_output	= ["kanata/simulated_output"]
 simulated_input 	= ["kanata/simulated_input"]
-passthru_ahk    	= ["kanata/passthru_ahk"]
-tcp_server      	= []
+passthru_ahk    	= ["simulated_input","simulated_output","kanata/passthru_ahk"]
 perf_logging    	= []
