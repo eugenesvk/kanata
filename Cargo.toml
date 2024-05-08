@@ -14,6 +14,7 @@ members = [
 exclude = [
     "wasm",
 ]
+resolver = "2"
 
 [package]
 name = "kanata"
