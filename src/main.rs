@@ -7,6 +7,7 @@ use anyhow::{bail, Result};
 use clap::Parser;
 use kanata_parser::cfg;
 use kanata_state_machine::*;
+use log::*;
 use simplelog::{format_description, *};
 use std::path::PathBuf;
 
