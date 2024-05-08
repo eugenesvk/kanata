@@ -7,7 +7,6 @@ use anyhow::{bail, Result};
 use clap::Parser;
 use kanata_parser::cfg;
 use kanata_state_machine::*;
-use log::*;
 use simplelog::{format_description, *};
 use std::path::PathBuf;
 
@@ -98,6 +97,7 @@ kanata.kbd in the current working directory and
 
 #[cfg(not(feature = "gui"))]
 mod cli {
+    use log::*;
     use super::*;
     /// Parse CLI arguments and initialize logging.
     fn cli_init() -> Result<ValidatedArgs> {
