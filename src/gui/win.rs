@@ -1,5 +1,4 @@
-#![allow(unused_imports,unused_variables,unreachable_code,dead_code,non_upper_case_globals)]
-// #![allow(non_upper_case_globals)]
+#![cfg_attr(debug_assertions,allow(unused_imports,unused_mut,unused_variables,dead_code,unused_assignments,unused_macros))]
 
 use std::env::{var_os,current_exe};
 use std::path::{Path,PathBuf};
