@@ -30,3 +30,8 @@ simulated_output = ["kanata/simulated_output"]
 simulated_input = ["kanata/simulated_input"]
 passthru_ahk = ["simulated_input","simulated_output"]
 tcp_server = ["kanata/tcp_server"]
+
+[lints.rust]
+non_snake_case        	= "allow"
+non_upper_case_globals	= "allow"
+non_camel_case_types  	= "allow"
