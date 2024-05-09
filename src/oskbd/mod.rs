@@ -10,6 +10,10 @@ mod windows;
 pub use linux::*;
 #[cfg(target_os = "macos")]
 pub use macos::*;
+// 1 llhook;  not(feature="simulated_input")
+//   has KbdOut                          all(not(feature="simulated_output"),not(feature="passthru_ahk"))
+// 2 exthook_os;  feature="simulated_input"
+//   NO  KbdOut, use simulated mod, so + all(not(feature="simulated_output"),not(feature="passthru_ahk"))
 #[cfg(any(all(not(feature="simulated_input"),    feature="simulated_output" ,not(feature="passthru_ahk"))
   ,       all(    feature="simulated_input" ,not(feature="simulated_output"),not(feature="passthru_ahk"))))]
 mod simulated;
