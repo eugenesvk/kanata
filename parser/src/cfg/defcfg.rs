@@ -1,6 +1,6 @@
-use super::error::*;
 use super::sexpr::SExpr;
 use super::HashSet;
+use super::{error::*, TrimAtomQuotes};
 use crate::cfg::check_first_expr;
 use crate::custom_action::*;
 #[allow(unused)]
@@ -532,7 +532,7 @@ pub const BOOLEAN_VALUES: [&str; 6] = ["yes", "true", "1", "no", "false", "0"];
 fn parse_defcfg_val_bool(expr: &SExpr, label: &str) -> Result<bool> {
     match &expr {
         SExpr::Atom(v) => {
-            let val = v.t.trim_matches('"').to_ascii_lowercase();
+            let val = v.t.trim_atom_quotes().to_ascii_lowercase();
             if TRUE_VALUES.contains(&val.as_str()) {
                 Ok(true)
             } else if FALSE_VALUES.contains(&val.as_str()) {
@@ -558,7 +558,7 @@ fn parse_defcfg_val_bool(expr: &SExpr, label: &str) -> Result<bool> {
 fn parse_cfg_val_u16(expr: &SExpr, label: &str, exclude_zero: bool) -> Result<u16> {
     let start = if exclude_zero { 1 } else { 0 };
     match &expr {
-        SExpr::Atom(v) => Ok(str::parse::<u16>(v.t.trim_matches('"'))
+        SExpr::Atom(v) => Ok(str::parse::<u16>(v.t.trim_atom_quotes())
             .ok()
             .and_then(|u| {
                 if exclude_zero && u == 0 {
@@ -600,7 +600,7 @@ pub fn parse_colon_separated_text(paths: &str) -> Vec<String> {
 pub fn parse_dev(val: &SExpr) -> Result<Vec<String>> {
     Ok(match val {
         SExpr::Atom(a) => {
-            let devs = parse_colon_separated_text(a.t.trim_matches('"'));
+            let devs = parse_colon_separated_text(a.t.trim_atom_quotes());
             if devs.len() == 1 && devs[0].is_empty() {
                 bail_expr!(val, "an empty string is not a valid device name or path")
             }
@@ -611,7 +611,7 @@ pub fn parse_dev(val: &SExpr) -> Result<Vec<String>> {
                 l.t.iter()
                     .try_fold(Vec::with_capacity(l.t.len()), |mut acc, expr| match expr {
                         SExpr::Atom(path) => {
-                            let trimmed_path = path.t.trim_matches('"').to_string();
+                            let trimmed_path = path.t.trim_atom_quotes().to_string();
                             if trimmed_path.is_empty() {
                                 bail_span!(
                                     path,
@@ -633,7 +633,7 @@ pub fn parse_dev(val: &SExpr) -> Result<Vec<String>> {
 
 fn sexpr_to_str_or_err<'a>(expr: &'a SExpr, label: &str) -> Result<&'a str> {
     match expr {
-        SExpr::Atom(a) => Ok(a.t.trim_matches('"')),
+        SExpr::Atom(a) => Ok(a.t.trim_atom_quotes()),
         SExpr::List(_) => bail_expr!(expr, "The value for {label} can't be a list"),
     }
 }
