@@ -10,16 +10,18 @@ mod windows;
 pub use linux::*;
 #[cfg(target_os = "macos")]
 pub use macos::*;
-#[cfg(any(all(feature="simulated_input",feature="simulated_output"),
-          all(feature="simulated_input",feature="simulated_output",feature="passthru_ahk"),))]
-mod sim_passthru;
-#[cfg(any(all(feature="simulated_input",feature="simulated_output"),
-          all(feature="simulated_input",feature="simulated_output",feature="passthru_ahk"),))]
-pub use sim_passthru::*;
-#[cfg(all(not(feature = "simulated_input"), not(feature = "simulated_output"), feature = "simulated_output"))]
+#[cfg(any(all(not(feature="simulated_input"),    feature="simulated_output" ,not(feature="passthru_ahk"))
+  ,       all(    feature="simulated_input" ,not(feature="simulated_output"),not(feature="passthru_ahk"))))]
 mod simulated;
-#[cfg(all(not(feature = "simulated_input"), not(feature = "simulated_output"), feature = "simulated_output"))]
+#[cfg(any(all(not(feature="simulated_input"),    feature="simulated_output" ,not(feature="passthru_ahk"))
+  ,       all(    feature="simulated_input" ,not(feature="simulated_output"),not(feature="passthru_ahk"))))]
 pub use simulated::*;
+#[cfg(any(all(    feature="simulated_input" ,    feature="simulated_output"                            )
+  ,       all(    feature="simulated_input" ,    feature="simulated_output",     feature="passthru_ahk"),))]
+mod sim_passthru;
+#[cfg(any(all(    feature="simulated_input" ,    feature="simulated_output"                            )
+  ,       all(    feature="simulated_input" ,    feature="simulated_output",     feature="passthru_ahk"),))]
+pub use sim_passthru::*;
 #[cfg(target_os = "windows")]
 pub use windows::*;
 pub const HI_RES_SCROLL_UNITS_IN_LO_RES: u16 = 120;
