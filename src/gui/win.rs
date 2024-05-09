@@ -61,6 +61,10 @@ impl  PathExt for PathBuf {fn add_ext(&mut self, ext_o:impl AsRef<std::path::Pat
   pub embed        	: nwg::EmbedResource,
   pub icon         	: nwg::Icon,
   pub window       	: nwg::MessageWindow,
+  ///              	A tooltip-like (no title/resize/focus/taskbar/clickthru) window to show notifications (e.g., layer change messages)
+  pub win_tt       	: nwg::Window,
+      win_tt_ifr   	: nwg::ImageFrame,
+      win_tt_timer 	: nwg::AnimationTimer,
   pub layer_notice 	: nwg::Notice,
   pub tray         	: nwg::TrayNotification,
   pub tray_menu    	: nwg::Menu,
@@ -74,10 +78,13 @@ pub fn get_appdata() -> Option<PathBuf> {var_os("APPDATA").map(PathBuf::from)}
 pub fn get_user_home() -> Option<PathBuf> {var_os("USERPROFILE").map(PathBuf::from)}
 pub fn get_xdg_home() -> Option<PathBuf> {var_os("XDG_CONFIG_HOME").map(PathBuf::from)}
 
-const CFG_FD: [&str; 3] = ["","kanata","kanata-tray"]; // blank "" allow checking directly for user passed values
-const ASSET_FD: [&str; 4] = ["","icon","img","icons"];
-const IMG_EXT: [&str; 7] = ["ico","jpg","jpeg","png","bmp","dds","tiff"];
-const PRE_LAYER:&str = "\n🗍: "; // : invalid path marker, so should be safe to use as a separator
+const CFG_FD   	:[&str;3]	= ["","kanata","kanata-tray"]; // blank "" allow checking directly for user passed values
+const ASSET_FD 	:[&str;4]	= ["","icon","img","icons"];
+const IMG_EXT  	:[&str;7]	= ["ico","jpg","jpeg","png","bmp","dds","tiff"];
+const PAD      	:[ i32;2]	= [-5,-5]; // same as combo_box.rs padding?
+const PRE_LAYER	: &str   	= "\n🗍: "; // : invalid path marker, so should be safe to use as a separator
+const IS_TT    	:  bool  	= true; // show tooltips on layer changes
+
 use crate::gui::{CFG, GUI_TX};
 use winapi::shared::windef::{HWND, HMENU};
 
@@ -148,6 +155,19 @@ fn set_menu_item_cfg_icon(menu_item:&mut nwg::MenuItem, cfg_icon_s:&str, cfg_p:&
 }
 
 impl SystemTray {
+  /// Show our tooltip-like notification window
+  fn show_tooltip(&self, img:Option<&nwg::Bitmap>) {
+    static is_init:OnceLock<bool> = OnceLock::new();
+    if ! is_init.get().is_some() { // layered win needs a special call after being initialized to appear
+      let _ = is_init.set(true); info!("win_tt hasn't been shown as a layered window");
+      let win_id = self.win_tt.handle.hwnd().expect("win_tt should be a valid/existing window!");
+      show_layered_win(win_id);
+    } else {info!("win_tt has been shown as a layered window");}
+    self.win_tt_ifr.set_bitmap(img);
+    self.win_tt.set_visible(true);self.win_tt_timer.start();
+  }
+  /// Hide our tooltip-like notification window
+  fn hide_tooltip(&self) {self.win_tt.set_visible(false)}
   fn show_menu(&self) {
     self.update_tray_icon_cfg_group(false);
     let (x,y) = nwg::GlobalCursor::position();
@@ -391,6 +411,7 @@ impl SystemTray {
     for handler in handlers.iter() {nwg::unbind_event_handler(&handler);}
     nwg::stop_thread_dispatch();}
 }
+pub const TT_DUR:u64=1000;
 
 pub mod system_tray_ui {
   use super::*;
@@ -422,7 +443,6 @@ pub mod system_tray_ui {
       nwg::Icon::builder().source_embed(Some(&d.embed)).source_embed_str(Some("iconMain")).strict(true)/*use sys, not panic, if missing*/
         .build(&mut d.icon)?;
 
-
       // Controls
       nwg::MessageWindow      	::builder()
         .                     	  build(       &mut d.window	)?	;
@@ -438,6 +458,16 @@ pub mod system_tray_ui {
         .                     	  build(       &mut d.tray_2reload	)?                          	;
       nwg::MenuItem           	::builder().parent(&d.tray_menu)  	.text("&X Exit\t‹⎈␠⎋")      	//
         .                     	  build(       &mut d.tray_3exit  	)?                          	;
+      d.win_tt = build_win_tt().expect("Tooltip window");
+
+      nwg::AnimationTimer::builder().parent(&d.window).interval(Duration::from_millis(TT_DUR))
+        .lifetime(Some(Duration::from_millis(TT_DUR+100))).max_tick(None).active(false)
+        .build(&mut d.win_tt_timer)?;
+
+      let mut cfg_icon_bmp_tray	= Default::default();
+      nwg::Bitmap::builder().source_embed(Some(&d.embed)).source_embed_str(Some("imgMain")).strict(true)
+        .size(Some(ICN_SZ_MENU.into())).build(&mut cfg_icon_bmp_tray)?;
+      nwg::ImageFrame::builder().parent(&d.win_tt).size(ICN_SZ_TT_I.into()).position(PAD.into()).build(&mut d.win_tt_ifr)?;
 
       let mut tmp_bitmap = Default::default();
       nwg::Bitmap::builder().source_embed(Some(&d.embed)).source_embed_str(Some("imgReload")).strict(true).size(Some(ICN_SZ_MENU.into()))
@@ -454,19 +484,15 @@ pub mod system_tray_ui {
        let mut icon_dyn     	= d.icon_dyn     .borrow_mut();
        let mut img_dyn      	= d.img_dyn      .borrow_mut();
        let mut icon_act_key 	= d.icon_act_key .borrow_mut();
-      const menu_acc:&str = "ASDFGQWERTZXCVBYUIOPHJKLNM";
-      // let cfg_icon_p = // todo remove
-        // if let Some(layer0_icon) = &app_data.layer0_icon {debug!("layer0_icon");layer0_icon} else {
-        // if let Some(cfg_icon   ) = &app_data.cfg_icon    {debug!("cfg_icon"   );cfg_icon   } else {""}};
+      const menu_acc :&str = "1234567890ASDFGQWERTZXCVBYUIOPHJKLNM";
+      const m_e  : usize = menu_acc.len() - 1;
       let layer0_icon_s = &app_data.layer0_icon.clone().unwrap_or("".to_string());
       let cfg_icon_s    = &app_data.cfg_icon.clone().unwrap_or("".to_string());
       if (app_data.cfg_p).len() > 0 {
         for (i, cfg_p) in app_data.cfg_p.iter().enumerate() {
           let i_acc = match i { // menu accelerators from 1–0 then A–Z starting from home row for easier presses
-            0..= 8	=> format!("&{} ",i+1),
-            9     	=> format!("&{} ",0),
-           10..=35	=> format!("&{} ",&menu_acc[(i-10)..cmp::min(i-10+1,menu_acc.len())]),
-            _     	=> format!("  "),
+           0    ..= m_e	=> format!("&{} ",&menu_acc[i     ..i+1]),
+            _          	=> format!("  "),
           };
           let cfg_name = &cfg_p.file_name().unwrap_or_else(||OsStr::new("")).to_string_lossy().to_string(); //kanata.kbd
           // let menu_text	= i_acc + cfg_name; // &1 kanata.kbd
@@ -529,6 +555,7 @@ pub mod system_tray_ui {
             E::OnWindowClose                                  	=> if &handle == &evt_ui.window {SystemTray::exit  (&evt_ui);}
             E::OnMousePress(MousePressEvent::MousePressLeftUp)	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
             E::OnContextMenu/*🖰›*/                            	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
+            E::OnTimerStop/*🕐*/ => {SystemTray::hide_tooltip(&evt_ui);}
             E::OnMenuHover =>
               if        &handle == &evt_ui.tray_1cfg_m	{SystemTray::check_active(&evt_ui);}
             E::OnMenuItemSelected =>
@@ -586,6 +613,75 @@ pub mod system_tray_ui {
   }
   impl Deref    for SystemTrayUi {type Target = SystemTray;fn deref    (&    self) -> &    Self::Target {&    self.inner}}
 }
+
+use winapi::um::winuser::{WS_OVERLAPPEDWINDOW,WS_CLIPCHILDREN,WS_VISIBLE,WS_DISABLED,WS_MAXIMIZE,WS_MINIMIZE,WS_CAPTION,WS_MINIMIZEBOX,WS_MAXIMIZEBOX,WS_SYSMENU,WS_THICKFRAME,WS_POPUP,WS_SIZEBOX,
+  WS_EX_ACCEPTFILES,WS_EX_APPWINDOW,WS_EX_CLIENTEDGE,WS_EX_COMPOSITED,WS_EX_CONTEXTHELP,WS_EX_CONTROLPARENT,WS_EX_DLGMODALFRAME,WS_EX_LAYERED,WS_EX_LAYOUTRTL,WS_EX_LEFT,WS_EX_LEFTSCROLLBAR,WS_EX_LTRREADING,WS_EX_MDICHILD,WS_EX_NOACTIVATE,WS_EX_NOINHERITLAYOUT,WS_EX_NOPARENTNOTIFY,WS_EX_NOREDIRECTIONBITMAP,WS_EX_OVERLAPPEDWINDOW,WS_EX_PALETTEWINDOW,WS_EX_RIGHT,WS_EX_RIGHTSCROLLBAR,WS_EX_RTLREADING,WS_EX_STATICEDGE,WS_EX_TOOLWINDOW,WS_EX_TOPMOST,WS_EX_TRANSPARENT,WS_EX_WINDOWEDGE,
+  SetLayeredWindowAttributes,GetLayeredWindowAttributes,
+};
+pub const ws_click_thru:u32 = 0
+ | WS_EX_LAYERED    	//0x80000	significantly improve performance and visual effects for a window that has a complex shape, animates its shape, or wishes to use alpha blending effects. The system automatically composes and repaints layered windows and the windows of underlying applications. As a result, layered windows are rendered smoothly, without the flickering typical of complex window regions. In addition, layered windows can be partially translucent, that is, alpha-blended.
+ //                 	After the CreateWindowEx call, the layered window will not become visible until the SetLayeredWindowAttributes or UpdateLayeredWindow function has been called for this window
+ //                 	layered window with WS_EX_TRANSPARENT: shape of the layered window will be ignored and the mouse events will be passed to other windows underneath the layered window
+ | WS_EX_TRANSPARENT	//0x  20L	don't paint until siblings beneath the window (that were created by the same thread) have been painted. Window appears transparent because the bits of underlying sibling windows have already been painted.
+ ;
+
+use std::rc::Rc;
+use nwg::WindowFlags as wf;
+/// Build a tooltip-like window to notify of user events
+fn show_layered_win(win_id:HWND) {
+  use winapi::um::wingdi::{CreateSolidBrush, RGB};
+  use winapi::um::winuser::LWA_ALPHA;
+  let crKey  	: COLORREF  	= RGB(0,0,0); //transparency color key to be used when composing the layered window
+  let bAlpha 	: BYTE      	= 255; //0 transparent 255 fully opaque
+  let dwFlags	: DWORD     	= LWA_ALPHA;
+    //       	LWA_ALPHA   	0x00000002 Use bAlpha to determine the opacity of the layered window
+    //       	LWA_COLORKEY	0x00000001	Use crKey as the transparency color
+  unsafe{SetLayeredWindowAttributes(win_id,crKey,bAlpha,dwFlags);} // layered window doesn't appear w/o this call
+}
+
+pub fn build_win_tt() -> Result<nwg::Window, nwg::NwgError> {
+  let mut f_style = wf::POPUP;
+  let f_ex = ws_click_thru
+   | WS_EX_NOACTIVATE	//0x8000000L top-level win doesn't become foreground win on user click
+   | WS_EX_TOOLWINDOW	// remove from the taskbar (floating toolbar)
+   ;
+
+  let mut window:nwg::Window = Default::default();
+  nwg::Window::builder().title("Active Kanata Layer")        	// text in the window title bar
+    .size(ICN_SZ_MENU_I.into()).position((0,0)).center(false)	// default win size/position in the desktop, center (overrides position) windows in the current monitor based on its size
+    .topmost(false)                                          	// If the window should always be on top of other system window
+    .maximized(false).minimized(false)                       	// max/minimize at creation
+    .flags(f_style).ex_flags(f_ex)                           	// WindowFlags | win32 window extended flags (straight from winapi unlike flags)
+    .icon(None)                                              	// window icon
+    .accept_files(false)                                     	// accept files by drag & drop
+    // .parent()                                             	// logical parent of the window, unlike children controls, this is NOT required
+    .build(&mut window)?;
+
+  // let win_id = window.handle.hwnd().expect("Should be a window!");
+  // show_layered_win(win_id);
+
+  // let window_rc    	= Rc::new(window);
+  // let events_window	= window_rc.clone();
+
+  // let ev_handler = nwg::full_bind_event_handler(&window_rc.handle, move |evt, _evt_data, handle| {
+  //   use nwg::Event as E;
+  //   match evt {
+  //     E::OnWindowClose =>
+  //       if &handle == &events_window as &nwg::Window {
+  //         // nwg::modal_info_message(&events_window.handle, "Goodbye", &format!("Goodbye {}", name_edit.text()));
+  //         nwg::stop_thread_dispatch();
+  //       },
+  //     E::OnButtonClick => {
+  //       // if &handle == &hello_button {nwg::modal_info_message(&events_window.handle, "Hello", &format!("Hello {}", name_edit.text()));},
+  //     },
+  //     _ => {}
+  //   }
+  // });
+  // nwg::dispatch_thread_events();
+  // nwg::unbind_event_handler(&ev_handler);
+  Ok(window)
+}
+
 
 pub fn build_tray(cfg: &Arc<Mutex<Kanata>>) -> Result<system_tray_ui::SystemTrayUi> {
   let k                    	= cfg.lock();
