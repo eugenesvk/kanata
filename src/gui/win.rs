@@ -143,8 +143,8 @@ fn set_menu_item_cfg_icon(menu_item:&mut nwg::MenuItem, cfg_icon_s:&str, cfg_p:&
 impl SystemTray {
   fn show_menu(&self) {
     self.update_tray_icon_cfg_group(false);
-    let (x, y) = nwg::GlobalCursor::position();
-    self.tray_menu.popup(x, y);  }
+    let (x,y) = nwg::GlobalCursor::position();
+    self.tray_menu.popup(x,y);}
   /// Add a ✓ (or highlight the icon) to the currently active config. Runs on opening of the list of configs menu
   fn update_tray_icon_cfg(&self,menu_item_cfg:&mut nwg::MenuItem,cfg_p:&PathBuf,is_active:bool) -> Result<()> {
     let mut img_dyn = self.img_dyn.borrow_mut();
