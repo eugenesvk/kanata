@@ -1,5 +1,9 @@
 #![cfg_attr(debug_assertions,allow(unused_imports,unused_mut,unused_variables,dead_code,unused_assignments,unused_macros))]
 
+use winapi::shared::minwindef::{BYTE,DWORD,UINT};
+use winapi::shared::windef::COLORREF;
+use winapi::shared::basetsd::LONG_PTR;
+use core::ffi::c_int;
 use std::env::{var_os,current_exe};
 use std::path::{Path,PathBuf};
 use std::collections::HashMap;
@@ -14,7 +18,7 @@ use std::sync::Arc;
 use core::cell::{Cell,RefCell};
 use nwd::NwgUi;
 use nwg::{NativeUi,ControlHandle};
-use crate::gui::win_nwg_ext::{BitmapEx, MenuItemEx, MenuEx};
+use crate::gui::win_nwg_ext::{BitmapEx, MenuItemEx, MenuEx, WindowEx};
 use kanata_parser::cfg;
 
 trait PathExt             {fn add_ext(&mut self, ext_o:impl AsRef<std::path::Path>);}
