@@ -396,20 +396,20 @@ pub mod system_tray_ui {
 
 
       // Controls
-      nwg::MessageWindow   	::builder()
-        .                  	  build(       &mut d.window	)?	;
-      nwg::Notice          	::builder().parent(&d.window)
-        .                  	  build(       &mut d.layer_notice	)?                          	;
+      nwg::MessageWindow      	::builder()
+        .                     	  build(       &mut d.window	)?	;
+      nwg::Notice             	::builder().parent(&d.window)
+        .                     	  build(       &mut d.layer_notice	)?                          	;
       // nwg::TrayNotification	::builder().parent(&d.window)     	.icon(Some(&d.icon))        	.tip(Some(&app_data.tooltip))
       //   .                  	  build(       &mut d.tray        	)?                          	;
-      nwg::Menu            	::builder().parent(&d.window)     	.popup(true)/*context menu*/	//
-        .                  	  build(       &mut d.tray_menu   	)?                          	;
-      nwg::Menu            	::builder().parent(&d.tray_menu)  	.text("&F Load config")     	//
-        .                  	  build(       &mut d.tray_1cfg_m 	)?                          	;
-      nwg::MenuItem        	::builder().parent(&d.tray_menu)  	.text("&R Reload config")   	//
-        .                  	  build(       &mut d.tray_2reload	)?                          	;
-      nwg::MenuItem        	::builder().parent(&d.tray_menu)  	.text("&X Exit\t‹⎈␠⎋")      	//
-        .                  	  build(       &mut d.tray_3exit  	)?                          	;
+      nwg::Menu               	::builder().parent(&d.window)     	.popup(true)/*context menu*/	//
+        .                     	  build(       &mut d.tray_menu   	)?                          	;
+      nwg::Menu               	::builder().parent(&d.tray_menu)  	.text("&F Load config")     	//
+        .                     	  build(       &mut d.tray_1cfg_m 	)?                          	;
+      nwg::MenuItem           	::builder().parent(&d.tray_menu)  	.text("&R Reload config")   	//
+        .                     	  build(       &mut d.tray_2reload	)?                          	;
+      nwg::MenuItem           	::builder().parent(&d.tray_menu)  	.text("&X Exit\t‹⎈␠⎋")      	//
+        .                     	  build(       &mut d.tray_3exit  	)?                          	;
 
       let mut tmp_bitmap = Default::default();
       nwg::Bitmap::builder().source_embed(Some(&d.embed)).source_embed_str(Some("imgReload")).strict(true).size(Some((24,24)))
