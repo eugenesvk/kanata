@@ -1,5 +1,6 @@
 #![cfg_attr(debug_assertions,allow(unused_imports,unused_mut,unused_variables,dead_code,unused_assignments,unused_macros))]
 
+use std::sync::OnceLock;
 use winapi::shared::minwindef::{BYTE,DWORD,UINT};
 use winapi::shared::windef::COLORREF;
 use winapi::shared::basetsd::LONG_PTR;
@@ -371,6 +372,7 @@ impl SystemTray {
 
 pub mod system_tray_ui {
   use super::*;
+  use std::time::Duration;
   use core::cmp;
   use std::rc::Rc;
   use std::cell::RefCell;
