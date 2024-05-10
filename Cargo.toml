@@ -84,7 +84,7 @@ winapi = { version = "0.3.9", features = [
     "mmsystem",
 ] }
 native-windows-gui = { version = "1.0.13", default_features = false, features=["tray-notification","message-window","menu","cursor","high-dpi","embed-resource","image-decoder","notice","animation-timer"] }
-native-windows-derive = { version = "1.0.5", default_features = false, optional = true }
+# native-windows-derive = { version = "1.0.5", default_features = false, optional = true }
 lazy_static = { version = "1.4.0", optional = true }
 regex = { version = "1.10.4", optional = true }
 kanata-interception = { version = "0.2.0", optional = true }
@@ -121,7 +121,7 @@ simulated_output = ["indoc"]
 wasm = [ "instant/wasm-bindgen" ]
 simulated_input = ["indoc"]
 passthru_ahk = ["simulated_input","simulated_output","win_dbg_logger"]
-gui = ["win_manifest","native-windows-derive","lazy_static","win_dbg_logger","win_dbg_logger/simple_shared","kanata-parser/gui","dep:windows-sys"]
+gui = ["win_manifest","lazy_static","win_dbg_logger","win_dbg_logger/simple_shared","kanata-parser/gui","dep:windows-sys"]
 
 [profile.release]
 opt-level = "z"
