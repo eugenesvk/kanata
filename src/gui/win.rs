@@ -320,9 +320,13 @@ impl SystemTray {
     if clear { *icon_dyn = Default::default(); *icon_active = Default::default(); *img_dyn = Default::default(); debug!("reloading active config, clearing icon_dyn/_active cache");}
     let app_data = self.app_data.borrow();
     if let Some(icon_opt) = icon_dyn.get(&cfg_layer_pkey) { // 1a config+layer path has already been checked
-      if let Some(icon) = icon_opt {self.tray.set_icon(&icon);*icon_active = Some(cfg_layer_pkey);
+      if let Some(icon) = icon_opt {
+        self.tray.set_icon(     &icon);*icon_active = Some(cfg_layer_pkey);
+        self.show_tooltip (Some(&icon));
       } else {info!("no icon found, using default for config+layer = {}",cfg_layer_pkey_s);
-        self.tray.set_icon(&self.icon);*icon_active = Some(cfg_layer_pkey);}
+        self.tray.set_icon(     &self.icon) ;*icon_active = Some(cfg_layer_pkey);
+        self.show_tooltip (Some(&self.icon));
+      }
     } else if let Some(layer_icon) = layer_icon { // 1b cfg+layer path hasn't been checked, but layer has an icon configured, so check it
       if let Some(ico_p) = get_icon_p(&layer_icon, &layer_name, "", &path_cur_cc, &app_data.icon_match_layer_name) {
         let mut temp_icon_bitmap = Default::default();
@@ -331,19 +335,26 @@ impl SystemTray {
           let temp_icon = temp_icon_bitmap.copy_as_icon();
           let _ = icon_dyn.insert(cfg_layer_pkey.clone(),Some(temp_icon));*icon_active = Some(cfg_layer_pkey);
           let temp_icon = temp_icon_bitmap.copy_as_icon();
-          self.tray.set_icon(&temp_icon);
+          self.tray.set_icon(     &temp_icon) ;
+          self.show_tooltip (Some(&temp_icon));
         } else {warn!("✗ Invalid icon file \"{layer_icon}\" from this config+layer: {}",cfg_layer_pkey_s);
           let _ = icon_dyn.insert(cfg_layer_pkey.clone(),None           );*icon_active = Some(cfg_layer_pkey);
-          self.tray.set_icon(&self.icon);
+          self.tray.set_icon(     &self.icon) ;
+          self.show_tooltip (Some(&self.icon));
         }
       } else {warn!("✗ Invalid icon path \"{layer_icon}\" from this config+layer: {}",cfg_layer_pkey_s);
           let _ = icon_dyn.insert(cfg_layer_pkey.clone(),None           );*icon_active = Some(cfg_layer_pkey);
-          self.tray.set_icon(&self.icon);
+          self.tray.set_icon(     &self.icon) ;
+          self.show_tooltip (Some(&self.icon));
       }
     } else if icon_dyn.contains_key(&path_cur_cc   ) { // 2a no layer icon configured, but config icon exists, use it
-      if let Some(icon) = icon_dyn.get(&path_cur_cc).unwrap() {self.tray.set_icon(&icon);*icon_active = Some(path_cur_cc);
+      if let Some(icon) = icon_dyn.get(&path_cur_cc).unwrap() {
+        self.tray.set_icon(     &icon);*icon_active = Some(path_cur_cc);
+        self.show_tooltip (Some(&icon));
       } else {info!("no icon found, using default for config: {}",path_cur_cc.display().to_string());
-        self.tray.set_icon(&self.icon);*icon_active = Some(path_cur_cc);}
+        self.tray.set_icon(     &self.icon);*icon_active = Some(path_cur_cc);
+        self.show_tooltip (Some(&self.icon));
+      }
     } else { // 2a no layer icon configured, no config icon, use config path
       let cfg_icon_p = if let Some(cfg_icon) = &app_data.cfg_icon {cfg_icon} else {""};
       if let Some(ico_p) = get_icon_p("", &layer_name, &cfg_icon_p, &path_cur_cc, &app_data.icon_match_layer_name) {
@@ -353,14 +364,17 @@ impl SystemTray {
           let temp_icon = temp_icon_bitmap.copy_as_icon();
           let _ = icon_dyn.insert(cfg_layer_pkey.clone(),Some(temp_icon));*icon_active = Some(cfg_layer_pkey);
           let temp_icon = temp_icon_bitmap.copy_as_icon();
-          self.tray.set_icon(&temp_icon);
+          self.tray.set_icon(     &temp_icon) ;
+          self.show_tooltip (Some(&temp_icon));
         } else {warn!("✗ Invalid icon file \"{cfg_icon_p}\" from this config: {}",path_cur_cc.display().to_string());
           let _ = icon_dyn.insert(cfg_layer_pkey.clone(),None           );*icon_active = Some(cfg_layer_pkey);
-          self.tray.set_icon(&self.icon);
+          self.tray.set_icon(     &self.icon) ;
+          self.show_tooltip (Some(&self.icon));
         }
       } else {warn!("✗ Invalid icon path \"{cfg_icon_p}\" from this config: {}",path_cur_cc.display().to_string());
           let _ = icon_dyn.insert(cfg_layer_pkey.clone(),None           );*icon_active = Some(cfg_layer_pkey);
-          self.tray.set_icon(&self.icon);
+          self.tray.set_icon(     &self.icon) ;
+          self.show_tooltip (Some(&self.icon));
       }
     }
   }
