@@ -247,60 +247,60 @@ impl WindowEx for nwg::Window {
   }
 }
 
-/**
+/*
   High level function that handle the creation of custom window control or built in window control
 */
-use winapi::shared::minwindef::{BOOL, UINT, DWORD, HMODULE, WPARAM, LPARAM, LRESULT};
-use nwg::ControlHandle;
-use crate::gui::win32;
-use super::win32::base_helper::{CUSTOM_ID_BEGIN, to_utf16};
-use super::win32::high_dpi;
-// use super::gui::win32::base_helper::to_utf16;
-// use super::to_utf16;
-pub(crate) unsafe fn build_hwnd_control<'a>(
-  class_name  	: &'a str,
-  window_title	: Option<&'a str>,
-  size        	: Option<(i32, i32)>,
-  pos         	: Option<(i32, i32)>,
-  flags       	: Option<DWORD>,
-  ex_flags    	: Option<DWORD>,
-  forced_flags	: DWORD,
-  parent      	: Option<HWND>) -> Result<ControlHandle, NwgError> {
-  use winapi::um::winuser::{WS_OVERLAPPEDWINDOW, WS_VISIBLE, WS_CLIPCHILDREN, /*WS_EX_LAYERED*/};
-  use winapi::um::winuser::{CreateWindowExW, AdjustWindowRectEx};
-  use winapi::shared::windef::RECT;
-  use winapi::um::libloaderapi::GetModuleHandleW;
+// use winapi::shared::minwindef::{BOOL, UINT, DWORD, HMODULE, WPARAM, LPARAM, LRESULT};
+// use nwg::ControlHandle;
+// use crate::gui::win32;
+// use super::win32::base_helper::{CUSTOM_ID_BEGIN, to_utf16};
+// use super::win32::high_dpi;
+// // use super::gui::win32::base_helper::to_utf16;
+// // use super::to_utf16;
+// pub(crate) unsafe fn build_hwnd_control<'a>(
+//   class_name  	: &'a str,
+//   window_title	: Option<&'a str>,
+//   size        	: Option<(i32, i32)>,
+//   pos         	: Option<(i32, i32)>,
+//   flags       	: Option<DWORD>,
+//   ex_flags    	: Option<DWORD>,
+//   forced_flags	: DWORD,
+//   parent      	: Option<HWND>) -> Result<ControlHandle, NwgError> {
+//   use winapi::um::winuser::{WS_OVERLAPPEDWINDOW, WS_VISIBLE, WS_CLIPCHILDREN, /*WS_EX_LAYERED*/};
+//   use winapi::um::winuser::{CreateWindowExW, AdjustWindowRectEx};
+//   use winapi::shared::windef::RECT;
+//   use winapi::um::libloaderapi::GetModuleHandleW;
 
-  let hmod = GetModuleHandleW(ptr::null_mut());
-  if hmod.is_null() { return Err(NwgError::initialization("GetModuleHandleW failed")); }
+//   let hmod = GetModuleHandleW(ptr::null_mut());
+//   if hmod.is_null() { return Err(NwgError::initialization("GetModuleHandleW failed")); }
 
-  let class_name  	= to_utf16(class_name);
-  let window_title	= to_utf16(window_title.unwrap_or("New Window"));
-  let ex_flags    	= ex_flags.unwrap_or(0);
-  let flags       	= flags.unwrap_or(WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_VISIBLE) | forced_flags;
+//   let class_name  	= to_utf16(class_name);
+//   let window_title	= to_utf16(window_title.unwrap_or("New Window"));
+//   let ex_flags    	= ex_flags.unwrap_or(0);
+//   let flags       	= flags.unwrap_or(WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_VISIBLE) | forced_flags;
 
-  let pos             	= pos .unwrap_or((0  ,  0));
-  let size            	= size.unwrap_or((500,500));
-  let (px, py)        	= high_dpi::logical_to_physical(pos.0 , pos .1);
-  let (mut sx, mut sy)	= high_dpi::logical_to_physical(size.0, size.1);
-  let parent_handle   	= parent.unwrap_or(ptr::null_mut());
-  let menu            	= ptr::null_mut();
-  let lp_params       	= ptr::null_mut();
+//   let pos             	= pos .unwrap_or((0  ,  0));
+//   let size            	= size.unwrap_or((500,500));
+//   let (px, py)        	= high_dpi::logical_to_physical(pos.0 , pos .1);
+//   let (mut sx, mut sy)	= high_dpi::logical_to_physical(size.0, size.1);
+//   let parent_handle   	= parent.unwrap_or(ptr::null_mut());
+//   let menu            	= ptr::null_mut();
+//   let lp_params       	= ptr::null_mut();
 
-  if parent.is_none() {
-    let mut rect = RECT {left:0,top:0,right:sx, bottom:sy};
-    AdjustWindowRectEx(&mut rect, flags, 0, ex_flags);
-    sx = rect.right   - rect.left;
-    sy = rect.bottom  - rect.top;
-  }
-  let handle = CreateWindowExW (ex_flags,
-    class_name.as_ptr(), window_title.as_ptr(),
-    flags,
-    px, py,    sx, sy,
-    parent_handle,
-    menu,
-    hmod,
-    lp_params);
-  if handle.is_null()	{Err(NwgError::initialization("Window creation failed"))
-  } else             	{Ok(ControlHandle::Hwnd(handle))}
-}
+//   if parent.is_none() {
+//     let mut rect = RECT {left:0,top:0,right:sx, bottom:sy};
+//     AdjustWindowRectEx(&mut rect, flags, 0, ex_flags);
+//     sx = rect.right   - rect.left;
+//     sy = rect.bottom  - rect.top;
+//   }
+//   let handle = CreateWindowExW (ex_flags,
+//     class_name.as_ptr(), window_title.as_ptr(),
+//     flags,
+//     px, py,    sx, sy,
+//     parent_handle,
+//     menu,
+//     hmod,
+//     lp_params);
+//   if handle.is_null()	{Err(NwgError::initialization("Window creation failed"))
+//   } else             	{Ok(ControlHandle::Hwnd(handle))}
+// }
