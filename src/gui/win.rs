@@ -537,6 +537,21 @@ pub mod system_tray_ui {
         }
       };
       ui.handler_def.borrow_mut().push(nwg::full_bind_event_handler(&ui.window.handle, handle_events));
+
+      // let evt_ui = Rc::downgrade(&ui.inner); // Events
+      // let handle_events = move |evt, _evt_data, handle| {
+      //   if let Some(evt_ui) = evt_ui.upgrade() {
+      //     match evt {
+      //       E::OnWindowClose	=> if &handle == &evt_ui.win_tt {
+      //           // nwg::modal_info_message(&evt_ui.win_tt.handle, "Goodbye", &format!("Goodbye {}", name_edit.text()));
+      //           nwg::stop_thread_dispatch();},
+      //       _ => {}
+      //     }
+      //   }
+      // };
+      // let ev_handler = nwg::full_bind_event_handler(&ui.win_tt.handle, handle_events);
+      // ui.handler_def.borrow_mut().push(ev_handler);
+
       return Ok(ui);
     }
   }
