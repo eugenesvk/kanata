@@ -233,4 +233,7 @@ pub fn main() -> Result<()> {
 fn main() {
     use main_lib::win_gui::*;
     lib_main_gui();
+    // use gui::win2::*;
+    // use log::*;
+    // lib_main_gui2();
 }
