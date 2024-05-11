@@ -317,6 +317,9 @@ impl SystemTray {
     };
   }
   /// Update tray icon data given various config/layer info
+  /// cfg_layer_pkey: "path␤🗍: layer_name" unique icon id
+  /// path_cur_cc   : "path" without the layer name
+  /// clear         : reset stored icon cached paths/files
   fn update_tray_icon(&self,cfg_layer_pkey:PathBuf, cfg_layer_pkey_s:&str,layer_name:&str,layer_icon:&Option<String>,
     path_cur_cc:PathBuf, clear:bool) {
     let mut icon_dyn    	= self.icon_dyn    .borrow_mut(); // update the tray icon
