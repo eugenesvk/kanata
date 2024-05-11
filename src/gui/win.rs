@@ -80,7 +80,7 @@ pub fn get_xdg_home() -> Option<PathBuf> {var_os("XDG_CONFIG_HOME").map(PathBuf:
 const CFG_FD   	:[&str;3]	= ["","kanata","kanata-tray"]; // blank "" allow checking directly for user passed values
 const ASSET_FD 	:[&str;4]	= ["","icon","img","icons"];
 const IMG_EXT  	:[&str;7]	= ["ico","jpg","jpeg","png","bmp","dds","tiff"];
-const PAD      	:[ i32;2]	= [-5,-5]; // same as combo_box.rs padding?
+const PAD      	:[ i32;2]	= [-6,-6]; // similar to as combo_box.rs padding -5?
 const PRE_LAYER	: &str   	= "\n🗍: "; // : invalid path marker, so should be safe to use as a separator
 const IS_TT    	:  bool  	= true; // show tooltips on layer changes
 
