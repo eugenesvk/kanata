@@ -440,7 +440,7 @@ pub mod system_tray_ui {
         .                     	  build(       &mut d.tray_3exit  	)?                          	;
 
       let mut tmp_bitmap = Default::default();
-      nwg::Bitmap::builder().source_embed(Some(&d.embed)).source_embed_str(Some("imgReload")).strict(true).size(Some((24,24)))
+      nwg::Bitmap::builder().source_embed(Some(&d.embed)).source_embed_str(Some("imgReload")).strict(true).size(Some(ICN_SZ_MENU.into()))
         .build(&mut tmp_bitmap)?;
       let img_exit  	= nwg::Bitmap::from_system_icon(SIID_DELETE);
       d.tray_2reload	.set_bitmap(Some(&tmp_bitmap));
