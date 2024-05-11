@@ -86,8 +86,8 @@ pub fn send_gui_notice() {
   } else {error!("no GUI_TX to notify GUI thread of layer changes");}
 }
 /// Find an icon file that matches a given config icon name for a layer `lyr_icn` or a layer name `lyr_nm` (if `match_name` is `true`) or a given config icon name for the whole config `cfg_p` or a config file name at various locations (where config file is, where executable is, in user config folders)
-fn get_icon_p<S1,S2,S3,P>(lyr_icn:S1,  lyr_nm:S2  ,cfg_icn:S3   ,   cfg_p:P    , match_name:&bool) -> Option<String>
- where                       S1:AsRef<str>,S2:AsRef<str>,S3:AsRef<str>, P:AsRef<Path> {
+fn get_icon_p<S1,S2,S3,P>(lyr_icn:S1  ,  lyr_nm:S2  , cfg_icn:S3  ,   cfg_p:P, match_name:&bool) -> Option<String>
+ where                   S1:AsRef<str>,S2:AsRef<str>,S3:AsRef<str>, P:AsRef<Path> {
   get_icon_p_impl(lyr_icn.as_ref(),lyr_nm.as_ref(),cfg_icn.as_ref(),cfg_p.as_ref(),match_name)}
 fn get_icon_p_impl(lyr_icn:&str, lyr_nm:&str, cfg_icn:&str, p:&Path, match_name:&bool) -> Option<String> {
   trace!("lyr_icn={lyr_icn} lyr_nm={lyr_nm} cfg_icn={cfg_icn} cfg_p={p:?} match_name={match_name}");
