@@ -176,6 +176,7 @@ impl SystemTray {
   }
   /// Show our tooltip-like notification window
   fn show_tooltip(&self, img:Option<&nwg::Bitmap>) {
+    if ! IS_TT {return};
     static is_init:OnceLock<bool> = OnceLock::new();
     if ! is_init.get().is_some() { // layered win needs a special call after being initialized to appear
       let _ = is_init.set(true); info!("win_tt hasn't been shown as a layered window");
@@ -476,8 +477,8 @@ pub mod system_tray_ui {
         .                     	  build(       &mut d.tray_2reload	)?                          	;
       nwg::MenuItem           	::builder().parent(&d.tray_menu)  	.text("&X Exit\t‹⎈␠⎋")      	//
         .                     	  build(       &mut d.tray_3exit  	)?                          	;
+      if IS_TT {
       d.win_tt = build_win_tt().expect("Tooltip window");
-
       nwg::AnimationTimer::builder().parent(&d.window).interval(Duration::from_millis(TT_DUR))
         .lifetime(Some(Duration::from_millis(TT_DUR+100))).max_tick(None).active(false)
         .build(&mut d.win_tt_timer)?;
@@ -486,6 +487,7 @@ pub mod system_tray_ui {
       nwg::Bitmap::builder().source_embed(Some(&d.embed)).source_embed_str(Some("imgMain")).strict(true)
         .size(Some(ICN_SZ_MENU.into())).build(&mut cfg_icon_bmp_tray)?;
       nwg::ImageFrame::builder().parent(&d.win_tt).size(ICN_SZ_TT_I.into()).position(PAD.into()).build(&mut d.win_tt_ifr)?;
+      }
 
       let mut tmp_bitmap = Default::default();
       nwg::Bitmap::builder().source_embed(Some(&d.embed)).source_embed_str(Some("imgReload")).strict(true).size(Some(ICN_SZ_MENU.into()))
