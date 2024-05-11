@@ -83,6 +83,7 @@ const IMG_EXT  	:[&str;7]	= ["ico","jpg","jpeg","png","bmp","dds","tiff"];
 const PAD      	:[ i32;2]	= [-6,-6]; // similar to as combo_box.rs padding -5?
 const PRE_LAYER	: &str   	= "\n🗍: "; // : invalid path marker, so should be safe to use as a separator
 const IS_TT    	:  bool  	= true; // show tooltips on layer changes
+const IS_TT_BLANK	:  bool  	= false; // show blank tooltips (when not icons for a layer exist)
 
 use crate::gui::{CFG, GUI_TX};
 use winapi::shared::windef::{HWND, HMENU};
@@ -177,6 +178,7 @@ impl SystemTray {
   /// Show our tooltip-like notification window
   fn show_tooltip(&self, img:Option<&nwg::Bitmap>) {
     if ! IS_TT {return};
+    if img.is_none() && ! IS_TT_BLANK {return};
     static is_init:OnceLock<bool> = OnceLock::new();
     if ! is_init.get().is_some() { // layered win needs a special call after being initialized to appear
       let _ = is_init.set(true); info!("win_tt hasn't been shown as a layered window");
