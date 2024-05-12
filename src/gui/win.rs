@@ -227,11 +227,44 @@ impl SystemTray {
       let win_id = self.win_tt.handle.hwnd().expect("win_tt should be a valid/existing window!");
       show_layered_win(win_id);
     } else {debug!("win_tt has been shown as a layered window");}
+    let (mut x,mut y) = nwg::GlobalCursor::position();
+    let win_ver = win_ver!();
+    let icn_sz_tt_i = (app_data.tooltip_size.0,app_data.tooltip_size.1);
+    let w = icn_sz_tt_i.0 as i32;
+    let h = icn_sz_tt_i.1 as i32;
+    let flags          	= if (win_ver.0>=6 && win_ver.1 >=1) || win_ver.0>6 {TPM_WORKAREA}else{0};
+    let     tt_off     	= 16; // tooltip offset vs. 🖰 pointer
+    let     anchorpoint	= &POINT{ x:x+tt_off, y:y+tt_off};
+    let     tt_win_sz  	= &SIZE {cx:w       ,cy:h};
+    let     p_sz       	= 6; // 🖰 pointer size to make sure tooltip doesn't overlap
+    let     excluderect	= &    RECT{left:x-p_sz,right :x+p_sz
+      ,                	       top :y-p_sz,bottom:x+p_sz, }; //Avoid ~ mouse pointer area
+    let mut out_rect   	= &mut RECT{left:0,right:0,top:0,bottom:0,};
+    let ret = unsafe{CalculatePopupWindowPosition(
+      anchorpoint           	,//*const POINT	.
+      tt_win_sz             	,//*const SIZE 	.
+      flags                 	,//u32         	specify how the function positions the pop-up window horizontally and vertically (=↑→ pos flags of the TrackPopupMenuEx function)
+        // horizontally     	               	.
+         // TPM_CENTERALIGN 	0x0004L        	Centers horizontally relative to the coordinate specified by the anchorPoint->x parameter.
+         // TPM_LEFTALIGN   	0x0000L        	left  edge is aligned with the coordinate specified by the anchorPoint->x parameter
+         // TPM_RIGHTALIGN  	0x0008L        	right edge is aligned with the coordinate specified by the anchorPoint->x parameter
+        // vertically       	               	.
+         // TPM_VCENTERALIGN	0x0010L        	Centers vertically relative to the coordinate specified by the anchorPoint->y parameter.
+         // TPM_BOTTOMALIGN 	0x0020L        	bottom edge is aligned with the coordinate specified by the anchorPoint->y parameter
+         // TPM_TOPALIGN    	0x0000L        	top    edge is aligned with the coordinate specified by the anchorPoint->y parameter
+        // TPM_WORKAREA     	0x10000L       	(win7) Restricts the pop-up window to within the work area. If this flag is not set, the pop-up window is restricted to the work area only if the input point is within the work area. For more information, see the rcWork and rcMonitor members of the MONITORINFO structure.
+      excluderect           	,//*const RECT 	ptr→structure: exclude rectangle. It can be NULL
+      out_rect              	,//*mut RECT   	ptr→structure: pop-up window position
+    )};
+    if ! (ret == 0)  {
+      x = out_rect.left;
+      y = out_rect.top;
+    }
     let dpi = dpi!();
-    let (x,y) = nwg::GlobalCursor::position();
-    let xx = (x as f64 / (dpi as f64 / 96 as f64)).round() as i32;
+    let xx = (x as f64 / (dpi as f64 / 96 as f64)).round() as i32; // adjust dpi for layout
     let yy = (y as f64 / (dpi as f64 / 96 as f64)).round() as i32;
-    trace!("🖰 @{x}⋅{y} @ dpi={dpi} → {xx}⋅{yy}");
+    trace!("🖰 @{x}⋅{y} (upd{}) @ dpi={dpi} → {xx}⋅{yy} {win_ver:?} flags={flags}",!(ret==0));
+
     self.win_tt_ifr.set_bitmap(img);
     self.win_tt.set_position(xx,yy);
     self.win_tt.set_visible(true);self.win_tt_timer.start();
