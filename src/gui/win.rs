@@ -38,6 +38,10 @@ impl  PathExt for PathBuf {fn add_ext(&mut self, ext_o:impl AsRef<std::path::Pat
   pub layer0_name          	:String,
   pub layer0_icon          	:Option<String>,
   pub icon_match_layer_name	:bool,
+  tooltip_layer_changes    	:bool,
+  tooltip_show_blank       	:bool,
+  tooltip_duration         	:u16,
+  tooltip_size             	:(u16,u16),
 }
 #[derive(Default)] pub struct Icn {
   pub tray   	: nwg::Bitmap, // uses an image of different size to fit the menu items
@@ -77,13 +81,10 @@ pub fn get_appdata() -> Option<PathBuf> {var_os("APPDATA").map(PathBuf::from)}
 pub fn get_user_home() -> Option<PathBuf> {var_os("USERPROFILE").map(PathBuf::from)}
 pub fn get_xdg_home() -> Option<PathBuf> {var_os("XDG_CONFIG_HOME").map(PathBuf::from)}
 
-const CFG_FD     	:[&str;3]	= ["","kanata","kanata-tray"]; // blank "" allow checking directly for user passed values
-const ASSET_FD   	:[&str;4]	= ["","icon","img","icons"];
-const IMG_EXT    	:[&str;7]	= ["ico","jpg","jpeg","png","bmp","dds","tiff"];
-const PAD        	:[ i32;2]	= [-6,-6]; // similar to as combo_box.rs padding -5?
-const PRE_LAYER  	: &str   	= "\n🗍: "; // : invalid path marker, so should be safe to use as a separator
-const IS_TT      	:  bool  	= true; // show tooltips on layer changes
-const IS_TT_BLANK	:  bool  	= false; // show blank tooltips (when not icons for a layer exist)
+const CFG_FD   	:[&str;3]	= ["","kanata","kanata-tray"]; // blank "" allow checking directly for user passed values
+const ASSET_FD 	:[&str;4]	= ["","icon","img","icons"];
+const IMG_EXT  	:[&str;7]	= ["ico","jpg","jpeg","png","bmp","dds","tiff"];
+const PRE_LAYER	: &str   	= "\n🗍: "; // : invalid path marker, so should be safe to use as a separator
 
 use crate::gui::{CFG, GUI_TX};
 use winapi::shared::windef::{HWND, HMENU};
@@ -159,11 +160,12 @@ impl SystemTray {
    where                         P:AsRef<str> {
     self.get_icon_from_file_impl(ico_p.as_ref())}
   fn get_icon_from_file_impl(&self, ico_p:&str) -> Result<Icn> {
+    let app_data = self.app_data.borrow(); let icn_sz_tt = [app_data.tooltip_size.0 as u32,app_data.tooltip_size.1 as u32];
     if let Ok(img_data) = self.decoder.from_filename(&ico_p).and_then(|img_src| img_src.frame(0)) {
       if   let Ok(cfg_img_menu)	= self.decoder.resize_image(&img_data,ICN_SZ_MENU) {
           let cfg_icon_bmp_tray	= cfg_img_menu.as_bitmap()?;
           let cfg_icon_bmp_icon	= cfg_icon_bmp_tray.copy_as_icon();
-        if let Ok(cfg_img_menu)	= self.decoder.resize_image(&img_data,ICN_SZ_TT) {
+        if let Ok(cfg_img_menu)	= self.decoder.resize_image(&img_data,icn_sz_tt) {
           let cfg_icon_bmp_tt  	= cfg_img_menu.as_bitmap()?;
           return Ok(Icn{tray:cfg_icon_bmp_tray, tooltip:cfg_icon_bmp_tt, icon:cfg_icon_bmp_icon})
         } else {debug!("✓ main ✗ icon resize Tray for {:?}",ico_p);}
@@ -184,8 +186,9 @@ impl SystemTray {
   }
   /// Show our tooltip-like notification window
   fn show_tooltip(&self, img:Option<&nwg::Bitmap>) {
-    if ! IS_TT {return};
-    if img.is_none() && ! IS_TT_BLANK {return};
+    let app_data = self.app_data.borrow();
+    if ! app_data.tooltip_layer_changes {return};
+    if img.is_none() && ! app_data.tooltip_show_blank {return};
     static is_init:OnceLock<bool> = OnceLock::new();
     if ! is_init.get().is_some() { // layered win needs a special call after being initialized to appear
       let _ = is_init.set(true); info!("win_tt hasn't been shown as a layered window");
@@ -437,7 +440,6 @@ impl SystemTray {
     for handler in handlers.iter() {nwg::unbind_event_handler(&handler);}
     nwg::stop_thread_dispatch();}
 }
-pub const TT_DUR:u64=1000;
 
 pub mod system_tray_ui {
   use super::*;
@@ -486,16 +488,21 @@ pub mod system_tray_ui {
         .                     	  build(       &mut d.tray_2reload	)?                          	;
       nwg::MenuItem           	::builder().parent(&d.tray_menu)  	.text("&X Exit\t‹⎈␠⎋")      	//
         .                     	  build(       &mut d.tray_3exit  	)?                          	;
-      if IS_TT {
-      d.win_tt = build_win_tt().expect("Tooltip window");
-      nwg::AnimationTimer::builder().parent(&d.window).interval(Duration::from_millis(TT_DUR))
-        .lifetime(Some(Duration::from_millis(TT_DUR+100))).max_tick(None).active(false)
+      info!("tooltip_duration = {:?} tooltip_layer_changes = {:?} blank = {:?} tooltip_size={:?}",app_data.tooltip_duration,app_data.tooltip_layer_changes,app_data.tooltip_show_blank,app_data.tooltip_size);
+      if app_data.tooltip_layer_changes {
+      d.win_tt = d.build_win_tt().expect("Tooltip window");
+      nwg::AnimationTimer::builder().parent(&d.window).interval(Duration::from_millis(app_data.tooltip_duration.into()))
+        .lifetime(Some(Duration::from_millis((app_data.tooltip_duration+100).into()))).max_tick(None).active(false)
         .build(&mut d.win_tt_timer)?;
 
+      let icn_sz_tt_i = (app_data.tooltip_size.0 as i32,app_data.tooltip_size.1 as i32);
+      let padx = (app_data.tooltip_size.0 as f64 / 6 as f64).round() as i32; // todo: replace with a no-margin NWG config when it's available
+      let pady = (app_data.tooltip_size.1 as f64 / 6 as f64).round() as i32;
+      let pad = (-padx,-pady); trace!("kanata tooltip sieze = {icn_sz_tt_i:?}, offset = {padx}⋅{pady}");
       let mut cfg_icon_bmp_tray	= Default::default();
       nwg::Bitmap::builder().source_embed(Some(&d.embed)).source_embed_str(Some("imgMain")).strict(true)
         .size(Some(ICN_SZ_MENU.into())).build(&mut cfg_icon_bmp_tray)?;
-      nwg::ImageFrame::builder().parent(&d.win_tt).size(ICN_SZ_TT_I.into()).position(PAD.into()).build(&mut d.win_tt_ifr)?;
+      nwg::ImageFrame::builder().parent(&d.win_tt).size(icn_sz_tt_i).position(pad).build(&mut d.win_tt_ifr)?;
       }
 
       let mut tmp_bitmap = Default::default();
@@ -717,21 +724,23 @@ pub fn build_win_tt() -> Result<nwg::Window, nwg::NwgError> {
 
 
 pub fn build_tray(cfg: &Arc<Mutex<Kanata>>) -> Result<system_tray_ui::SystemTrayUi> {
-  let k                    	= cfg.lock();
-  let paths                	= &k.cfg_paths;
-  let cfg_icon             	= &k.tray_icon;
-  let path_cur             	= &paths[0];
-  let layer0_id            	=  k.layout.b().current_layer();
-  let layer0_name          	= &k.layer_info[layer0_id].name;
-  let layer0_icon          	= &k.layer_info[layer0_id].icon;
-  let icon_match_layer_name	= &k.icon_match_layer_name;
-  let app_data             	= SystemTrayData {
-    tooltip                	: path_cur.display().to_string(),
-    cfg_p                  	: paths.clone(),
-    cfg_icon               	: cfg_icon.clone(),
-    layer0_name            	: layer0_name.clone(),
-    layer0_icon            	: layer0_icon.clone(),
-    icon_match_layer_name  	: *icon_match_layer_name,
+  let k                  	= cfg.lock();
+  let paths              	= &k.cfg_paths;
+  let path_cur           	= &paths[0];
+  let layer0_id          	=  k.layout.b().current_layer();
+  let layer0_name        	= &k.layer_info[layer0_id].name;
+  let layer0_icon        	= &k.layer_info[layer0_id].icon;
+  let app_data           	= SystemTrayData {
+    tooltip              	: path_cur.display().to_string(),
+    cfg_p                	: paths.clone(),
+    cfg_icon             	: k.tray_icon.clone(),
+    layer0_name          	: layer0_name.clone(),
+    layer0_icon          	: layer0_icon.clone(),
+    icon_match_layer_name	: k.icon_match_layer_name,
+    tooltip_layer_changes : k.tooltip_layer_changes,
+    tooltip_show_blank    : k.tooltip_show_blank,
+    tooltip_duration      : k.tooltip_duration,
+    tooltip_size          : k.tooltip_size,
   };
   // drop(k); // release manually if needed in buid_ui
   let app	= SystemTray {app_data:RefCell::new(app_data), ..Default::default()};
