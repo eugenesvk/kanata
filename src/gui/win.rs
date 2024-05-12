@@ -541,7 +541,7 @@ pub mod system_tray_ui {
       if app_data.tooltip_layer_changes {
       d.win_tt = d.build_win_tt().expect("Tooltip window");
       nwg::AnimationTimer::builder().parent(&d.window).interval(Duration::from_millis(app_data.tooltip_duration.into()))
-        .lifetime(Some(Duration::from_millis((app_data.tooltip_duration+100).into()))).max_tick(None).active(false)
+        .lifetime(Some(Duration::from_millis((app_data.tooltip_duration+9).into()))).max_tick(None).active(false)
         .build(&mut d.win_tt_timer)?;
 
       let icn_sz_tt_i = (app_data.tooltip_size.0 as i32,app_data.tooltip_size.1 as i32);
