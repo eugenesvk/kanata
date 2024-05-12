@@ -83,7 +83,7 @@ winapi = { version = "0.3.9", features = [
     "timeapi",
     "mmsystem",
 ] }
-native-windows-gui = { version = "1.0.13", default_features = false, features=["tray-notification","message-window","menu","cursor","high-dpi","embed-resource","image-decoder","notice","animation-timer"] }
+native-windows-gui = { version = "1.0.13", default_features = false}
 # native-windows-derive = { version = "1.0.5", default_features = false, optional = true }
 lazy_static = { version = "1.4.0", optional = true }
 regex = { version = "1.10.4", optional = true }
@@ -121,7 +121,7 @@ simulated_output = ["indoc"]
 wasm = [ "instant/wasm-bindgen" ]
 simulated_input = ["indoc"]
 passthru_ahk = ["simulated_input","simulated_output","win_dbg_logger"]
-gui = ["win_manifest","lazy_static","win_dbg_logger","win_dbg_logger/simple_shared","kanata-parser/gui","dep:windows-sys"]
+gui = ["win_manifest","lazy_static","win_dbg_logger","win_dbg_logger/simple_shared","kanata-parser/gui","dep:windows-sys","kanata-parser/gui","native-windows-gui/tray-notification","native-windows-gui/message-window","native-windows-gui/menu","native-windows-gui/cursor","native-windows-gui/high-dpi","native-windows-gui/embed-resource","native-windows-gui/image-decoder","native-windows-gui/notice","native-windows-gui/animation-timer","dep:windows-sys"]
 
 [profile.release]
 opt-level = "z"
