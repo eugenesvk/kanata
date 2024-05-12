@@ -167,7 +167,7 @@ impl SystemTray {
       if   let Ok(cfg_img_menu)	= self.decoder.resize_image(&img_data,ICN_SZ_MENU) {
           let cfg_icon_bmp_tray	= cfg_img_menu.as_bitmap()?;
           let cfg_icon_bmp_icon	= cfg_icon_bmp_tray.copy_as_icon();
-        if let Ok(cfg_img_menu)	= self.decoder.resize_image(&img_data,icn_sz_tt) {
+        if let Ok(cfg_img_menu)	= self.decoder.resize_image(&img_data,icn_sz_tt) {trace!("resized TT img as {icn_sz_tt:?}");
           let cfg_icon_bmp_tt  	= cfg_img_menu.as_bitmap()?;
           return Ok(Icn{tray:cfg_icon_bmp_tray, tooltip:cfg_icon_bmp_tt, icon:cfg_icon_bmp_icon})
         } else {debug!("✓ main ✗ icon resize Tray for {:?}",ico_p);}
@@ -193,10 +193,10 @@ impl SystemTray {
     if img.is_none() && ! app_data.tooltip_show_blank {self.win_tt.set_visible(false); return};
     static is_init:OnceLock<bool> = OnceLock::new();
     if ! is_init.get().is_some() { // layered win needs a special call after being initialized to appear
-      let _ = is_init.set(true); info!("win_tt hasn't been shown as a layered window");
+      let _ = is_init.set(true); debug!("win_tt hasn't been shown as a layered window");
       let win_id = self.win_tt.handle.hwnd().expect("win_tt should be a valid/existing window!");
       show_layered_win(win_id);
-    } else {info!("win_tt has been shown as a layered window");}
+    } else {debug!("win_tt has been shown as a layered window");}
     let dpi = dpi!();
     let (x,y) = nwg::GlobalCursor::position();
     let xx = (x as f64 / (dpi as f64 / 96 as f64)).round() as i32;
