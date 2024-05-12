@@ -1,6 +1,7 @@
 #![cfg_attr(debug_assertions,allow(unused_imports,unused_mut,unused_variables,dead_code,unused_assignments,unused_macros))]
 
 use parking_lot::MutexGuard;
+use std::time::Duration;
 use std::sync::OnceLock;
 use winapi::shared::minwindef::{BYTE,DWORD,UINT};
 use winapi::shared::windef::COLORREF;
@@ -43,6 +44,8 @@ impl  PathExt for PathBuf {fn add_ext(&mut self, ext_o:impl AsRef<std::path::Pat
   pub tooltip_show_blank   	:bool,
   pub tooltip_duration     	:u16,
   pub tooltip_size         	:(u16,u16),
+  pub tt_duration_pre      	:u16,
+  pub tt_size_pre          	:(u16,u16),
 }
 #[derive(Default)] pub struct Icn {
   pub tray   	: nwg::Bitmap, // uses an image of different size to fit the menu items
@@ -274,6 +277,35 @@ impl SystemTray {
     } else {error!("no CFG var that contains active kanata config");
     };
   }
+  /// Check if tooltip data is changed, and update tooltip window size / timer duration
+  fn update_tooltip_data(&self,k:&MutexGuard<Kanata>) -> bool {
+    let mut app_data = self.app_data.borrow_mut();
+    let mut clear = false;
+    if ! app_data.tt_duration_pre 	== k.tooltip_duration {
+      app_data   .tooltip_duration	=  k.tooltip_duration; clear = true;
+      app_data   .tt_duration_pre 	=  k.tooltip_duration; trace!("timer duration changed, updating");
+      self.win_tt_timer.set_interval(     Duration::from_millis((k.tooltip_duration                          ).into()));
+      self.win_tt_timer.set_lifetime(Some(Duration::from_millis((k.tooltip_duration.saturating_add(TTTIMER_L)).into())));
+    }
+    if ! (app_data.tt_size_pre.0	== k.tooltip_size.0
+      &&  app_data.tt_size_pre.1	== k.tooltip_size.1) {
+      app_data    .tt_size_pre  	=  k.tooltip_size; clear = true;
+      app_data    .tooltip_size 	=  k.tooltip_size; trace!("tooltip_size duration changed, updating");
+      let dpi = dpi!();
+      let icn_sz_tt_i = (k.tooltip_size.0,k.tooltip_size.1);
+      let w = (icn_sz_tt_i.0 as f64 / (dpi as f64 / 96 as f64)).round() as u32;
+      let h = (icn_sz_tt_i.1 as f64 / (dpi as f64 / 96 as f64)).round() as u32;
+      self.win_tt.set_size(w,h);
+
+      let icn_sz_tt_i = (k.tooltip_size.0 as u32,k.tooltip_size.1 as u32);
+      let padx = (k.tooltip_size.0 as f64 / 6 as f64).round() as i32; // todo: replace with a no-margin NWG config when it's available
+      let pady = (k.tooltip_size.1 as f64 / 6 as f64).round() as i32;
+      trace!("kanata tooltip size = {icn_sz_tt_i:?}, ttsize = {w}⋅{h} offset = {padx}⋅{pady}");
+      self.win_tt_ifr.set_size(icn_sz_tt_i.0, icn_sz_tt_i.1);
+      self.win_tt_ifr.set_position(-padx,-pady);
+    }
+    clear
+  }
   /// Reload config file, currently active (`i=None`) or matching a given `i` index
   fn reload_cfg(&self,i:Option<usize>) -> Result<()> {
     use nwg::TrayNotificationFlags as f_tray;
@@ -327,6 +359,7 @@ impl SystemTray {
       if log_enabled!(Debug) {let layer_icon_s	= layer_icon.clone().unwrap_or("✗".to_string());
         debug!("pos reload tray_icon={:?} layer_name={:?} layer_icon={:?}",cfg_icon,layer_name,layer_icon_s);}
 
+      let _ = self.update_tooltip_data(&k); // check for changes before they're overwritten ↓
       {*self.app_data.borrow_mut() = update_app_data(&k)?;}
       // self.tray.set_visibility(false); // flash the icon, but might be confusing as the app isn't restarting, just reloading
       self.tray.set_tip(&cfg_layer_pkey_s); // update tooltip to point to the newer config
@@ -362,8 +395,8 @@ impl SystemTray {
         debug!("✓ layer changed to ‘{}’ with icon ‘{}’ @ ‘{}’ tray_icon ‘{}’",layer_name,layer_icon_s,cfg_name,cfg_icon_s);
       }
 
+      let clear = self.update_tooltip_data(&k); // if tooltip dimensions changed, reset icons to get them resized
       self.tray.set_tip(&cfg_layer_pkey_s); // update tooltip to point to the newer config
-      let clear = false;
       self.update_tray_icon(cfg_layer_pkey,&cfg_layer_pkey_s,&layer_name,&layer_icon,path_cur_cc,clear)
     } else {debug!("✗ kanata config is locked, can't get current layer (likely the gui changed the layer and is still holding the lock, it will update the icon)");}
     } else {warn!("✗ Layer indicator NOT changed, no CFG");
@@ -487,7 +520,6 @@ impl SystemTray {
 
 pub mod system_tray_ui {
   use super::*;
-  use std::time::Duration;
   use core::cmp;
   use std::rc::Rc;
   use std::cell::RefCell;
@@ -733,10 +765,12 @@ pub fn update_app_data(k:&MutexGuard<Kanata>) -> Result<SystemTrayData> {
     layer0_name          	: layer0_name.clone(),
     layer0_icon          	: layer0_icon.clone(),
     icon_match_layer_name	: k.icon_match_layer_name,
-    tooltip_layer_changes : k.tooltip_layer_changes,
-    tooltip_show_blank    : k.tooltip_show_blank,
-    tooltip_duration      : k.tooltip_duration,
-    tooltip_size          : k.tooltip_size,
+    tooltip_layer_changes	: k.tooltip_layer_changes,
+    tooltip_show_blank   	: k.tooltip_show_blank,
+    tooltip_duration     	: k.tooltip_duration,
+    tooltip_size         	: k.tooltip_size,
+    tt_duration_pre      	: k.tooltip_duration,
+    tt_size_pre          	: k.tooltip_size,
   })
 }
 pub fn build_tray(cfg: &Arc<Mutex<Kanata>>) -> Result<system_tray_ui::SystemTrayUi> {
