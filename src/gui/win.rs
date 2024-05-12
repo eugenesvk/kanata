@@ -564,7 +564,6 @@ pub mod system_tray_ui {
         .                     	  build(       &mut d.tray_2reload	)?                          	;
       nwg::MenuItem           	::builder().parent(&d.tray_menu)  	.text("&X Exit\t‹⎈␠⎋")      	//
         .                     	  build(       &mut d.tray_3exit  	)?                          	;
-      info!("tooltip_duration = {:?} tooltip_layer_changes = {:?} blank = {:?} tooltip_size={:?}",app_data.tooltip_duration,app_data.tooltip_layer_changes,app_data.tooltip_show_blank,app_data.tooltip_size);
       if app_data.tooltip_layer_changes {
       d.win_tt = d.build_win_tt().expect("Tooltip window");
       nwg::AnimationTimer::builder().parent(&d.window).interval(Duration::from_millis(app_data.tooltip_duration.into()))
@@ -758,6 +757,7 @@ pub fn update_app_data(k:&MutexGuard<Kanata>) -> Result<SystemTrayData> {
   let layer0_id  	=  k.layout.b().current_layer();
   let layer0_name	= &k.layer_info[layer0_id].name;
   let layer0_icon	= &k.layer_info[layer0_id].icon;
+  if log_enabled!(Info) {info!("  ✓ update_app_data layer0_name={:?} layer0_icon={:?} TTshow={:?} blank={:?} for 🕐={:?} size={:?}",layer0_name.clone(),layer0_icon.clone(),k.tooltip_layer_changes,k.tooltip_show_blank,k.tooltip_duration,k.tooltip_size);}
   Ok(SystemTrayData {
     tooltip              	: path_cur.display().to_string(),
     cfg_p                	: paths.clone(),
