@@ -572,7 +572,7 @@ pub mod system_tray_ui {
       const menu_acc :&str = "1234567890ASDFGQWERTZXCVBYUIOPHJKLNM";
       const m_e  : usize = menu_acc.len() - 1;
       let layer0_icon_s = &app_data.layer0_icon.clone().unwrap_or("".to_string());
-      let cfg_icon_s    = &app_data.cfg_icon.clone().unwrap_or("".to_string());
+      let cfg_icon_s    = &app_data.cfg_icon   .clone().unwrap_or("".to_string());
       if (app_data.cfg_p).len() > 0 {
         for (i, cfg_p) in app_data.cfg_p.iter().enumerate() {
           let i_acc = match i { // menu accelerators from 1–0 then A–Z starting from home row for easier presses
