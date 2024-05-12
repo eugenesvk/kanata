@@ -326,15 +326,10 @@ impl SystemTray {
       if log_enabled!(Debug) {let layer_icon_s	= layer_icon.clone().unwrap_or("✗".to_string());
         debug!("pos reload tray_icon={:?} layer_name={:?} layer_icon={:?}",cfg_icon,layer_name,layer_icon_s);}
 
-      {let mut app_data = self.app_data.borrow_mut();
-      app_data.cfg_icon = cfg_icon.clone();
-      app_data.layer0_name = k.layer_info[0].name.clone();
-      app_data.layer0_icon = Some(k.layer_info[0].name.clone());
-      app_data.icon_match_layer_name = k.icon_match_layer_name;
+      {*self.app_data.borrow_mut() = update_app_data(&k)?;}
       // self.tray.set_visibility(false); // flash the icon, but might be confusing as the app isn't restarting, just reloading
       self.tray.set_tip(&cfg_layer_pkey_s); // update tooltip to point to the newer config
       // self.tray.set_visibility(true);
-      }
       let clear = i.is_none();
       self.update_tray_icon(cfg_layer_pkey,&cfg_layer_pkey_s,&layer_name,&layer_icon,path_cur_cc, clear)
     }   else {msg_title+="✗ Config NOT reloaded, no CFG";warn!("{}", msg_title); flags |= f_tray::ERROR_ICON;
@@ -366,9 +361,7 @@ impl SystemTray {
         debug!("✓ layer changed to ‘{}’ with icon ‘{}’ @ ‘{}’ tray_icon ‘{}’",layer_name,layer_icon_s,cfg_name,cfg_icon_s);
       }
 
-      {let app_data = self.app_data.borrow_mut();
       self.tray.set_tip(&cfg_layer_pkey_s); // update tooltip to point to the newer config
-      }
       let clear = false;
       self.update_tray_icon(cfg_layer_pkey,&cfg_layer_pkey_s,&layer_name,&layer_icon,path_cur_cc,clear)
     } else {debug!("✗ kanata config is locked, can't get current layer (likely the gui changed the layer and is still holding the lock, it will update the icon)");}
