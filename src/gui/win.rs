@@ -1,6 +1,11 @@
 #![cfg_attr(debug_assertions,allow(unused_imports,unused_mut,unused_variables,dead_code,unused_assignments,unused_macros))]
 
 use parking_lot::MutexGuard;
+use windows_sys::Win32::Foundation::{SIZE,RECT,POINT,NTSTATUS};
+use windows_sys::Win32::UI::WindowsAndMessaging::{TPM_WORKAREA,TPM_CENTERALIGN,TPM_LEFTALIGN,TPM_RIGHTALIGN,TPM_VCENTERALIGN,TPM_BOTTOMALIGN,TPM_TOPALIGN,
+  CalculatePopupWindowPosition,};
+use windows_sys::Win32::System::SystemInformation::{OSVERSIONINFOW,};
+use windows_sys::Wdk::System::SystemServices::{RtlGetVersion,};
 use std::time::Duration;
 use std::sync::OnceLock;
 use winapi::shared::minwindef::{BYTE,DWORD,UINT};
@@ -156,6 +161,28 @@ macro_rules! dpi { //todo: change on monitor changes
   () => {{
     static DPI: OnceLock<i32> = OnceLock::new();
     *DPI.get_or_init(|| unsafe{nwg::dpi()})
+  }};
+}
+macro_rules! win_ver {
+  () => {{
+    static WIN_VER: OnceLock<(u32,u32,u32)> = OnceLock::new();
+    *WIN_VER.get_or_init(|| {
+      let mut os_ver_i : *mut OSVERSIONINFOW = &mut OSVERSIONINFOW{
+        dwOSVersionInfoSize	: 0, //u32
+        dwMajorVersion     	: 0, //u32
+        dwMinorVersion     	: 0, //u32
+        dwBuildNumber      	: 0, //u32
+        dwPlatformId       	: 0, //u32
+        szCSDVersion       	:[0;128], //[u16; 128]
+      };
+      let mut ver:u32;
+      unsafe{ if 0 == RtlGetVersion(os_ver_i) {return (
+        (*os_ver_i).dwMajorVersion,
+        (*os_ver_i).dwMinorVersion,
+        (*os_ver_i).dwBuildNumber,
+      )}}
+      (0,0,0)
+    })
   }};
 }
 
