@@ -39,10 +39,10 @@ impl  PathExt for PathBuf {fn add_ext(&mut self, ext_o:impl AsRef<std::path::Pat
   pub layer0_name          	:String,
   pub layer0_icon          	:Option<String>,
   pub icon_match_layer_name	:bool,
-  tooltip_layer_changes    	:bool,
-  tooltip_show_blank       	:bool,
-  tooltip_duration         	:u16,
-  tooltip_size             	:(u16,u16),
+  pub tooltip_layer_changes	:bool,
+  pub tooltip_show_blank   	:bool,
+  pub tooltip_duration     	:u16,
+  pub tooltip_size         	:(u16,u16),
 }
 #[derive(Default)] pub struct Icn {
   pub tray   	: nwg::Bitmap, // uses an image of different size to fit the menu items
