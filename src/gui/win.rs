@@ -1,5 +1,6 @@
 #![cfg_attr(debug_assertions,allow(unused_imports,unused_mut,unused_variables,dead_code,unused_assignments,unused_macros))]
 
+use parking_lot::MutexGuard;
 use std::sync::OnceLock;
 use winapi::shared::minwindef::{BYTE,DWORD,UINT};
 use winapi::shared::windef::COLORREF;
@@ -725,14 +726,13 @@ fn show_layered_win(win_id:HWND) {
   unsafe{SetLayeredWindowAttributes(win_id,crKey,bAlpha,dwFlags);} // layered window doesn't appear w/o this call
 }
 
-pub fn build_tray(cfg: &Arc<Mutex<Kanata>>) -> Result<system_tray_ui::SystemTrayUi> {
-  let k                  	= cfg.lock();
-  let paths              	= &k.cfg_paths;
-  let path_cur           	= &paths[0];
-  let layer0_id          	=  k.layout.b().current_layer();
-  let layer0_name        	= &k.layer_info[layer0_id].name;
-  let layer0_icon        	= &k.layer_info[layer0_id].icon;
-  let app_data           	= SystemTrayData {
+pub fn update_app_data(k:&MutexGuard<Kanata>) -> Result<SystemTrayData> {
+  let paths      	= &k.cfg_paths;
+  let path_cur   	= &paths[0];
+  let layer0_id  	=  k.layout.b().current_layer();
+  let layer0_name	= &k.layer_info[layer0_id].name;
+  let layer0_icon	= &k.layer_info[layer0_id].icon;
+  Ok(SystemTrayData {
     tooltip              	: path_cur.display().to_string(),
     cfg_p                	: paths.clone(),
     cfg_icon             	: k.tray_icon.clone(),
@@ -743,8 +743,12 @@ pub fn build_tray(cfg: &Arc<Mutex<Kanata>>) -> Result<system_tray_ui::SystemTray
     tooltip_show_blank    : k.tooltip_show_blank,
     tooltip_duration      : k.tooltip_duration,
     tooltip_size          : k.tooltip_size,
-  };
-  // drop(k); // release manually if needed in buid_ui
+  })
+}
+pub fn build_tray(cfg: &Arc<Mutex<Kanata>>) -> Result<system_tray_ui::SystemTrayUi> {
+  let k       	= cfg.lock();
+  let app_data	= update_app_data(&k)?;
+  drop(k); // release manually if needed in buid_ui
   let app	= SystemTray {app_data:RefCell::new(app_data), ..Default::default()};
   SystemTray::build_ui(app).context("Failed to build UI")
 }
