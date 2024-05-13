@@ -205,29 +205,29 @@ impl LogFmt {
     pub fn in_press_key(&mut self, key: OsCode) {
         self.fmt(
             LogFmtT::InKeyDown,
-            KeyCode::from(OsCode::from(key)).to_string(),
+            KeyCode::from(key).to_string(),
         )
     }
     pub fn in_release_key(&mut self, key: OsCode) {
         self.fmt(
             LogFmtT::InKeyUp,
-            KeyCode::from(OsCode::from(key)).to_string(),
+            KeyCode::from(key).to_string(),
         )
     }
     pub fn in_repeat_key(&mut self, key: OsCode) {
         self.fmt(
             LogFmtT::InKeyRep,
-            KeyCode::from(OsCode::from(key)).to_string(),
+            KeyCode::from(key).to_string(),
         )
     }
     pub fn press_key(&mut self, key: OsCode) {
         self.fmt(
             LogFmtT::KeyDown,
-            KeyCode::from(OsCode::from(key)).to_string(),
+            KeyCode::from(key).to_string(),
         )
     }
     pub fn release_key(&mut self, key: OsCode) {
-        self.fmt(LogFmtT::KeyUp, KeyCode::from(OsCode::from(key)).to_string())
+        self.fmt(LogFmtT::KeyUp, KeyCode::from(key).to_string())
     }
     pub fn send_unicode(&mut self, c: char) {
         self.fmt(LogFmtT::Unicode, c.to_string())
