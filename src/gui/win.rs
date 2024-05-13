@@ -1,10 +1,15 @@
 #![cfg_attr(debug_assertions,allow(unused_imports,unused_mut,unused_variables,dead_code,unused_assignments,unused_macros))]
 
+use std::ffi::OsString;
+use core::ffi::c_void;
 use parking_lot::MutexGuard;
-use windows_sys::Win32::Foundation::{SIZE,RECT,POINT,NTSTATUS};
-use windows_sys::Win32::UI::WindowsAndMessaging::{TPM_WORKAREA,TPM_CENTERALIGN,TPM_LEFTALIGN,TPM_RIGHTALIGN,TPM_VCENTERALIGN,TPM_BOTTOMALIGN,TPM_TOPALIGN,
+use windows_sys::Win32::Foundation::{SIZE,RECT,POINT,NTSTATUS,ERROR_SUCCESS};
+use windows_sys::Win32::UI::WindowsAndMessaging::{TPM_WORKAREA,TPM_CENTERALIGN,TPM_LEFTALIGN,TPM_RIGHTALIGN,TPM_VCENTERALIGN,TPM_BOTTOMALIGN,TPM_TOPALIGN,SM_CXCURSOR,SM_CYCURSOR,
   CalculatePopupWindowPosition,};
 use windows_sys::Win32::System::SystemInformation::{OSVERSIONINFOW,};
+use windows_sys::Win32::System::Registry::{HKEY_CURRENT_USER,RRF_RT_REG_SZ,RRF_RT_REG_DWORD,
+  RegGetValueW,};
+use windows_sys::Win32::UI::HiDpi::GetSystemMetricsForDpi;
 use windows_sys::Wdk::System::SystemServices::{RtlGetVersion,};
 use std::time::Duration;
 use std::sync::OnceLock;
@@ -16,6 +21,7 @@ use std::env::{var_os,current_exe};
 use std::path::{Path,PathBuf};
 use std::collections::HashMap;
 use std::ffi::OsStr;
+use log::*;
 use log::Level::*;
 use crate::{Kanata,kanata};
 use parking_lot::Mutex;
@@ -185,6 +191,52 @@ macro_rules! win_ver {
     })
   }};
 }
+
+/// Convert string to wide array and append null
+pub fn to_wide_str(s: &str) -> Vec<u16> {
+  use std::ffi::OsStr;
+  use std::iter::once;
+  use std::os::windows::ffi::OsStrExt;
+  OsStr::new(s).encode_wide().chain(once(0)).collect()
+}
+macro_rules! mouse_scale_factor { // screen size = dpi⋅size⋅scaleF
+  () => {{
+    static MOUSE_PTR_SCALE_F: OnceLock<u32> = OnceLock::new();
+    *MOUSE_PTR_SCALE_F.get_or_init(|| {
+      // 3. pointer scale factor @ Settings/Ease of Access/Mouse pointer
+      let key_root   = HKEY_CURRENT_USER;
+      let key_path_s = r"SOFTWARE\Microsoft\Accessibility";
+      let key_name_s = "CursorSize";
+      let key_path = to_wide_str(key_path_s);
+      let key_name = to_wide_str(key_name_s);
+      use std::os::windows::prelude::*;
+      let mut mouse_scale   	: DWORD = 0;
+      let     mouse_scale_p 	: *mut c_void = std::mem::transmute(&mut mouse_scale);
+      let mut mouse_scale_sz	: DWORD = std::mem::size_of::<DWORD>() as DWORD;
+      let res = unsafe{RegGetValueW(key_root,key_path.as_ptr(),key_name.as_ptr(),RRF_RT_REG_DWORD //restrict type to REG_DWORD
+        ,std::ptr::null_mut() //pdwType
+        ,mouse_scale_p, &mut mouse_scale_sz)};
+      match res as DWORD {
+        ERROR_SUCCESS       	=> {}
+        ERROR_FILE_NOT_FOUND	=> {error!(r"Registry '{}\{}' not found"                   ,key_path_s,key_name_s    );mouse_scale = 1}
+        _                   	=> {error!(r"Registry '{}\{}' couldn't be read as DWORD {}",key_path_s,key_name_s,res);mouse_scale = 1}
+      }
+      mouse_scale
+    })
+  }};
+}
+pub fn get_mouse_ptr_size() -> (u32,u32) {
+  // 1. get monitor DPI
+  let dpi = unsafe{nwg::dpi()};
+  // 2. icon size @ dpi
+  let curW  	= SM_CXCURSOR;
+  let curH  	= SM_CYCURSOR;
+  let width 	= unsafe{GetSystemMetricsForDpi(curW,dpi as u32)} as u32; // int	nIndex	system metric or configuration setting to be retrieved
+  let height	= unsafe{GetSystemMetricsForDpi(curH,dpi as u32)} as u32; //uint	dpi   	DPI to use for scaling the metric
+  let mouse_scale = mouse_scale_factor!();
+  (mouse_scale*width,mouse_scale*height)
+}
+
 
 impl SystemTray {
   /// Read an image from a file, convert it to various formats: tray, tooltip, icon
