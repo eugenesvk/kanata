@@ -120,9 +120,9 @@ fn get_icon_p_impl(lyr_icn:&str, lyr_nm:&str, cfg_icn:&str, p:&Path, match_name:
   let f_ext         = [lyr_icn_p.extension(),if *match_name{lyr_nm_p.extension()}else{None          },cfg_icn_p.extension(),None,None];
   let     pre_p     =  p.parent    ().unwrap_or_else(| |Path   ::new(""));
   let     cur_exe   = current_exe  ().unwrap_or_else(|_|PathBuf::new(  ));
-  let     xdg_cfg   = get_xdg_home ().unwrap_or_else(| |PathBuf::new(  ));
-  let     app_data  = get_appdata  ().unwrap_or_else(| |PathBuf::new(  ));
-  let mut user_cfg  = get_user_home().unwrap_or_else(| |PathBuf::new(  )); user_cfg.push(".config");
+  let     xdg_cfg   = get_xdg_home ().unwrap_or_default();
+  let     app_data  = get_appdata  ().unwrap_or_default();
+  let mut user_cfg  = get_user_home().unwrap_or_default(); user_cfg.push(".config");
   let parents       = [Path::new(""),pre_p,&cur_exe,&xdg_cfg,&app_data,&user_cfg]; // empty path to allow no prefixes when icon path is explictily set in case it's a full path already
 
   for (i,  nm) in f_name.enumerate()  {trace!("{}nm={:?}" ,"" ,nm);
@@ -138,7 +138,7 @@ fn get_icon_p_impl(lyr_icn:&str, lyr_nm:&str, cfg_icn:&str, p:&Path, match_name:
       for    p_kan in CFG_FD          {trace!("{}p_kan={:?}"  ,"    "     ,p_kan);
         for  p_icn in ASSET_FD        {trace!("{}p_icn={:?}"  ,"      "   ,p_icn);
           for  ext in IMG_EXT         {trace!("{}  ext={:?}"  ,"        " ,ext);
-            if !(p_par == blank_p)    {icon_file.push(p_par);} // folders
+            if p_par != blank_p    {icon_file.push(p_par);} // folders
             if ! p_kan.is_empty()     {icon_file.push(p_kan);}
             if ! p_icn.is_empty()     {icon_file.push(p_icn);}
             if !    nm.is_empty()     {icon_file.push(nm   );}
@@ -150,7 +150,7 @@ fn get_icon_p_impl(lyr_icn:&str, lyr_nm:&str, cfg_icn:&str, p:&Path, match_name:
             } else {info!("✓ found icon file: {}",icon_file.display().to_string());
               return Some(icon_file.display().to_string())
             } } } } } }
-  debug!("✗ no icon file found");return None
+  debug!("✗ no icon file found");None
 }
 pub const ICN_SZ_MENU  	:[u32;2] = [24,24]; // size for menu icons
 pub const ICN_SZ_TT    	:[u32;2] = [36,36]; // size for tooltip icons
@@ -193,7 +193,7 @@ impl SystemTray {
     self.get_icon_from_file_impl(ico_p.as_ref())}
   fn get_icon_from_file_impl(&self, ico_p:&str) -> Result<Icn> {
     let app_data = self.app_data.borrow(); let icn_sz_tt = [app_data.tooltip_size.0 as u32,app_data.tooltip_size.1 as u32];
-    if let Ok(img_data) = self.decoder.from_filename(&ico_p).and_then(|img_src| img_src.frame(0)) {
+    if let Ok(img_data) = self.decoder.from_filename(ico_p).and_then(|img_src| img_src.frame(0)) {
       if   let Ok(cfg_img_menu)	= self.decoder.resize_image(&img_data,ICN_SZ_MENU) {
           let cfg_icon_bmp_tray	= cfg_img_menu.as_bitmap()?;
           let cfg_icon_bmp_icon	= cfg_icon_bmp_tray.copy_as_icon();
@@ -208,8 +208,8 @@ impl SystemTray {
   /// Read an image from a file, convert it to a menu-sized icon, assign to a menu and return the image in various formats (tray, tooltip, icon)
   fn set_menu_item_cfg_icon(&self, menu_item:&mut nwg::MenuItem, cfg_icon_s:&str, cfg_p:&PathBuf)
     -> Result<Icn> {
-    if let Some(ico_p) = get_icon_p("","", &cfg_icon_s, &cfg_p, &false) {
-      if let Ok(icn) = self.get_icon_from_file(&ico_p) {
+    if let Some(ico_p) = get_icon_p("","", cfg_icon_s, cfg_p, &false) {
+      if let Ok(icn) = self.get_icon_from_file(ico_p) {
         menu_item.set_bitmap(Some(&icn.tray));
         return Ok(icn)
       } else     {debug!("✗ main 0 icon ✓ icon path, will be using DEFAULT icon for {:?}",cfg_p);}
@@ -222,7 +222,7 @@ impl SystemTray {
     if ! app_data.tooltip_layer_changes {return};
     if img.is_none() && ! app_data.tooltip_show_blank {self.win_tt.set_visible(false); return};
     static is_init:OnceLock<bool> = OnceLock::new();
-    if ! is_init.get().is_some() { // layered win needs a special call after being initialized to appear
+    if is_init.get().is_none() { // layered win needs a special call after being initialized to appear
       let _ = is_init.set(true); debug!("win_tt hasn't been shown as a layered window");
       let win_id = self.win_tt.handle.hwnd().expect("win_tt should be a valid/existing window!");
       show_layered_win(win_id);
@@ -256,14 +256,14 @@ impl SystemTray {
       excluderect           	,//*const RECT 	ptr→structure: exclude rectangle. It can be NULL
       out_rect              	,//*mut RECT   	ptr→structure: pop-up window position
     )};
-    if ! (ret == 0)  {
+    if ret != 0  {
       x = out_rect.left;
       y = out_rect.top;
     }
     let dpi = dpi!();
-    let xx = (x as f64 / (dpi as f64 / 96 as f64)).round() as i32; // adjust dpi for layout
-    let yy = (y as f64 / (dpi as f64 / 96 as f64)).round() as i32;
-    trace!("🖰 @{x}⋅{y} (upd{}) @ dpi={dpi} → {xx}⋅{yy} {win_ver:?} flags={flags}",!(ret==0));
+    let xx = (x as f64 / (dpi as f64 / 96_f64)).round() as i32; // adjust dpi for layout
+    let yy = (y as f64 / (dpi as f64 / 96_f64)).round() as i32;
+    trace!("🖰 @{x}⋅{y} (upd{}) @ dpi={dpi} → {xx}⋅{yy} {win_ver:?} flags={flags}",ret != 0);
 
     self.win_tt_ifr.set_bitmap(img);
     self.win_tt.set_position(xx,yy);
@@ -280,13 +280,12 @@ impl SystemTray {
     let mut img_dyn = self.img_dyn.borrow_mut();
     if img_dyn.contains_key(cfg_p) { // check if menu group icon needs to be updated to match active
       if is_active {
-        img_dyn.get(cfg_p).and_then(|maybe_icn| maybe_icn.as_ref()).map(|icn| {
-          self.tray_1cfg_m.set_bitmap(Some(&icn.tray)) });
+        if let Some(icn) = img_dyn.get(cfg_p).and_then(|maybe_icn| maybe_icn.as_ref()) { self.tray_1cfg_m.set_bitmap(Some(&icn.tray)) }
       }
     } else {trace!("config menu item icon missing, read config and add it (or nothing) {cfg_p:?}");
-      if let Ok(cfg) = cfg::new_from_file(&cfg_p) {
+      if let Ok(cfg) = cfg::new_from_file(cfg_p) {
         if let Some(cfg_icon_s) = cfg.options.tray_icon {debug!("loaded config without a tray icon {cfg_p:?}");
-          if let Ok(icn) = self.set_menu_item_cfg_icon(menu_item_cfg, &cfg_icon_s, &cfg_p) {
+          if let Ok(icn) = self.set_menu_item_cfg_icon(menu_item_cfg, &cfg_icon_s, cfg_p) {
             if is_active {self.tray_1cfg_m.set_bitmap(Some(&icn.tray));} // update currently active config's icon in the combo menu
                   debug!("✓set icon {cfg_p:?}");
             let _ = img_dyn.insert(cfg_p.clone(),Some(icn));
@@ -305,7 +304,7 @@ impl SystemTray {
       if ! is_check || force {
         let cfg_p = &k.cfg_paths[idx_cfg]; debug!("✗ mismatch idx_cfg={idx_cfg:?} {} {:?} cfg_p={cfg_p:?}",if is_check {"✓"}else{"✗"},	h_cfg_i.handle);
         h_cfg_i.set_checked(true);
-        if let Err(e) = self.update_tray_icon_cfg(h_cfg_i,&cfg_p,true){
+        if let Err(e) = self.update_tray_icon_cfg(h_cfg_i,cfg_p,true){
           debug!("{e:?} {cfg_p:?}");
           let mut img_dyn	= self.img_dyn.borrow_mut();
           img_dyn.insert(cfg_p.clone(),None);
@@ -323,14 +322,14 @@ impl SystemTray {
         // 1 if missing an icon, read config to get one
         let cfg_p = &k.cfg_paths[i]; trace!("     →→→→ i={i:?} {:?} cfg_p={cfg_p:?}",h_cfg_i.handle);
         let is_active = i==idx_cfg;
-        if let Err(e) = self.update_tray_icon_cfg(&mut h_cfg_i,&cfg_p,is_active){
+        if let Err(e) = self.update_tray_icon_cfg(h_cfg_i,cfg_p,is_active){
           debug!("{e:?} {cfg_p:?}");
           let mut img_dyn	= self.img_dyn.borrow_mut();
           img_dyn.insert(cfg_p.clone(),None);
           if is_active {self.tray_1cfg_m.set_bitmap(None);} // can't update active menu, so remove combo menu icon
         };
         // 2 if wrong GUI checkmark, correct it
-        if   h_cfg_i.checked(){trace!("✓checked {} active {} eq? {} !eq? {}",i,idx_cfg,is_active,!(i==idx_cfg));}
+        if   h_cfg_i.checked(){trace!("✓checked {} active {} eq? {} !eq? {}",i,idx_cfg,is_active,i != idx_cfg);}
         if   h_cfg_i.checked() && ! is_active {debug!("uncheck i{} act{}",i,idx_cfg);h_cfg_i.set_checked(false);} // uncheck inactive
         if ! h_cfg_i.checked() &&   is_active {debug!("  check i{} act{}",i,idx_cfg);h_cfg_i.set_checked(true );} //   check   active
       };
@@ -341,9 +340,9 @@ impl SystemTray {
   fn update_tooltip_data(&self,k:&MutexGuard<Kanata>) -> bool {
     let mut app_data = self.app_data.borrow_mut();
     let mut clear = false;
-    if ! (app_data.tt_duration_pre	== k.tooltip_duration) {
-      app_data   .tooltip_duration	=  k.tooltip_duration; clear = true;
-      app_data   .tt_duration_pre 	=  k.tooltip_duration; trace!("timer duration changed, updating");
+    if app_data  .tt_duration_pre 	!= k.tooltip_duration {
+      app_data   .tooltip_duration	 = k.tooltip_duration; clear = true;
+      app_data   .tt_duration_pre 	 = k.tooltip_duration; trace!("timer duration changed, updating");
       self.win_tt_timer.set_interval(     Duration::from_millis((k.tooltip_duration                          ).into()));
       self.win_tt_timer.set_lifetime(Some(Duration::from_millis((k.tooltip_duration.saturating_add(TTTIMER_L)).into())));
     }
@@ -353,13 +352,13 @@ impl SystemTray {
       app_data    .tooltip_size 	=  k.tooltip_size; trace!("tooltip_size duration changed, updating");
       let dpi = dpi!();
       let icn_sz_tt_i = (k.tooltip_size.0,k.tooltip_size.1);
-      let w = (icn_sz_tt_i.0 as f64 / (dpi as f64 / 96 as f64)).round() as u32;
-      let h = (icn_sz_tt_i.1 as f64 / (dpi as f64 / 96 as f64)).round() as u32;
+      let w = (icn_sz_tt_i.0 as f64 / (dpi as f64 / 96_f64)).round() as u32;
+      let h = (icn_sz_tt_i.1 as f64 / (dpi as f64 / 96_f64)).round() as u32;
       self.win_tt.set_size(w,h);
 
       let icn_sz_tt_i = (k.tooltip_size.0 as u32,k.tooltip_size.1 as u32);
-      let padx = (k.tooltip_size.0 as f64 / 6 as f64).round() as i32; // todo: replace with a no-margin NWG config when it's available
-      let pady = (k.tooltip_size.1 as f64 / 6 as f64).round() as i32;
+      let padx = (k.tooltip_size.0 as f64 / 6_f64).round() as i32; // todo: replace with a no-margin NWG config when it's available
+      let pady = (k.tooltip_size.1 as f64 / 6_f64).round() as i32;
       trace!("kanata tooltip size = {icn_sz_tt_i:?}, ttsize = {w}⋅{h} offset = {padx}⋅{pady}");
       self.win_tt_ifr.set_size(icn_sz_tt_i.0, icn_sz_tt_i.1);
       self.win_tt_ifr.set_position(-padx,-pady);
@@ -425,7 +424,7 @@ impl SystemTray {
       self.tray.set_tip(&cfg_layer_pkey_s); // update tooltip to point to the newer config
       // self.tray.set_visibility(true);
       let clear = i.is_none();
-      self.update_tray_icon(cfg_layer_pkey,&cfg_layer_pkey_s,&layer_name,&layer_icon,path_cur_cc, clear)
+      self.update_tray_icon(cfg_layer_pkey,&cfg_layer_pkey_s,layer_name,layer_icon,path_cur_cc, clear)
     }   else {msg_title+="✗ Config NOT reloaded, no CFG";warn!("{}", msg_title); flags |= f_tray::ERROR_ICON;
     };
     flags |= f_tray::LARGE_ICON; // todo: fails without this, must have SM_CXICON x SM_CYICON?
@@ -457,7 +456,7 @@ impl SystemTray {
 
       let clear = self.update_tooltip_data(&k); // if tooltip dimensions changed, reset icons to get them resized
       self.tray.set_tip(&cfg_layer_pkey_s); // update tooltip to point to the newer config
-      self.update_tray_icon(cfg_layer_pkey,&cfg_layer_pkey_s,&layer_name,&layer_icon,path_cur_cc,clear)
+      self.update_tray_icon(cfg_layer_pkey,&cfg_layer_pkey_s,layer_name,layer_icon,path_cur_cc,clear)
     } else {debug!("✗ kanata config is locked, can't get current layer (likely the gui changed the layer and is still holding the lock, it will update the icon)");}
     } else {warn!("✗ Layer indicator NOT changed, no CFG");
     };
@@ -481,8 +480,8 @@ impl SystemTray {
         self.show_tooltip (None);trace!("✗💬 1a");
       }
     } else if let Some(layer_icon) = layer_icon { // 1b cfg+layer path hasn't been checked, but layer has an icon configured, so check it
-      if let Some(ico_p) = get_icon_p(&layer_icon, &layer_name, "", &path_cur_cc, &app_data.icon_match_layer_name) {
-        if let Ok(icn) = self.get_icon_from_file(&ico_p) {info!("✓ Using an icon from this config+layer: {}",cfg_layer_pkey_s);
+      if let Some(ico_p) = get_icon_p(layer_icon, layer_name, "", &path_cur_cc, &app_data.icon_match_layer_name) {
+        if let Ok(icn) = self.get_icon_from_file(ico_p) {info!("✓ Using an icon from this config+layer: {}",cfg_layer_pkey_s);
           self.tray.set_icon(&icn.icon);
           self.show_tooltip(Some(&icn.tooltip));trace!("✓💬 1b");
           let _ = img_dyn .insert(cfg_layer_pkey.clone(),Some(icn)); *icon_act_key = Some(cfg_layer_pkey);
@@ -505,8 +504,8 @@ impl SystemTray {
       }
     } else { // 2b no layer icon configured, no config icon, use config path
       let cfg_icon_p = if let Some(cfg_icon) = &app_data.cfg_icon {cfg_icon} else {""};
-      if let Some(ico_p) = get_icon_p("", &layer_name, &cfg_icon_p, &path_cur_cc, &app_data.icon_match_layer_name) {
-        if let Ok(icn) = self.get_icon_from_file(&ico_p) {
+      if let Some(ico_p) = get_icon_p("", layer_name, cfg_icon_p, &path_cur_cc, &app_data.icon_match_layer_name) {
+        if let Ok(icn) = self.get_icon_from_file(ico_p) {
           info!("✓ Using an icon from this config: {}",path_cur_cc.display().to_string());
           self.tray.set_icon(     &icn.icon);
           self.show_tooltip (Some(&icn.tooltip));trace!("✓💬 2b");
@@ -525,7 +524,7 @@ impl SystemTray {
   }
   fn exit(&self) {
     let handlers = self.handlers_dyn.borrow();
-    for handler in handlers.iter() {nwg::unbind_event_handler(&handler);}
+    for handler in handlers.iter() {nwg::unbind_event_handler(handler);}
     nwg::stop_thread_dispatch();}
 
   fn build_win_tt(&self) -> Result<nwg::Window, nwg::NwgError> {
@@ -539,8 +538,8 @@ impl SystemTray {
     let dpi = dpi!();
     let app_data = self.app_data.borrow();
     let icn_sz_tt_i = (app_data.tooltip_size.0,app_data.tooltip_size.1);
-    let w = (icn_sz_tt_i.0 as f64 / (dpi as f64 / 96 as f64)).round() as i32;
-    let h = (icn_sz_tt_i.1 as f64 / (dpi as f64 / 96 as f64)).round() as i32;
+    let w = (icn_sz_tt_i.0 as f64 / (dpi as f64 / 96_f64)).round() as i32;
+    let h = (icn_sz_tt_i.1 as f64 / (dpi as f64 / 96_f64)).round() as i32;
     trace!("Active Kanata Layer win size = {w}⋅{h}");
     nwg::Window::builder().title("Active Kanata Layer")	// text in the window title bar
       .size((w,h)).position((0,0)).center(false)       	// default win size/position in the desktop, center (overrides position) windows in the current monitor based on its size
@@ -631,8 +630,8 @@ pub mod system_tray_ui {
         .build(&mut d.win_tt_timer)?;
 
       let icn_sz_tt_i = (app_data.tooltip_size.0 as i32,app_data.tooltip_size.1 as i32);
-      let padx = (app_data.tooltip_size.0 as f64 / 6 as f64).round() as i32; // todo: replace with a no-margin NWG config when it's available
-      let pady = (app_data.tooltip_size.1 as f64 / 6 as f64).round() as i32;
+      let padx = (app_data.tooltip_size.0 as f64 / 6_f64).round() as i32; // todo: replace with a no-margin NWG config when it's available
+      let pady = (app_data.tooltip_size.1 as f64 / 6_f64).round() as i32;
       let pad = (-padx,-pady); trace!("kanata tooltip size = {icn_sz_tt_i:?}, offset = {padx}⋅{pady}");
       let mut cfg_icon_bmp_tray	= Default::default();
       nwg::Bitmap::builder().source_embed(Some(&d.embed)).source_embed_str(Some("imgMain")).strict(true)
@@ -658,11 +657,11 @@ pub mod system_tray_ui {
       const m_e  : usize = menu_acc.len() - 1;
       let layer0_icon_s = &app_data.layer0_icon.clone().unwrap_or("".to_string());
       let cfg_icon_s    = &app_data.cfg_icon   .clone().unwrap_or("".to_string());
-      if (app_data.cfg_p).len() > 0 {
+      if !(app_data.cfg_p).is_empty() {
         for (i, cfg_p) in app_data.cfg_p.iter().enumerate() {
           let i_acc = match i { // menu accelerators from 1–0 then A–Z starting from home row for easier presses
            0    ..= m_e	=> format!("&{} ",&menu_acc[i     ..i+1]),
-            _          	=> format!("  "),
+            _          	=> "  ".to_string(),
           };
           let cfg_name = &cfg_p.file_name().unwrap_or_else(||OsStr::new("")).to_string_lossy().to_string(); //kanata.kbd
           // let menu_text	= i_acc + cfg_name; // &1 kanata.kbd
@@ -672,7 +671,7 @@ pub mod system_tray_ui {
           } else   	{nwg::MenuItem::builder().parent(&d.tray_1cfg_m).text(&menu_text)            	.build(&mut menu_item)?;
           }
           if i == 0	{ // add icons if exists, hashed by config path (for active config, others will create on load)
-            if let Some(ico_p) = get_icon_p(&layer0_icon_s, &app_data.layer0_name, &cfg_icon_s, &cfg_p, &app_data.icon_match_layer_name) {
+            if let Some(ico_p) = get_icon_p(layer0_icon_s, &app_data.layer0_name, cfg_icon_s, cfg_p, &app_data.icon_match_layer_name) {
               let mut cfg_layer_pkey = PathBuf::new(); // path key
               cfg_layer_pkey.push(cfg_p.clone());
               cfg_layer_pkey.push(PRE_LAYER.to_owned() + &app_data.layer0_name);
@@ -697,7 +696,7 @@ pub mod system_tray_ui {
               *icon_act_key = Some(cfg_p.clone());
             }
             // Set tray menu config item icons, ignores layers since these are per config
-            if let Ok(icn) = d.set_menu_item_cfg_icon(&mut menu_item, &cfg_icon_s, &cfg_p) {
+            if let Ok(icn) = d.set_menu_item_cfg_icon(&mut menu_item, cfg_icon_s, cfg_p) {
               d.tray_1cfg_m.set_bitmap(Some(&icn.tray)); // show currently active config's icon in the combo menu
               let _ = img_dyn.insert(cfg_p.clone(),Some(icn));
             } else {
@@ -723,35 +722,30 @@ pub mod system_tray_ui {
       let handle_events = move |evt, _evt_data, handle| {
         if let Some(evt_ui) = evt_ui.upgrade() {
           match evt {
-            E::OnNotice                                       	=> if &handle == &evt_ui.layer_notice {SystemTray::reload_layer_icon(&evt_ui);}
-            E::OnWindowClose                                  	=> if &handle == &evt_ui.window {SystemTray::exit  (&evt_ui);}
-            E::OnMousePress(MousePressEvent::MousePressLeftUp)	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
-            E::OnContextMenu/*🖰›*/                            	=> if &handle == &evt_ui.tray {SystemTray::show_menu(&evt_ui);}
+            E::OnNotice                                       	=> if handle == evt_ui.layer_notice {SystemTray::reload_layer_icon(&evt_ui);}
+            E::OnWindowClose                                  	=> if handle == evt_ui.window {SystemTray::exit  (&evt_ui);}
+            E::OnMousePress(MousePressEvent::MousePressLeftUp)	=> if handle == evt_ui.tray {SystemTray::show_menu(&evt_ui);}
+            E::OnContextMenu/*🖰›*/                            	=> if handle == evt_ui.tray {SystemTray::show_menu(&evt_ui);}
             E::OnTimerStop/*🕐*/ => {SystemTray::hide_tooltip(&evt_ui);}
             E::OnMenuHover =>
-              if        &handle == &evt_ui.tray_1cfg_m	{SystemTray::check_active(&evt_ui);}
+              if        handle == evt_ui.tray_1cfg_m	{SystemTray::check_active(&evt_ui);}
             E::OnMenuItemSelected =>
-              if        &handle == &evt_ui.tray_2reload	{let _ = SystemTray::reload_cfg(&evt_ui,None);SystemTray::update_tray_icon_cfg_group(&evt_ui,true);
-              } else if &handle == &evt_ui.tray_3exit  	{SystemTray::exit  (&evt_ui);
-              } else {
-                match handle {
-                  ControlHandle::MenuItem(parent, id) => {
-                    {let tray_item_dyn	= &evt_ui.tray_item_dyn.borrow(); //
-                    for (i, h_cfg) in tray_item_dyn.iter().enumerate() {
-                      if &handle == h_cfg { //info!("CONFIG handle i={:?} {:?}",i,&handle);
-                        // if SystemTray::reload_cfg(&evt_ui,Some(i)).is_ok() {
-                          for (j, h_cfg_j) in tray_item_dyn.iter().enumerate() {
-                            if h_cfg_j.checked() {h_cfg_j.set_checked(false);} } // uncheck others
-                          h_cfg.set_checked(true); // check self
-                        let _ = SystemTray::reload_cfg(&evt_ui,Some(i)); // depends on future fix in kanata that would revert index on failed config changes
-                        // } else {info!("OnMenuItemSelected: checkmarks not changed since config wasn't reloaded");}
-                      }
-                    }
-                    }
-                    SystemTray::update_tray_icon_cfg_group(&evt_ui,true);
-                  },
-                  _	=> {},
+              if        handle == evt_ui.tray_2reload	{let _ = SystemTray::reload_cfg(&evt_ui,None);SystemTray::update_tray_icon_cfg_group(&evt_ui,true);
+              } else if handle == evt_ui.tray_3exit  	{SystemTray::exit  (&evt_ui);
+              } else if let ControlHandle::MenuItem(parent, id) = handle {
+                {let tray_item_dyn	= &evt_ui.tray_item_dyn.borrow(); //
+                for (i, h_cfg) in tray_item_dyn.iter().enumerate() {
+                  if &handle == h_cfg { //info!("CONFIG handle i={:?} {:?}",i,&handle);
+                    // if SystemTray::reload_cfg(&evt_ui,Some(i)).is_ok() {
+                      for (j, h_cfg_j) in tray_item_dyn.iter().enumerate() {
+                        if h_cfg_j.checked() {h_cfg_j.set_checked(false);} } // uncheck others
+                      h_cfg.set_checked(true); // check self
+                    let _ = SystemTray::reload_cfg(&evt_ui,Some(i)); // depends on future fix in kanata that would revert index on failed config changes
+                    // } else {info!("OnMenuItemSelected: checkmarks not changed since config wasn't reloaded");}
+                  }
                 }
+                }
+                SystemTray::update_tray_icon_cfg_group(&evt_ui,true);
               },
             _ => {}
           }
@@ -773,7 +767,7 @@ pub mod system_tray_ui {
       // let ev_handler = nwg::full_bind_event_handler(&ui.win_tt.handle, handle_events);
       // ui.handler_def.borrow_mut().push(ev_handler);
 
-      return Ok(ui);
+      Ok(ui)
     }
   }
 
@@ -848,5 +842,4 @@ pub use std::io::{stdout, IsTerminal};
 
 use once_cell::sync::Lazy;
 pub static IS_TERM:Lazy<bool> = Lazy::new(||stdout().is_terminal());
-pub static IS_CONSOLE:Lazy<bool> = Lazy::new(|| unsafe{
-  if AttachConsole(ATTACH_PARENT_PROCESS)== 0i32 {return false} else {return true}});
+pub static IS_CONSOLE:Lazy<bool> = Lazy::new(|| unsafe{AttachConsole(ATTACH_PARENT_PROCESS) != 0i32});
