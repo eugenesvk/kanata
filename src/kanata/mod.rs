@@ -226,6 +226,8 @@ impl Kanata {
         let kbd_out = match KbdOut::new(
             #[cfg(target_os = "linux")]
             &args.symlink_path,
+            #[cfg(target_os = "linux")]
+            cfg.options.linux_use_trackpoint_property,
             #[cfg(feature = "passthru_ahk")]
             _tx,
         ) {
@@ -356,6 +358,8 @@ impl Kanata {
         let kbd_out = match KbdOut::new(
             #[cfg(target_os = "linux")]
             &None,
+            #[cfg(target_os = "linux")]
+            cfg.options.linux_use_trackpoint_property,
             #[cfg(feature = "passthru_ahk")]
             None,
         ) {

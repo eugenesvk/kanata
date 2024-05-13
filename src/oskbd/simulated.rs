@@ -356,7 +356,7 @@ impl KbdOut {
         Self::new_actual()
     }
     #[cfg(target_os = "linux")]
-    pub fn new(_: &Option<String>) -> Result<Self, io::Error> {
+    pub fn new(_s: &Option<String>, _tp: bool) -> Result<Self, io::Error> {
         Self::new_actual()
     }
     #[cfg(target_os = "linux")]
