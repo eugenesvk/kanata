@@ -833,7 +833,7 @@ use winapi::um::winuser::{WS_OVERLAPPEDWINDOW,WS_CLIPCHILDREN,WS_VISIBLE,WS_DISA
   WS_EX_ACCEPTFILES,WS_EX_APPWINDOW,WS_EX_CLIENTEDGE,WS_EX_COMPOSITED,WS_EX_CONTEXTHELP,WS_EX_CONTROLPARENT,WS_EX_DLGMODALFRAME,WS_EX_LAYERED,WS_EX_LAYOUTRTL,WS_EX_LEFT,WS_EX_LEFTSCROLLBAR,WS_EX_LTRREADING,WS_EX_MDICHILD,WS_EX_NOACTIVATE,WS_EX_NOINHERITLAYOUT,WS_EX_NOPARENTNOTIFY,WS_EX_NOREDIRECTIONBITMAP,WS_EX_OVERLAPPEDWINDOW,WS_EX_PALETTEWINDOW,WS_EX_RIGHT,WS_EX_RIGHTSCROLLBAR,WS_EX_RTLREADING,WS_EX_STATICEDGE,WS_EX_TOOLWINDOW,WS_EX_TOPMOST,WS_EX_TRANSPARENT,WS_EX_WINDOWEDGE,
   SetLayeredWindowAttributes,GetLayeredWindowAttributes,
 };
-pub const ws_click_thru:u32 = 0
+pub const ws_click_thru:u32 = WS_EX_LEFT
  | WS_EX_LAYERED    	//0x80000	significantly improve performance and visual effects for a window that has a complex shape, animates its shape, or wishes to use alpha blending effects. The system automatically composes and repaints layered windows and the windows of underlying applications. As a result, layered windows are rendered smoothly, without the flickering typical of complex window regions. In addition, layered windows can be partially translucent, that is, alpha-blended.
  //                 	After the CreateWindowEx call, the layered window will not become visible until the SetLayeredWindowAttributes or UpdateLayeredWindow function has been called for this window
  //                 	layered window with WS_EX_TRANSPARENT: shape of the layered window will be ignored and the mouse events will be passed to other windows underneath the layered window
