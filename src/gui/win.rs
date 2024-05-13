@@ -592,7 +592,7 @@ impl SystemTray {
     trace!("Active Kanata Layer win size = {w}⋅{h}");
     nwg::Window::builder().title("Active Kanata Layer")	// text in the window title bar
       .size((w,h)).position((0,0)).center(false)       	// default win size/position in the desktop, center (overrides position) windows in the current monitor based on its size
-      .topmost(false)                                  	// If the window should always be on top of other system window
+      .topmost(true)                                   	// If the window should always be on top of other system window
       .maximized(false).minimized(false)               	// max/minimize at creation
       .flags(f_style).ex_flags(f_ex)                   	// WindowFlags | win32 window extended flags (straight from winapi unlike flags)
       .icon(None)                                      	// window icon
