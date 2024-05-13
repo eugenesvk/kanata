@@ -163,12 +163,6 @@ pub const ICN_SZ_TT    	:[u32;2] = [36,36]; // size for tooltip icons
 pub const ICN_SZ_MENU_I	:[i32;2] = [24,24]; // for the builder, which needs i32
 pub const ICN_SZ_TT_I  	:[i32;2] = [36,36]; // for the builder, which needs i32
 
-macro_rules! dpi { //todo: change on monitor changes
-  () => {{
-    static DPI: OnceLock<i32> = OnceLock::new();
-    *DPI.get_or_init(|| unsafe{nwg::dpi()})
-  }};
-}
 macro_rules! win_ver {
   () => {{
     static WIN_VER: OnceLock<(u32,u32,u32)> = OnceLock::new();
@@ -312,7 +306,7 @@ impl SystemTray {
       x = out_rect.left;
       y = out_rect.top;
     }
-    let dpi = dpi!();
+    let dpi = unsafe{nwg::dpi()};
     let xx = (x as f64 / (dpi as f64 / 96_f64)).round() as i32; // adjust dpi for layout
     let yy = (y as f64 / (dpi as f64 / 96_f64)).round() as i32;
     trace!("🖰 @{x}⋅{y} (upd{}) @ dpi={dpi} → {xx}⋅{yy} {win_ver:?} flags={flags}",ret != 0);
@@ -402,7 +396,7 @@ impl SystemTray {
       &&  app_data.tt_size_pre.1	== k.tooltip_size.1) {
       app_data    .tt_size_pre  	=  k.tooltip_size; clear = true;
       app_data    .tooltip_size 	=  k.tooltip_size; trace!("tooltip_size duration changed, updating");
-      let dpi = dpi!();
+      let dpi = unsafe{nwg::dpi()};
       let icn_sz_tt_i = (k.tooltip_size.0,k.tooltip_size.1);
       let w = (icn_sz_tt_i.0 as f64 / (dpi as f64 / 96_f64)).round() as u32;
       let h = (icn_sz_tt_i.1 as f64 / (dpi as f64 / 96_f64)).round() as u32;
@@ -587,7 +581,7 @@ impl SystemTray {
      ;
 
     let mut window:nwg::Window = Default::default();
-    let dpi = dpi!();
+    let dpi = unsafe{nwg::dpi()};
     let app_data = self.app_data.borrow();
     let icn_sz_tt_i = (app_data.tooltip_size.0,app_data.tooltip_size.1);
     let w = (icn_sz_tt_i.0 as f64 / (dpi as f64 / 96_f64)).round() as i32;
