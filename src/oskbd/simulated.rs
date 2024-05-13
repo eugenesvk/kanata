@@ -63,6 +63,12 @@ pub struct LogFmt {
     unicode: String,
     code: String,
 }
+impl Default for LogFmt {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LogFmt {
     pub fn new() -> Self {
         Self {
