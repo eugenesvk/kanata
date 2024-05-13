@@ -205,7 +205,7 @@ macro_rules! mouse_scale_factor { // screen size = dpi⋅size⋅scaleF
       let key_name = to_wide_str(key_name_s);
       use std::os::windows::prelude::*;
       let mut mouse_scale   	: DWORD = 0;
-      let     mouse_scale_p 	: *mut c_void = unsafe{std::mem::transmute(&mut mouse_scale)};
+      let     mouse_scale_p 	: *mut c_void = &mut mouse_scale as *mut u32 as *mut std::ffi::c_void;
       let mut mouse_scale_sz	: DWORD = std::mem::size_of::<DWORD>() as DWORD;
       let res = unsafe{RegGetValueW(key_root,key_path.as_ptr(),key_name.as_ptr(),RRF_RT_REG_DWORD //restrict type to REG_DWORD
         ,std::ptr::null_mut() //pdwType
