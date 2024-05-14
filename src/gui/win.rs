@@ -872,7 +872,7 @@ pub fn update_app_data(k:&MutexGuard<Kanata>) -> Result<SystemTrayData> {
   let layer0_id  	=  k.layout.b().current_layer();
   let layer0_name	= &k.layer_info[layer0_id].name;
   let layer0_icon	= &k.layer_info[layer0_id].icon;
-  if log_enabled!(Info) {info!("  ✓ update_app_data layer0_name={:?} layer0_icon={:?} TTshow={:?} blank={:?} for 🕐={:?} size={:?}",layer0_name.clone(),layer0_icon.clone(),k.tooltip_layer_changes,k.tooltip_show_blank,k.tooltip_duration,k.tooltip_size);}
+  if log_enabled!(Info) {info!("  ✓ update_app_data layer0_name={:?} layer0_icon={:?} TTshow={:?} blank={:?} for 🕐={:?} bsae={} size={:?}",layer0_name.clone(),layer0_icon.clone(),k.tooltip_layer_changes,k.tooltip_show_blank,k.tooltip_duration,k.tooltip_no_base,k.tooltip_size);}
   Ok(SystemTrayData {
     tooltip              	: path_cur.display().to_string(),
     cfg_p                	: paths.clone(),
