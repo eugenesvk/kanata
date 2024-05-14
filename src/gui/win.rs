@@ -316,7 +316,8 @@ impl SystemTray {
 
     self.win_tt_ifr.set_bitmap(img);
     self.win_tt.set_position(xx,yy);
-    self.win_tt.set_visible(true);self.win_tt_timer.start();
+    self.win_tt.set_visible(true);
+    if app_data.tooltip_duration != 0 {self.win_tt_timer.start()};
   }
   /// Hide our tooltip-like notification window
   fn hide_tooltip(&self) {self.win_tt.set_visible(false)}
@@ -392,7 +393,7 @@ impl SystemTray {
     if app_data  .tt_duration_pre 	!= k.tooltip_duration {
       app_data   .tooltip_duration	 = k.tooltip_duration; clear = true;
       app_data   .tt_duration_pre 	 = k.tooltip_duration; trace!("timer duration changed, updating");
-      self.win_tt_timer.set_interval(     Duration::from_millis((k.tooltip_duration                          ).into()));
+      self.win_tt_timer.set_interval(     Duration::from_millis((k.tooltip_duration.saturating_add(1        )).into()));
       self.win_tt_timer.set_lifetime(Some(Duration::from_millis((k.tooltip_duration.saturating_add(TTTIMER_L)).into())));
     }
     if ! (app_data.tt_size_pre.0	== k.tooltip_size.0
@@ -674,7 +675,7 @@ pub mod system_tray_ui {
         .                     	  build(       &mut d.tray_3exit  	)?                          	;
       if app_data.tooltip_layer_changes {
       d.win_tt = d.build_win_tt().expect("Tooltip window");
-      nwg::AnimationTimer::builder().parent(&d.window).interval(Duration::from_millis(app_data.tooltip_duration.into()))
+      nwg::AnimationTimer::builder().parent(&d.window).interval(Duration::from_millis(app_data.tooltip_duration.saturating_add(1).into()))
         .lifetime(Some(Duration::from_millis((app_data.tooltip_duration+TTTIMER_L).into()))).max_tick(None).active(false)
         .build(&mut d.win_tt_timer)?;
 
