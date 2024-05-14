@@ -769,7 +769,7 @@ pub mod system_tray_ui {
       };
 
       let evt_ui = Rc::downgrade(&ui.inner); // Events
-      let handle_events = move |evt, _evt_data, handle| {
+      let handle_events = move |evt, d:nwg::EventData, handle| {
         if let Some(evt_ui) = evt_ui.upgrade() {
           match evt {
             E::OnNotice                                       	=> if handle == evt_ui.layer_notice {SystemTray::reload_layer_icon(&evt_ui);}
@@ -777,6 +777,13 @@ pub mod system_tray_ui {
             E::OnMousePress(MousePressEvent::MousePressLeftUp)	=> if handle == evt_ui.tray {SystemTray::show_menu(&evt_ui);}
             E::OnContextMenu/*🖰›*/                            	=> if handle == evt_ui.tray {SystemTray::show_menu(&evt_ui);}
             E::OnTimerStop/*🕐*/ => {SystemTray::hide_tooltip(&evt_ui);}
+            E::OnKeyPress => {info!("OnKeyPress vk={}",d.on_key());}
+            E::OnKeyRelease => {info!("OnKeyRelease vk={}",d.on_key());}
+            E::OnSysKeyPress => {info!("OnSysKeyPress vk={}",d.on_key());}
+            E::OnSysKeyRelease => {info!("OnSysKeyRelease vk={}",d.on_key());}
+            E::OnKeyEnter => {info!("OnKeyEnter");}
+            E::OnKeyEsc => {info!("OnKeyEsc");}
+            E::OnChar => {info!("OnKey char={}",d.on_char());}
             E::OnMenuHover =>
               if        handle == evt_ui.tray_1cfg_m	{SystemTray::check_active(&evt_ui);}
             E::OnMenuItemSelected =>
@@ -802,6 +809,20 @@ pub mod system_tray_ui {
         }
       };
       ui.handler_def.borrow_mut().push(nwg::full_bind_event_handler(&ui.window.handle, handle_events));
+
+      // // You can share controls handle with events handlers
+      // let new_tray_handle = &ui.tray_menu.handle;
+      // let hwnd = new_tray_handle.hwnd().expect("Cannot bind control with an handle of type sss");
+      // let evt_ui = Rc::downgrade(&ui.inner); // Events
+      // let handle_events = move |evt, d:nwg::EventData, handle:nwg::ControlHandle| {
+      //   if let Some(evt_ui) = evt_ui.upgrade() {
+      //     match evt {
+      //       E::OnKeyPress => {info!("OnKeyPress vk={}",d.on_key());}
+      //       E::OnKeyRelease => {info!("OnKeyRelease vk={}",d.on_key());}
+      //       _ => {}
+      //     }}};
+      // let handler = nwg::bind_event_handler(&ui.tray_menu.handle, &ui.window.handle, handle_events);
+      // ui.handler_def.borrow_mut().push(handler);
 
       // let evt_ui = Rc::downgrade(&ui.inner); // Events
       // let handle_events = move |evt, _evt_data, handle| {
