@@ -52,6 +52,7 @@ impl  PathExt for PathBuf {fn add_ext(&mut self, ext_o:impl AsRef<std::path::Pat
   pub layer0_icon          	:Option<String>,
   pub icon_match_layer_name	:bool,
   pub tooltip_layer_changes	:bool,
+  pub tooltip_no_base      	:bool,
   pub tooltip_show_blank   	:bool,
   pub tooltip_duration     	:u16,
   pub tooltip_size         	:(u16,u16),
@@ -72,8 +73,10 @@ impl  PathExt for PathBuf {fn add_ext(&mut self, ext_o:impl AsRef<std::path::Pat
   pub handlers_dyn 	: RefCell<Vec<nwg::EventHandler>>,
   ///              	Store dynamically created icons to not load them from a file every time (icon format for tray icon, bitmap for tray MenuItem icons and tooltips)
   pub img_dyn      	: RefCell<HashMap<PathBuf,Option<Icn>>>,
-  ///              	Store 'img_dyn' hashmap key for the currently active icon ('cfg_path:layer_name' format)
+  ///              	Store 'img_dyn' hashmap key for the currently active icon ('cfg_path:🗍layer_name' format)
   pub icon_act_key 	: RefCell<Option<PathBuf>>,
+  ///              	Store 'img_dyn' hashmap key for the first deflayer to allow skipping it in tooltips
+  pub icon_0_key   	: RefCell<Option<PathBuf>>,
   ///              	Store embedded-in-the-binary resources like icons not to load them from a file
   pub embed        	: nwg::EmbedResource,
   pub icon         	: nwg::Icon,
@@ -519,12 +522,16 @@ impl SystemTray {
     path_cur_cc:PathBuf, clear:bool) {
     let mut img_dyn     	= self.img_dyn     .borrow_mut(); // update the tray icons
     let mut icon_act_key	= self.icon_act_key.borrow_mut(); // update the tray icon active path
-    if clear { *img_dyn = Default::default(); *icon_act_key = Default::default(); debug!("reloading active config, clearing img_dyn/_active cache");}
+    let mut icon_0_key  	= self.icon_0_key  .borrow_mut(); // update the tray tooltip layer0 path
+    if clear { *img_dyn = Default::default(); *icon_act_key = Default::default(); *icon_0_key = Some(cfg_layer_pkey.clone()); debug!("reloading active config, clearing img_dyn/_active cache");}
     let app_data = self.app_data.borrow();
+    let skip_tt = app_data.tooltip_no_base && icon_0_key.as_ref().filter(|p| **p == cfg_layer_pkey).is_some();
+    if icon_0_key.is_none() {warn!("internal bug: icon_0_key should never be empty?")}
     if let Some(icn_opt) = img_dyn.get(&cfg_layer_pkey) { // 1a config+layer path has already been checked
       if let Some(icn) = icn_opt {
-        self.tray.set_icon(     &icn.icon);*icon_act_key = Some(cfg_layer_pkey);
-        self.show_tooltip (Some(&icn.tooltip));trace!("✓💬 1a");
+        self.tray.set_icon(     &icn.icon);*icon_act_key = Some(cfg_layer_pkey.clone());
+        if ! skip_tt {
+        self.show_tooltip (Some(&icn.tooltip));info!("✓💬 1a {cfg_layer_pkey:?}");}
       } else {info!("no icon found, using default for config+layer = {}",cfg_layer_pkey_s);
         self.tray.set_icon(     &self.icon) ;*icon_act_key = Some(cfg_layer_pkey);
         self.show_tooltip (None);trace!("✗💬 1a");
@@ -533,7 +540,8 @@ impl SystemTray {
       if let Some(ico_p) = get_icon_p(layer_icon, layer_name, "", &path_cur_cc, &app_data.icon_match_layer_name) {
         if let Ok(icn) = self.get_icon_from_file(ico_p) {info!("✓ Using an icon from this config+layer: {}",cfg_layer_pkey_s);
           self.tray.set_icon(&icn.icon);
-          self.show_tooltip(Some(&icn.tooltip));trace!("✓💬 1b");
+          if ! skip_tt {
+          self.show_tooltip(Some(&icn.tooltip));trace!("✓💬 1b");}
           let _ = img_dyn .insert(cfg_layer_pkey.clone(),Some(icn)); *icon_act_key = Some(cfg_layer_pkey);
         } else {warn!("✗ Invalid icon file \"{layer_icon}\" from this config+layer: {}",cfg_layer_pkey_s);
           let _ = img_dyn .insert(cfg_layer_pkey.clone(),None     );
@@ -558,7 +566,8 @@ impl SystemTray {
         if let Ok(icn) = self.get_icon_from_file(ico_p) {
           info!("✓ Using an icon from this config: {}",path_cur_cc.display().to_string());
           self.tray.set_icon(     &icn.icon);
-          self.show_tooltip (Some(&icn.tooltip));trace!("✓💬 2b");
+          if ! skip_tt {
+          self.show_tooltip (Some(&icn.tooltip));trace!("✓💬 2b");}
           let _ = img_dyn.insert(cfg_layer_pkey.clone(),Some(icn)); *icon_act_key = Some(cfg_layer_pkey);
         } else {warn!("✗ Invalid icon file \"{cfg_icon_p}\" from this config: {}",cfg_layer_pkey.display().to_string());
           let _ = img_dyn.insert(cfg_layer_pkey.clone(),None     ); *icon_act_key = Some(cfg_layer_pkey);
@@ -703,6 +712,7 @@ pub mod system_tray_ui {
       {let mut tray_item_dyn	= d.tray_item_dyn.borrow_mut(); //extra scope to drop borrowed mut
        let mut img_dyn      	= d.img_dyn      .borrow_mut();
        let mut icon_act_key 	= d.icon_act_key .borrow_mut();
+       let mut icon_0_key   	= d.icon_0_key   .borrow_mut();
       const menu_acc :&str = "1234567890ASDFGQWERTZXCVBYUIOPHJKLNM";
       const m_e  : usize = menu_acc.len() - 1;
       let layer0_icon_s = &app_data.layer0_icon.clone().unwrap_or("".to_string());
@@ -726,6 +736,7 @@ pub mod system_tray_ui {
               cfg_layer_pkey.push(cfg_p.clone());
               cfg_layer_pkey.push(PRE_LAYER.to_owned() + &app_data.layer0_name);
               let cfg_layer_pkey_s = cfg_layer_pkey.display().to_string();
+              *icon_0_key = Some(cfg_layer_pkey.clone());
               if let Ok(icn) = d.get_icon_from_file(&ico_p) {debug!("✓ main 0 config: using icon for {}",cfg_layer_pkey_s);
                 main_tray_icon_l = icn.tray.copy_as_icon(); main_tray_icon_is = true;
                 let _ = img_dyn.insert(cfg_layer_pkey,Some(icn));
@@ -871,6 +882,7 @@ pub fn update_app_data(k:&MutexGuard<Kanata>) -> Result<SystemTrayData> {
     icon_match_layer_name	: k.icon_match_layer_name,
     tooltip_layer_changes	: k.tooltip_layer_changes,
     tooltip_show_blank   	: k.tooltip_show_blank,
+    tooltip_no_base      	: k.tooltip_no_base,
     tooltip_duration     	: k.tooltip_duration,
     tooltip_size         	: k.tooltip_size,
     tt_duration_pre      	: k.tooltip_duration,
