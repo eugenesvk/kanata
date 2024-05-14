@@ -1,5 +1,7 @@
 #![allow(non_snake_case,non_upper_case_globals,non_camel_case_types,unused_imports,unused_mut,unused_variables,dead_code,unused_assignments,unused_macros)]
 // based on https://github.com/lynxnb/wsl-usb-manager/blob/master/src/gui/nwg_ext.rs
+use native_windows_gui::ControlHandle;
+use core::ffi::c_int;
 use std::{ptr,mem::size_of};
 use native_windows_gui as nwg;
 
@@ -228,10 +230,52 @@ impl MenuItemEx for nwg::MenuItem {
 }
 
 
-pub trait WindowEx {
-  fn set_flag(&self, flag:u32);
+pub unsafe fn logical_to_physical(x: i32, y: i32) -> (i32, i32) {
+  use muldiv::MulDiv;
+  use winapi::um::winuser::USER_DEFAULT_SCREEN_DPI;
+  let dpi = nwg::dpi();
+  let x = x.mul_div_round(dpi, USER_DEFAULT_SCREEN_DPI).unwrap_or(x);
+  let y = y.mul_div_round(dpi, USER_DEFAULT_SCREEN_DPI).unwrap_or(y);
+  (x, y)
 }
+use log::*;
+pub unsafe fn set_win_pos_top(win_id:HWND, x:i32, y:i32, to_top:bool) {
+  use winapi::um::winuser::SetWindowPos;
+  use winapi::um::winuser::{SWP_NOZORDER,SWP_NOSIZE,SWP_NOACTIVATE,SWP_NOOWNERZORDER,HWND_TOPMOST,HWND_NOTOPMOST};
+  let (x, y) = logical_to_physical(x, y);
+  let (w, h) = (0,0);
+  let uFlags = SWP_NOSIZE|SWP_NOACTIVATE|SWP_NOOWNERZORDER;
+  let win_id_after = if to_top{HWND_TOPMOST}else{HWND_NOTOPMOST};
+  SetWindowPos(win_id, win_id_after
+    ,x as c_int, y as c_int, w, h
+    ,uFlags);
+}
+
+pub trait WindowEx {
+  fn set_flag   (&self, flag:u32);
+  fn set_pos_top(&self, x:i32,y:i32, to_top:bool);
+}
+pub fn check_hwnd(win_id: &ControlHandle, not_bound: &str, bad_handle: &str) -> HWND {
+  use winapi::um::winuser::IsWindow;
+  if win_id.blank() { panic!("{}", not_bound); }
+  match win_id.hwnd() {
+    Some(hwnd) => match unsafe { IsWindow(hwnd) } {
+      0 => { panic!("The window ID is no longer valid. This usually means the control was freed by the OS"); },
+      _ => hwnd
+    },
+    None => { panic!("{}", bad_handle); }
+ }
+}
+
+const NOT_BOUND : &'static str = "Window is not yet bound to a winapi object";
+const BAD_HANDLE: &'static str = "INTERNAL ERROR: Window handle is not HWND!";
 impl WindowEx for nwg::Window {
+  /// Set the position of the window as the topmost (briefly) without having to activate the main windwow
+  fn set_pos_top(&self, x:i32, y:i32, to_top:bool) {
+    let win_id = check_hwnd(&self.handle, NOT_BOUND, BAD_HANDLE);
+    unsafe {set_win_pos_top(win_id, x,y, to_top)}
+  }
+
   /// Set window style flags
   fn set_flag(&self, flag:u32) {
     // use nwg::win32::window_helper as wh;

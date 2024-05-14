@@ -315,7 +315,8 @@ impl SystemTray {
     trace!("🖰 @{mx}⋅{my} ↔{mouse_ptr_w}↕{mouse_ptr_h} (upd={}) {x}⋅{y} @ dpi={dpi} → {xx}⋅{yy} {win_ver:?} flags={flags} ex←{}→{}↑{}↓{}",ret != 0,excluderect.left,excluderect.right,excluderect.top,excluderect.bottom);
 
     self.win_tt_ifr.set_bitmap(img);
-    self.win_tt.set_position(xx,yy);
+    // self.win_tt.set_position(xx,yy);
+    self.win_tt.set_pos_top(xx,yy,true);
     self.win_tt.set_visible(true);self.win_tt_timer.start();
   }
   /// Hide our tooltip-like notification window
@@ -592,7 +593,7 @@ impl SystemTray {
     trace!("Active Kanata Layer win size = {w}⋅{h}");
     nwg::Window::builder().title("Active Kanata Layer")	// text in the window title bar
       .size((w,h)).position((0,0)).center(false)       	// default win size/position in the desktop, center (overrides position) windows in the current monitor based on its size
-      .topmost(true)                                   	// If the window should always be on top of other system window
+      .topmost(false)                                   	// If the window should always be on top of other system window
       .maximized(false).minimized(false)               	// max/minimize at creation
       .flags(f_style).ex_flags(f_ex)                   	// WindowFlags | win32 window extended flags (straight from winapi unlike flags)
       .icon(None)                                      	// window icon
