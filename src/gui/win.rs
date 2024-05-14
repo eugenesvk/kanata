@@ -341,6 +341,7 @@ impl SystemTray {
           if let Ok(icn) = self.set_menu_item_cfg_icon(menu_item_cfg, &cfg_icon_s, cfg_p) {
             if is_active {self.tray_1cfg_m.set_bitmap(Some(&icn.tray));} // update currently active config's icon in the combo menu
                   debug!("✓set icon {cfg_p:?}");
+              info!("1✓✓✓ adding {cfg_p:?}");
             let _ = img_dyn.insert(cfg_p.clone(),Some(icn));
           } else {bail!("✗couldn't get a valid icon")}
         } else   {bail!("✗icon not configured")}
@@ -360,6 +361,7 @@ impl SystemTray {
         if let Err(e) = self.update_tray_icon_cfg(h_cfg_i,cfg_p,true){
           debug!("{e:?} {cfg_p:?}");
           let mut img_dyn	= self.img_dyn.borrow_mut();
+              info!("2✓✓✓ adding {cfg_p:?}");
           img_dyn.insert(cfg_p.clone(),None);
           self.tray_1cfg_m.set_bitmap(None); // can't update menu, so remove combo menu icon
         };
@@ -378,6 +380,7 @@ impl SystemTray {
         if let Err(e) = self.update_tray_icon_cfg(h_cfg_i,cfg_p,is_active){
           debug!("{e:?} {cfg_p:?}");
           let mut img_dyn	= self.img_dyn.borrow_mut();
+              info!("3✓✓✓ adding {cfg_p:?}");
           img_dyn.insert(cfg_p.clone(),None);
           if is_active {self.tray_1cfg_m.set_bitmap(None);} // can't update active menu, so remove combo menu icon
         };
@@ -568,13 +571,16 @@ impl SystemTray {
           self.tray.set_icon(     &icn.icon);
           if ! skip_tt {
           self.show_tooltip (Some(&icn.tooltip));trace!("✓💬 2b");}
+              info!("4.1✓✓✓ adding {cfg_layer_pkey:?}");
           let _ = img_dyn.insert(cfg_layer_pkey.clone(),Some(icn)); *icon_act_key = Some(cfg_layer_pkey);
         } else {warn!("✗ Invalid icon file \"{cfg_icon_p}\" from this config: {}",cfg_layer_pkey.display().to_string());
+              info!("4.2✓✓✓ adding {cfg_layer_pkey:?}");
           let _ = img_dyn.insert(cfg_layer_pkey.clone(),None     ); *icon_act_key = Some(cfg_layer_pkey);
           self.tray.set_icon(     &self.icon);
           self.show_tooltip (None);trace!("✗💬 2b");
         }
       } else {warn!("✗ Invalid icon path \"{cfg_icon_p}\" from this config: {}",cfg_layer_pkey.display().to_string());
+              info!("4.3✓✓✓ adding {cfg_layer_pkey:?}");
           let _ = img_dyn.insert(cfg_layer_pkey.clone(),None     ); *icon_act_key = Some(cfg_layer_pkey);
           self.tray.set_icon(     &self.icon);
           self.show_tooltip (None);trace!("✗💬 2b_");
@@ -739,9 +745,11 @@ pub mod system_tray_ui {
               *icon_0_key = Some(cfg_layer_pkey.clone());
               if let Ok(icn) = d.get_icon_from_file(&ico_p) {debug!("✓ main 0 config: using icon for {}",cfg_layer_pkey_s);
                 main_tray_icon_l = icn.tray.copy_as_icon(); main_tray_icon_is = true;
+              info!("5.1✓✓✓ adding {cfg_layer_pkey:?}\nico_p={ico_p:?}");
                 let _ = img_dyn.insert(cfg_layer_pkey,Some(icn));
                 // d.tray.set_icon(&icn.icon);
               } else {info!("✗ main 0 icon ✓ icon path, will be using DEFAULT icon for {:?}",cfg_p);
+              info!("5.2✓✓✓ adding {cfg_layer_pkey:?}");
                 let _ = img_dyn.insert(cfg_layer_pkey,None);}
             } else   {debug!("✗ main 0 config: using DEFAULT icon for {:?}",cfg_p);
               let mut cfg_icon_bmp_tray	= Default::default();
@@ -753,14 +761,17 @@ pub mod system_tray_ui {
                 .size(Some(ICN_SZ_TT  .into())).build(&mut cfg_icon_bmp_tt)?;
               nwg::Icon::builder  ().source_embed(Some(&d.embed)).source_embed_str(Some("iconMain")).strict(true)
                 .build(&mut cfg_icon_bmp_icon)?;
+              info!("5.3✓✓✓ adding {cfg_p:?}");
               let _ = img_dyn.insert(cfg_p.clone(),Some(Icn{tray:cfg_icon_bmp_tray, tooltip:cfg_icon_bmp_tt, icon:cfg_icon_bmp_icon}));
               *icon_act_key = Some(cfg_p.clone());
             }
             // Set tray menu config item icons, ignores layers since these are per config
             if let Ok(icn) = d.set_menu_item_cfg_icon(&mut menu_item, cfg_icon_s, cfg_p) {
               d.tray_1cfg_m.set_bitmap(Some(&icn.tray)); // show currently active config's icon in the combo menu
+              info!("6✓✓✓ adding {cfg_p:?}");
               let _ = img_dyn.insert(cfg_p.clone(),Some(icn));
             } else {
+              info!("7✓✓✓ adding {cfg_p:?}");
               let _ = img_dyn.insert(cfg_p.clone(),None);
             }
           }
