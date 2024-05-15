@@ -493,7 +493,11 @@ impl SystemTray {
     Ok(())
   }
   /// Update tray icon data on layer change
-  fn reload_layer_icon(&self) {
+  fn reload_layer_icon(&self) {let _ = self.reload_cfg_or_layer_icon(false);}
+  /// Update tray icon data on config reload
+  fn reload_cfg_icon  (&self) {let _ = self.reload_cfg_or_layer_icon(true );}
+  /// Update tray icon data on layer change (and config reload)
+  fn reload_cfg_or_layer_icon(&self,is_cfg:bool) -> Result<()> {
     if let Some(cfg) = CFG.get() {if let Some(k) = cfg.try_lock() {
       let paths      	= &k.cfg_paths;
       let idx_cfg    	=  k.cur_cfg_idx;
@@ -514,13 +518,14 @@ impl SystemTray {
         let layer_icon_s	= cfg_icon.clone().unwrap_or("✗".to_string());
         debug!("✓ layer changed to ‘{}’ with icon ‘{}’ @ ‘{}’ tray_icon ‘{}’",layer_name,layer_icon_s,cfg_name,cfg_icon_s);
       }
-
-      let clear = self.update_tooltip_data(&k); // if tooltip dimensions changed, reset icons to get them resized
+      let clear = self.update_tooltip_data(&k); // check for changes before they're overwritten ↓, and if tooltip dimensions changed, reset icons later to get them resized
+      if is_cfg {*self.app_data.borrow_mut() = update_app_data(&k)?;} // update data on config reload
       self.tray.set_tip(&cfg_layer_pkey_s); // update tooltip to point to the newer config
       self.update_tray_icon(cfg_layer_pkey,&cfg_layer_pkey_s,layer_name,layer_icon,path_cur_cc,clear)
     } else {debug!("✗ kanata config is locked, can't get current layer (likely the gui changed the layer and is still holding the lock, it will update the icon)");}
     } else {warn!("✗ Layer indicator NOT changed, no CFG");
     };
+    Ok(())
   }
   /// Update tray icon data given various config/layer info
   /// cfg_layer_pkey: "path␤🗍: layer_name" unique icon id
@@ -801,7 +806,8 @@ pub mod system_tray_ui {
       let handle_events = move |evt, _evt_data, handle| {
         if let Some(evt_ui) = evt_ui.upgrade() {
           match evt {
-            E::OnNotice                                       	=> if handle == evt_ui.layer_notice {SystemTray::reload_layer_icon(&evt_ui);}
+            E::OnNotice                          	=> if handle == evt_ui.layer_notice	{SystemTray::reload_layer_icon(&evt_ui);
+              } else                             	   if handle == evt_ui.cfg_notice  	{SystemTray::reload_cfg_icon(&evt_ui);}
             E::OnWindowClose                                  	=> if handle == evt_ui.window {SystemTray::exit  (&evt_ui);}
             E::OnMousePress(MousePressEvent::MousePressLeftUp)	=> if handle == evt_ui.tray {SystemTray::show_menu(&evt_ui);}
             E::OnContextMenu/*🖰›*/                            	=> if handle == evt_ui.tray {SystemTray::show_menu(&evt_ui);}
