@@ -135,8 +135,10 @@ fn main_impl() -> Result<()> {
 
     nwg::init().context("Failed to init Native Windows GUI")?;
     let ui = build_tray(&cfg_arc)?;
-    let gui_tx = ui.layer_notice.sender(); // allows notifying GUI on layer changes
-    if GUI_TX.set(gui_tx).is_err() {warn!("Someone else set our ‘GUI_TX’");};
+    let gui_tx    	= ui.layer_notice.sender(); // allows notifying GUI on layer changes
+    let gui_cfg_tx	= ui.cfg_notice  .sender(); // allows notifying GUI on config reloads
+    if GUI_TX    .set(gui_tx    ).is_err() {warn!("Someone else set our ‘GUI_TX’"    );};
+    if GUI_CFG_TX.set(gui_cfg_tx).is_err() {warn!("Someone else set our ‘GUI_CFG_TX’");};
     Kanata::start_processing_loop(cfg_arc.clone(), rx, ntx, args.nodelay);
     if let (Some(server), Some(nrx)) = (server, nrx) {#[allow(clippy::unit_arg)]Kanata::start_notification_loop(nrx, server.connections);}
     Kanata::event_loop(cfg_arc, tx, ui)?; // 1 only listens for keyboard events
