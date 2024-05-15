@@ -652,7 +652,7 @@ pub mod system_tray_ui {
   use std::rc::Rc;
   use std::cell::RefCell;
   use std::ops::{Deref, DerefMut};
-  use native_windows_gui::{self as nwg, MousePressEvent};
+  use native_windows_gui::{self as nwg, MousePressEvent as Em};
   use windows_sys::Win32::UI::{Controls::LVSCW_AUTOSIZE_USEHEADER,
     Shell::{SIID_SHIELD,SIID_DELETE,SIID_DOCASSOC}}; //SIID_HELP SIID_FIND
 
@@ -797,9 +797,9 @@ pub mod system_tray_ui {
           match evt {
             E::OnNotice                          	=> if handle == evt_ui.layer_notice	{SystemTray::reload_layer_icon(&evt_ui);
               } else                             	   if handle == evt_ui.cfg_notice  	{SystemTray::reload_cfg_icon(&evt_ui);}
-            E::OnWindowClose                                  	=> if handle == evt_ui.window {SystemTray::exit  (&evt_ui);}
-            E::OnMousePress(MousePressEvent::MousePressLeftUp)	=> if handle == evt_ui.tray {SystemTray::show_menu(&evt_ui);}
-            E::OnContextMenu/*🖰›*/                            	=> if handle == evt_ui.tray {SystemTray::show_menu(&evt_ui);}
+            E::OnWindowClose                     	=> if handle == evt_ui.window      	{SystemTray::exit  (&evt_ui);}
+            E::OnMousePress(Em::MousePressLeftUp)	=> if handle == evt_ui.tray        	{SystemTray::show_menu(&evt_ui);}
+            E::OnContextMenu/*🖰›*/               	=> if handle == evt_ui.tray        	{SystemTray::show_menu(&evt_ui);}
             E::OnTimerStop/*🕐*/ => {SystemTray::hide_tooltip(&evt_ui);}
             E::OnMenuHover =>
               if        handle == evt_ui.tray_1cfg_m	{SystemTray::check_active(&evt_ui);}
