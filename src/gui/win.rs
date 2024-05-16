@@ -246,6 +246,7 @@ pub fn get_mouse_ptr_size(dpi_scale:bool) -> (u32,u32) {
   (mouse_scale*width,mouse_scale*height)
 }
 
+thread_local! {static MXY:Cell<(i32,i32)> = Cell::default();} // stores old mouse pointer position to avoid refreshing tooltips if mouse doesn't move
 impl SystemTray {
   /// Read an image from a file, convert it to various formats: tray, tooltip, icon
   fn get_icon_from_file<P>(&self,  ico_p:P) -> Result<Icn>
@@ -277,12 +278,19 @@ impl SystemTray {
     menu_item.set_bitmap(None); bail!("✗couldn't get a valid icon for {:?}",cfg_p)
   }
   /// Move tooltip to the current mouse pointer position
-  fn update_tooltip_pos(&self) -> (i32,i32) {
+  fn update_tooltip_pos(&self) {
     let app_data = self.app_data.borrow();
     // let start = std::time::Instant::now();
-    let (mut x,mut y) = nwg::GlobalCursor::position(); // hotspot, typically top-left
-    let mx = x; let my = y;
-    //todo: compare with old positoin and update only if changes? x,y - old position, check if delta > X and only then update?
+    let mut x = 0; let mut y = 0;
+    let mut is_same = false;
+    MXY.with(|mxy| {
+      (x,y) = nwg::GlobalCursor::position();
+      let (mx,my) = mxy.get(); // info!("got {mx}⋅{my} from MXY {}", mx==x);
+      if   mx==x
+        && my==y {is_same = true; return} //info!("mouse hasn't moved, returning! {mx}⋅{my} {x}⋅{y} is_same={is_same}");
+      mxy.set((x,y));});
+    if is_same {return}; //info!("⏎⏎⏎");
+    // info!("{x}⋅{y} mouse moved! updating tooltip position is_same={is_same}");
     let win_ver = win_ver!();
     let w = app_data.tooltip_size.0 as i32; // image width/height to take it into account when calculating overlaps
     let h = app_data.tooltip_size.1 as i32;
