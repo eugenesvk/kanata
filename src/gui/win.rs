@@ -324,7 +324,6 @@ impl SystemTray {
     // self.win_tt.set_position(xx,yy); // todo: leaks GDI DCs for some reason?
     self.win_tt.set_position_ex(xx,yy);
     // info!(" 🕐{}μs update tooltip_pos",(start.elapsed()).as_micros());
-    (x,y)
   }
 
   /// Spawn a thread with a new 🖰 pointer watcher (that sends a signal back to GUI which in turn moves the tooltip to the new position)
@@ -364,7 +363,7 @@ impl SystemTray {
     self.win_tt_ifr.set_bitmap(img);
     {let mut m_ptr_wh	= self.m_ptr_wh.borrow_mut();
     *m_ptr_wh = get_mouse_ptr_size(false);} // 🖰 pointer size to make sure tooltip doesn't overlap, don't adjust for dpi in internal calculations
-    let (x,y) = self.update_tooltip_pos();
+    self.update_tooltip_pos();
     self.win_tt.set_visible(true);
     if app_data.tooltip_duration != 0 {self.win_tt_timer.start()};
 
