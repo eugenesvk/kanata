@@ -34,7 +34,7 @@ use std::sync::Arc;
 use core::cell::{Cell,RefCell};
 // use nwd::NwgUi;
 use nwg::{NativeUi,ControlHandle};
-use crate::gui::win_nwg_ext::{BitmapEx, MenuItemEx, MenuEx, WindowEx};
+use crate::gui::win_nwg_ext::{BitmapEx, MenuItemEx, MenuEx, WindowEx, dpi};
 use kanata_parser::cfg;
 
 trait PathExt             {fn add_ext(&mut self, ext_o:impl AsRef<std::path::Path>);}
@@ -235,7 +235,8 @@ macro_rules! mouse_scale_factor { // screen size = dpi⋅size⋅scaleF
 }
 pub fn get_mouse_ptr_size(dpi_scale:bool) -> (u32,u32) {
   // 1. get monitor DPI
-  let dpi = if dpi_scale {unsafe{nwg::dpi()}} else {96};
+  // let dpi = if dpi_scale {unsafe{nwg::dpi()}} else {96};
+  let dpi = if dpi_scale {dpi()} else {96};
   // 2. icon size @ dpi
   let curW  	= SM_CXCURSOR;
   let curH  	= SM_CYCURSOR;
@@ -315,11 +316,12 @@ impl SystemTray {
       x = out_rect.left;
       y = out_rect.top;
     }
-    let dpi = unsafe{nwg::dpi()};
+    let dpi = dpi(); //leaks DC: let dpi = unsafe{nwg::dpi()};
     let xx = (x as f64 / (dpi as f64 / 96_f64)).round() as i32; // adjust dpi for layout
     let yy = (y as f64 / (dpi as f64 / 96_f64)).round() as i32; // TODO: somehow still shown a bit too far off from the pointer
     trace!("🖰 @{mx}⋅{my} ↔{mouse_ptr_w}↕{mouse_ptr_h} (upd={}) {x}⋅{y} @ dpi={dpi} → {xx}⋅{yy} {win_ver:?} flags={flags} ex←{}→{}↑{}↓{}",ret != 0,excluderect.left,excluderect.right,excluderect.top,excluderect.bottom);
-    self.win_tt.set_position(xx,yy);
+    // self.win_tt.set_position(xx,yy); // todo: leaks GDI DCs for some reason?
+    self.win_tt.set_position_ex(xx,yy);
     // info!(" 🕐{}μs update tooltip_pos",(start.elapsed()).as_micros());
     (x,y)
   }
@@ -464,7 +466,7 @@ impl SystemTray {
       &&  app_data.tt_size_pre.1	== k.tooltip_size.1) {
       app_data    .tt_size_pre  	=  k.tooltip_size; clear = true;
       app_data    .tooltip_size 	=  k.tooltip_size; trace!("tooltip_size duration changed, updating");
-      let dpi = unsafe{nwg::dpi()};
+      let dpi = dpi(); //leaks DC: let dpi = unsafe{nwg::dpi()};
       let icn_sz_tt_i = (k.tooltip_size.0,k.tooltip_size.1);
       let w = (icn_sz_tt_i.0 as f64 / (dpi as f64 / 96_f64)).round() as u32;
       let h = (icn_sz_tt_i.1 as f64 / (dpi as f64 / 96_f64)).round() as u32;
