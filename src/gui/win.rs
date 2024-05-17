@@ -57,6 +57,8 @@ impl  PathExt for PathBuf {fn add_ext(&mut self, ext_o:impl AsRef<std::path::Pat
   pub tooltip_no_base      	:bool,
   pub tooltip_show_blank   	:bool,
   pub tooltip_duration     	:u16,
+  pub notify_cfg_reload       	:bool,
+  pub notify_cfg_reload_silent	:bool,
   pub tooltip_size         	:(u16,u16),
   pub tt_duration_pre      	:u16,
   pub tt_size_pre          	:(u16,u16),
@@ -583,6 +585,17 @@ impl SystemTray {
       }
       let clear = self.update_tooltip_data(&k); // check for changes before they're overwritten ↓, and if tooltip dimensions changed, reset icons later to get them resized
       if is_cfg {*self.app_data.borrow_mut() = update_app_data(&k)?;} // update data on config reload
+      if is_cfg {let app_data = self.app_data.borrow();
+        if app_data.notify_cfg_reload {
+          use nwg::TrayNotificationFlags as f_tray;
+          let cfg_name = &path_cur.file_name().unwrap_or_else(||OsStr::new("")).to_string_lossy().to_string();
+          let msg_title   = "🔄 \"".to_owned() + cfg_name + "\" re-loaded";
+          let msg_content = &path_cur_s;
+          let mut flags   = f_tray::empty() | f_tray::USER_ICON | f_tray::LARGE_ICON;
+          if app_data.notify_cfg_reload_silent {flags |= f_tray::SILENT;}
+          self.tray.show(&msg_content, Some(&msg_title), Some(flags), Some(&self.icon));
+        }
+      }
       self.tray.set_tip(&cfg_layer_pkey_s); // update tooltip to point to the newer config
       self.update_tray_icon(cfg_layer_pkey,&cfg_layer_pkey_s,layer_name,layer_icon,path_cur_cc,clear)
     } else {debug!("✗ kanata config is locked, can't get current layer (likely the gui changed the layer and is still holding the lock, it will update the icon)");}
@@ -968,6 +981,8 @@ pub fn update_app_data(k:&MutexGuard<Kanata>) -> Result<SystemTrayData> {
     tooltip_show_blank   	: k.tooltip_show_blank,
     tooltip_no_base      	: k.tooltip_no_base,
     tooltip_duration     	: k.tooltip_duration,
+    notify_cfg_reload       	: k.notify_cfg_reload,
+    notify_cfg_reload_silent	: k.notify_cfg_reload_silent,
     tooltip_size         	: k.tooltip_size,
     tt_duration_pre      	: k.tooltip_duration,
     tt_size_pre          	: k.tooltip_size,
