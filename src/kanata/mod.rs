@@ -154,6 +154,10 @@ pub struct Kanata {
     #[cfg(all(target_os = "windows", feature = "gui"))]
     pub tooltip_duration: u16, // Show tooltip on layer changes for this duration (ms)
     #[cfg(all(target_os = "windows", feature = "gui"))]
+    pub notify_cfg_reload: bool, // Show system notification message on config reload
+    #[cfg(all(target_os = "windows", feature = "gui"))]
+    pub notify_cfg_reload_silent: bool, // Disable sound for the system notification message on config reload
+    #[cfg(all(target_os = "windows", feature = "gui"))]
     pub tooltip_size: (u16,u16), // Set tooltip size (width, height)
 }
 
@@ -339,6 +343,10 @@ impl Kanata {
             #[cfg(all(target_os = "windows", feature = "gui"))]
             tooltip_duration: cfg.options.tooltip_duration,
             #[cfg(all(target_os = "windows", feature = "gui"))]
+            notify_cfg_reload: cfg.options.notify_cfg_reload,
+            #[cfg(all(target_os = "windows", feature = "gui"))]
+            notify_cfg_reload_silent: cfg.options.notify_cfg_reload_silent,
+            #[cfg(all(target_os = "windows", feature = "gui"))]
             tooltip_size: cfg.options.tooltip_size,
         })
     }
@@ -458,6 +466,10 @@ impl Kanata {
             #[cfg(all(target_os = "windows", feature = "gui"))]
             tooltip_duration: cfg.options.tooltip_duration,
             #[cfg(all(target_os = "windows", feature = "gui"))]
+            notify_cfg_reload: cfg.options.notify_cfg_reload,
+            #[cfg(all(target_os = "windows", feature = "gui"))]
+            notify_cfg_reload_silent: cfg.options.notify_cfg_reload_silent,
+            #[cfg(all(target_os = "windows", feature = "gui"))]
             tooltip_size: cfg.options.tooltip_size,
         })
     }
@@ -505,13 +517,15 @@ impl Kanata {
         }
         self.switch_max_key_timing = cfg.switch_max_key_timing;
         #[cfg(all(target_os = "windows", feature = "gui"))] {
-        self.tray_icon = cfg.options.tray_icon;
-        self.icon_match_layer_name = cfg.options.icon_match_layer_name;
-        self.tooltip_layer_changes = cfg.options.tooltip_layer_changes;
-        self.tooltip_no_base       = cfg.options.tooltip_no_base;
-        self.tooltip_show_blank    = cfg.options.tooltip_show_blank;
-        self.tooltip_duration      = cfg.options.tooltip_duration;
-        self.tooltip_size          = cfg.options.tooltip_size;
+        self.tray_icon               	= cfg.options.tray_icon;
+        self.icon_match_layer_name   	= cfg.options.icon_match_layer_name;
+        self.tooltip_layer_changes   	= cfg.options.tooltip_layer_changes;
+        self.tooltip_no_base         	= cfg.options.tooltip_no_base;
+        self.tooltip_show_blank      	= cfg.options.tooltip_show_blank;
+        self.tooltip_duration        	= cfg.options.tooltip_duration;
+        self.notify_cfg_reload       	= cfg.options.notify_cfg_reload;
+        self.notify_cfg_reload_silent	= cfg.options.notify_cfg_reload_silent;
+        self.tooltip_size            	= cfg.options.tooltip_size;
         }
 
         *MAPPED_KEYS.lock() = cfg.mapped_keys;
