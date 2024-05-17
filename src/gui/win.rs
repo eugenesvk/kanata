@@ -47,21 +47,21 @@ impl  PathExt for PathBuf {fn add_ext(&mut self, ext_o:impl AsRef<std::path::Pat
 }
 
 #[derive(Default,Debug,Clone)] pub struct SystemTrayData {
-  pub tooltip              	:String,
-  pub cfg_p                	:Vec<PathBuf>,
-  pub cfg_icon             	:Option<String>,
-  pub layer0_name          	:String,
-  pub layer0_icon          	:Option<String>,
-  pub icon_match_layer_name	:bool,
-  pub tooltip_layer_changes	:bool,
-  pub tooltip_no_base      	:bool,
-  pub tooltip_show_blank   	:bool,
-  pub tooltip_duration     	:u16,
+  pub tooltip                 	:String,
+  pub cfg_p                   	:Vec<PathBuf>,
+  pub cfg_icon                	:Option<String>,
+  pub layer0_name             	:String,
+  pub layer0_icon             	:Option<String>,
+  pub icon_match_layer_name   	:bool,
+  pub tooltip_layer_changes   	:bool,
+  pub tooltip_no_base         	:bool,
+  pub tooltip_show_blank      	:bool,
+  pub tooltip_duration        	:u16,
   pub notify_cfg_reload       	:bool,
   pub notify_cfg_reload_silent	:bool,
-  pub tooltip_size         	:(u16,u16),
-  pub tt_duration_pre      	:u16,
-  pub tt_size_pre          	:(u16,u16),
+  pub tooltip_size            	:(u16,u16),
+  pub tt_duration_pre         	:u16,
+  pub tt_size_pre             	:(u16,u16),
 }
 #[derive(Default)] pub struct Icn {
   pub tray   	: nwg::Bitmap, // uses an image of different size to fit the menu items
