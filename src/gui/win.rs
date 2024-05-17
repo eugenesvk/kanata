@@ -598,7 +598,7 @@ impl SystemTray {
       }
       self.tray.set_tip(&cfg_layer_pkey_s); // update tooltip to point to the newer config
       self.update_tray_icon(cfg_layer_pkey,&cfg_layer_pkey_s,layer_name,layer_icon,path_cur_cc,clear)
-    } else {debug!("✗ kanata config is locked, can't get current layer (likely the gui changed the layer and is still holding the lock, it will update the icon)");}
+    } else {debug!("kanata config is locked, can't get current layer: 1. ✓ gui changed the layer and is still holding the lock (not an issue, it will update the icon) or 2. ✗ kanata tried to load an invalid config");}
     } else {warn!("✗ Layer indicator NOT changed, no CFG");
     };
     Ok(())
