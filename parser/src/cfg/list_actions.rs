@@ -21,9 +21,13 @@ pub const UNICODE: &str = "unicode";
 pub const SYM: &str = "🔣";
 pub const ONE_SHOT: &str = "one-shot";
 pub const ONE_SHOT_PRESS: &str = "one-shot-press";
+pub const ONE_SHOT_PRESS_A: &str = "one-shot↓";
 pub const ONE_SHOT_RELEASE: &str = "one-shot-release";
+pub const ONE_SHOT_RELEASE_A: &str = "one-shot↑";
 pub const ONE_SHOT_PRESS_PCANCEL: &str = "one-shot-press-pcancel";
+pub const ONE_SHOT_PRESS_PCANCEL_A: &str = "one-shot↓🗙";
 pub const ONE_SHOT_RELEASE_PCANCEL: &str = "one-shot-release-pcancel";
+pub const ONE_SHOT_RELEASE_PCANCEL_A: &str = "one-shot↑🗙";
 pub const TAP_DANCE: &str = "tap-dance";
 pub const TAP_DANCE_EAGER: &str = "tap-dance-eager";
 pub const CHORD: &str = "chord";
@@ -88,10 +92,10 @@ pub fn is_list_action(ac: &str) -> bool {
         UNICODE,
         SYM,
         ONE_SHOT,
-        ONE_SHOT_PRESS,
-        ONE_SHOT_RELEASE,
-        ONE_SHOT_PRESS_PCANCEL,
-        ONE_SHOT_RELEASE_PCANCEL,
+        ONE_SHOT_PRESS, ONE_SHOT_PRESS_A,
+        ONE_SHOT_RELEASE, ONE_SHOT_RELEASE_A,
+        ONE_SHOT_PRESS_PCANCEL, ONE_SHOT_PRESS_PCANCEL_A,
+        ONE_SHOT_RELEASE_PCANCEL, ONE_SHOT_RELEASE_PCANCEL_A,
         TAP_DANCE,
         TAP_DANCE_EAGER,
         CHORD,

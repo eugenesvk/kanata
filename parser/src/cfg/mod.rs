@@ -1584,14 +1584,13 @@ fn parse_action_list(ac: &[SExpr], s: &ParserState) -> Result<&'static KanataAct
         MACRO_REPEAT => parse_macro(&ac[1..], s, RepeatMacro::Yes),
         MACRO_RELEASE_CANCEL => parse_macro_release_cancel(&ac[1..], s, RepeatMacro::No),
         MACRO_REPEAT_RELEASE_CANCEL => parse_macro_release_cancel(&ac[1..], s, RepeatMacro::Yes),
-        UNICODE => parse_unicode(&ac[1..], s),
-        SYM => parse_unicode(&ac[1..], s),
-        ONE_SHOT | ONE_SHOT_PRESS => parse_one_shot(&ac[1..], s, OneShotEndConfig::EndOnFirstPress),
-        ONE_SHOT_RELEASE => parse_one_shot(&ac[1..], s, OneShotEndConfig::EndOnFirstRelease),
-        ONE_SHOT_PRESS_PCANCEL => {
+        UNICODE | SYM => parse_unicode(&ac[1..], s),
+        ONE_SHOT | ONE_SHOT_PRESS | ONE_SHOT_PRESS_A => parse_one_shot(&ac[1..], s, OneShotEndConfig::EndOnFirstPress),
+        ONE_SHOT_RELEASE | ONE_SHOT_RELEASE_A => parse_one_shot(&ac[1..], s, OneShotEndConfig::EndOnFirstRelease),
+        ONE_SHOT_PRESS_PCANCEL | ONE_SHOT_PRESS_PCANCEL_A => {
             parse_one_shot(&ac[1..], s, OneShotEndConfig::EndOnFirstPressOrRepress)
         }
-        ONE_SHOT_RELEASE_PCANCEL => {
+        ONE_SHOT_RELEASE_PCANCEL | ONE_SHOT_RELEASE_PCANCEL_A => {
             parse_one_shot(&ac[1..], s, OneShotEndConfig::EndOnFirstReleaseOrRepress)
         }
         TAP_DANCE => parse_tap_dance(&ac[1..], s, TapDanceConfig::Lazy),
