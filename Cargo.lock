@@ -522,7 +522,6 @@ dependencies = [
  "signal-hook",
  "simplelog",
  "time",
- "win_dbg_logger 0.1.0",
  "winapi",
  "windows-sys 0.52.0",
 ]
@@ -1191,7 +1190,7 @@ dependencies = [
  "signal-hook",
  "simplelog",
  "widestring",
- "win_dbg_logger 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "win_dbg_logger",
  "winapi",
 ]
 
@@ -1520,17 +1519,6 @@ name = "widestring"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7219d36b6eac893fa81e84ebe06485e7dcbb616177469b142df14f1f4deb1311"
-
-[[package]]
-name = "win_dbg_logger"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
- "log",
- "regex",
- "simplelog",
- "winapi",
-]
 
 [[package]]
 name = "win_dbg_logger"
