@@ -63,7 +63,8 @@ pub static WINDBG_L5    	:WinDbgLogger = WinDbgLogger {level:LevelFilter::Trace	
 pub static WINDBG_L0    	:WinDbgLogger = WinDbgLogger {level:LevelFilter::Off  	, _priv:()};
 
 #[cfg(all(target_os="windows",feature="gui"))]
-pub fn windbg_simple_combo(log_lvl:LevelFilter) -> Box<dyn simplelog::SharedLogger> {
+pub fn windbg_simple_combo(log_lvl:LevelFilter, noti_lvl:LevelFilter) -> Box<dyn simplelog::SharedLogger> {
+  set_noti_lvl(noti_lvl);
   match log_lvl {
     LevelFilter::Error	=> Box::new(WINDBG_L1),
     LevelFilter::Warn 	=> Box::new(WINDBG_L2),
@@ -95,6 +96,11 @@ pub fn set_thread_state(is: bool) -> &'static bool { // accessor function to avo
   static CELL: OnceLock<bool> = OnceLock::new();
   CELL.get_or_init(|| is)
 }
+pub fn get_noti_lvl() -> &'static LevelFilter {set_noti_lvl(LevelFilter::Off)}
+pub fn set_noti_lvl(lvl:LevelFilter) -> &'static LevelFilter { // accessor function to avoid get_or_init on every call (lazycell allows doing that without an extra function)
+  static CELL: OnceLock<LevelFilter> = OnceLock::new();
+  CELL.get_or_init(|| lvl)
+}
 
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -120,14 +126,19 @@ impl log::Log for WinDbgLogger {
     let thread_id = if *is_thread_state()	{format!("{}¦", unsafe { GetCurrentThreadId() })
     } else                               	{"".to_string()};
     if self.enabled(record.metadata()) {
-      let s = format!(
-        "{}{}{}:{} {}",
-        thread_id,
-        iconify(record.level()),
-        clean_name(record.file()),
-        record.line().unwrap_or(0),
-        record.args()
+      let s = format!("{}{}{}:{} {}",
+        thread_id,iconify(record.level()),clean_name(record.file()),
+        record.line().unwrap_or(0), record.args()
       );
+      #[cfg(all(target_os="windows",feature="gui"))] {use crate::gui::win::*;
+        let title = format!("{}{}:{}",
+          thread_id,clean_name(record.file()),
+          record.line().unwrap_or(0));
+        let msg = format!("{}",record.args());
+        if record.level() <= *get_noti_lvl() {
+          show_err_msg_nofail(title,msg); // log gets intialized before gui, so some errors might have no target to log to, ignore it
+        }
+      }
       output_debug_string(&s);
     }
   }
