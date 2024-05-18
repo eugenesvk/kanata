@@ -1039,7 +1039,8 @@ pub fn build_tray(cfg: &Arc<Mutex<Kanata>>) -> Result<system_tray_ui::SystemTray
   let app_data	= update_app_data(&k)?;
   drop(k); // release manually if needed in buid_ui
   let app	= SystemTray {app_data:RefCell::new(app_data), ..Default::default()};
-  SystemTray::build_ui(app).context("Failed to build UI")
+  // SystemTray::build_ui(app).context("Failed to build UI") // hides the original error
+  Ok(SystemTray::build_ui(app)?)
 }
 
 pub use log::*;
