@@ -81,7 +81,7 @@ impl InputEvent {
     } else {
       #[cfg(not(feature = "win_llhook_read_scancodes"))]{pInfo.vkCode}
       #[cfg(    feature = "win_llhook_read_scancodes" )]{
-        let extended = if pInfo.flags & 0x1 == 0x1 {0xE000} else {0};
+        let _extended = if pInfo.flags & 0x1 == 0x1 {0xE000} else {0};
         crate::oskbd::u16_to_osc(pInfo.scanCode as u16).map(Into::into).unwrap_or(pInfo.vkCode)
     }
   };

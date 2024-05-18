@@ -593,7 +593,7 @@ impl SystemTray {
           let msg_content = &path_cur_s;
           let mut flags   = f_tray::empty() | f_tray::USER_ICON | f_tray::LARGE_ICON;
           if app_data.notify_cfg_reload_silent {flags |= f_tray::SILENT;}
-          self.tray.show(&msg_content, Some(&msg_title), Some(flags), Some(&self.icon));
+          self.tray.show(msg_content, Some(&msg_title), Some(flags), Some(&self.icon));
         }
       }
       self.tray.set_tip(&cfg_layer_pkey_s); // update tooltip to point to the newer config
