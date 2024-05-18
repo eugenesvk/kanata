@@ -6,6 +6,7 @@ pub use win::*;
 // pub use win32::*;
 // pub use win32::base_helper::to_utf16;
 pub mod win_nwg_ext;
+pub mod win_dbg_logger;
 pub use win_dbg_logger as log_win;
 pub use win_dbg_logger::WINDBG_LOGGER;
 pub use win_nwg_ext::*;

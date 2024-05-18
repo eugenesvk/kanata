@@ -23,7 +23,7 @@ fn append_file_name(path: impl AsRef<Path>, appendix: impl AsRef<OsStr>) -> Path
     }
     result
 }
-use win_dbg_logger::output_debug_string;
+use crate::gui::log_win::output_debug_string;
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum LogFmtT {
     InKeyUp,
