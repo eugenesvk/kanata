@@ -59,6 +59,7 @@ impl  PathExt for PathBuf {fn add_ext(&mut self, ext_o:impl AsRef<std::path::Pat
   pub tooltip_duration        	:u16,
   pub notify_cfg_reload       	:bool,
   pub notify_cfg_reload_silent	:bool,
+  pub notify_error            	:bool,
   pub tooltip_size            	:(u16,u16),
   pub tt_duration_pre         	:u16,
   pub tt_size_pre             	:(u16,u16),
@@ -576,6 +577,8 @@ impl SystemTray {
   }
   /// Show OS notification message with an error coming from WinDbgLogger
   fn notify_error(&self) {
+    let app_data = self.app_data.borrow();
+    if ! app_data.notify_error {return};
     use nwg::TrayNotificationFlags as f_tray;
     let mut msg_title  	= "".to_string();
     let mut msg_content	= "".to_string();
@@ -587,7 +590,8 @@ impl SystemTray {
         Err(TryRecvError::Disconnected)	=> {msg_title += "internal"; msg_content += "channel to receive errors is Disconnected";}
       }
     } else {msg_title += "internal"; msg_content += "SystemTray is supposed to have a valid 'err_recv' field value"}
-    let flags   = f_tray::empty() | f_tray::ERROR_ICON;
+    flags |= f_tray::ERROR_ICON;
+    if app_data.notify_cfg_reload_silent {flags |= f_tray::SILENT;}
     let msg_title   = strip_ansi_escapes::strip_str(&msg_title);
     let msg_content = strip_ansi_escapes::strip_str(&msg_content);
     self.tray.show(&msg_content, Some(&msg_title), Some(flags), Some(&self.icon));
@@ -1012,21 +1016,22 @@ pub fn update_app_data(k:&MutexGuard<Kanata>) -> Result<SystemTrayData> {
   let layer0_icon	= &k.layer_info[layer0_id].icon;
   if log_enabled!(Info) {info!("  ✓ update_app_data layer0_name={:?} layer0_icon={:?} TTshow={:?} blank={:?} for 🕐={:?} base={} size={:?}",layer0_name.clone(),layer0_icon.clone(),k.tooltip_layer_changes,k.tooltip_show_blank,k.tooltip_duration,k.tooltip_no_base,k.tooltip_size);}
   Ok(SystemTrayData {
-    tooltip              	: path_cur.display().to_string(),
-    cfg_p                	: paths.clone(),
-    cfg_icon             	: k.tray_icon.clone(),
-    layer0_name          	: layer0_name.clone(),
-    layer0_icon          	: layer0_icon.clone(),
-    icon_match_layer_name	: k.icon_match_layer_name,
-    tooltip_layer_changes	: k.tooltip_layer_changes,
-    tooltip_show_blank   	: k.tooltip_show_blank,
-    tooltip_no_base      	: k.tooltip_no_base,
-    tooltip_duration     	: k.tooltip_duration,
+    tooltip                 	: path_cur.display().to_string(),
+    cfg_p                   	: paths.clone(),
+    cfg_icon                	: k.tray_icon.clone(),
+    layer0_name             	: layer0_name.clone(),
+    layer0_icon             	: layer0_icon.clone(),
+    icon_match_layer_name   	: k.icon_match_layer_name,
+    tooltip_layer_changes   	: k.tooltip_layer_changes,
+    tooltip_show_blank      	: k.tooltip_show_blank,
+    tooltip_no_base         	: k.tooltip_no_base,
+    tooltip_duration        	: k.tooltip_duration,
     notify_cfg_reload       	: k.notify_cfg_reload,
     notify_cfg_reload_silent	: k.notify_cfg_reload_silent,
-    tooltip_size         	: k.tooltip_size,
-    tt_duration_pre      	: k.tooltip_duration,
-    tt_size_pre          	: k.tooltip_size,
+    notify_error            	: k.notify_error,
+    tooltip_size            	: k.tooltip_size,
+    tt_duration_pre         	: k.tooltip_duration,
+    tt_size_pre             	: k.tooltip_size,
   })
 }
 pub fn build_tray(cfg: &Arc<Mutex<Kanata>>) -> Result<system_tray_ui::SystemTrayUi> {

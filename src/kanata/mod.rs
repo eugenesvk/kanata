@@ -158,6 +158,8 @@ pub struct Kanata {
     #[cfg(all(target_os = "windows", feature = "gui"))]
     pub notify_cfg_reload_silent: bool, // Disable sound for the system notification message on config reload
     #[cfg(all(target_os = "windows", feature = "gui"))]
+    pub notify_error: bool, // Show OS notification on errors
+    #[cfg(all(target_os = "windows", feature = "gui"))]
     pub tooltip_size: (u16,u16), // Set tooltip size (width, height)
 }
 
@@ -347,6 +349,8 @@ impl Kanata {
             #[cfg(all(target_os = "windows", feature = "gui"))]
             notify_cfg_reload_silent: cfg.options.notify_cfg_reload_silent,
             #[cfg(all(target_os = "windows", feature = "gui"))]
+            notify_error: cfg.options.notify_error,
+            #[cfg(all(target_os = "windows", feature = "gui"))]
             tooltip_size: cfg.options.tooltip_size,
         })
     }
@@ -470,6 +474,8 @@ impl Kanata {
             #[cfg(all(target_os = "windows", feature = "gui"))]
             notify_cfg_reload_silent: cfg.options.notify_cfg_reload_silent,
             #[cfg(all(target_os = "windows", feature = "gui"))]
+            notify_error: cfg.options.notify_error,
+            #[cfg(all(target_os = "windows", feature = "gui"))]
             tooltip_size: cfg.options.tooltip_size,
         })
     }
@@ -525,6 +531,7 @@ impl Kanata {
         self.tooltip_duration        	= cfg.options.tooltip_duration;
         self.notify_cfg_reload       	= cfg.options.notify_cfg_reload;
         self.notify_cfg_reload_silent	= cfg.options.notify_cfg_reload_silent;
+        self.notify_error            	= cfg.options.notify_error;
         self.tooltip_size            	= cfg.options.tooltip_size;
         }
 
