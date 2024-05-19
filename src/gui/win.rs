@@ -94,6 +94,7 @@ impl  PathExt for PathBuf {fn add_ext(&mut self, ext_o:impl AsRef<std::path::Pat
   pub layer_notice 	: nwg::Notice,
   pub cfg_notice   	: nwg::Notice,
   pub err_notice   	: nwg::Notice,
+  pub exit_notice  	: nwg::Notice,
   pub tt_notice    	: nwg::Notice,
   ///              	Receiver of error message content sent from other threads (e.g., from key event thread via WinDbgLogger that will also notify our GUI (but not pass data) after sending data to this receiver)
   pub err_recv     	:         Option<Receiver<(String,String)>>,
@@ -118,7 +119,7 @@ const IMG_EXT  	:[&str;7]	= ["ico","jpg","jpeg","png","bmp","dds","tiff"];
 const PRE_LAYER	: &str   	= "\n🗍: "; // : invalid path marker, so should be safe to use as a separator
 const TTTIMER_L	:  u16   	= 9; // lifetime delta to duration for a tooltip timer (so that it's only shown once)
 
-use crate::gui::{CFG, GUI_TX, GUI_CFG_TX, GUI_ERR_TX, GUI_ERR_MSG_TX};
+use crate::gui::{CFG, GUI_TX, GUI_CFG_TX, GUI_ERR_TX, GUI_EXIT_TX, GUI_ERR_MSG_TX};
 use winapi::shared::windef::{HWND, HMENU};
 
 pub fn send_gui_notice() {
@@ -132,6 +133,10 @@ pub fn send_gui_cfg_notice() {
 pub fn send_gui_err_notice() {
   if let Some(gui_tx) = GUI_ERR_TX.get() {gui_tx.notice();
   } else {error!("no GUI_ERR_TX to notify GUI thread of errors");}
+}
+pub fn send_gui_exit_notice() {
+  if let Some(gui_tx) = GUI_EXIT_TX.get() {gui_tx.notice();
+  } else {error!("no GUI_EXIT_TX to ask GUI thread to exit");}
 }
 pub fn show_err_msg_nofail(title:String,msg:String) {
   // log gets intialized before gui, so some errors might have no target to log to, ignore it
@@ -811,6 +816,8 @@ pub mod system_tray_ui {
         .                     	  build(       &mut d.err_notice	)?	;
       nwg::Notice             	::builder().parent(&d.window)
         .                     	  build(       &mut d.tt_notice   	)?                          	;
+      nwg::Notice             	::builder().parent(&d.window)
+        .                     	  build(       &mut d.exit_notice	)?	;
       // nwg::TrayNotification	::builder().parent(&d.window)     	.icon(Some(&d.icon))        	.tip(Some(&app_data.tooltip))
       //   .                  	  build(       &mut d.tray        	)?                          	;
       nwg::Menu               	::builder().parent(&d.window)     	.popup(true)/*context menu*/	//
@@ -925,6 +932,7 @@ pub mod system_tray_ui {
             E::OnNotice                          	=> if id == evt_ui.layer_notice	{SystemTray::reload_layer_icon 	(&evt_ui);
               } else                             	   if id == evt_ui.cfg_notice  	{SystemTray::reload_cfg_icon   	(&evt_ui);
               } else                             	   if id == evt_ui.err_notice  	{SystemTray::notify_error      	(&evt_ui);
+              } else                             	   if id == evt_ui.exit_notice 	{SystemTray::exit              	(&evt_ui);
               } else                             	   if id == evt_ui.tt_notice   	{SystemTray::update_tooltip_pos	(&evt_ui);}
             E::OnWindowClose                     	=> if id == evt_ui.window      	{SystemTray::exit              	(&evt_ui);}
             E::OnMousePress(Em::MousePressLeftUp)	=> if id == evt_ui.tray        	{SystemTray::show_menu         	(&evt_ui);}

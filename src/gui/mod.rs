@@ -19,4 +19,5 @@ pub static CFG: OnceLock<Arc<Mutex<Kanata>>> = OnceLock::new();
 pub static GUI_TX: OnceLock<native_windows_gui::NoticeSender> = OnceLock::new();
 pub static GUI_CFG_TX: OnceLock<native_windows_gui::NoticeSender> = OnceLock::new();
 pub static GUI_ERR_TX: OnceLock<native_windows_gui::NoticeSender> = OnceLock::new();
+pub static GUI_EXIT_TX: OnceLock<native_windows_gui::NoticeSender> = OnceLock::new();
 pub static GUI_ERR_MSG_TX: OnceLock<ASender<(String,String)>> = OnceLock::new();
