@@ -919,26 +919,26 @@ pub mod system_tray_ui {
       };
 
       let evt_ui = Rc::downgrade(&ui.inner); // Events
-      let handle_events = move |evt, _evt_data, handle| {
+      let handle_events = move |evt, _evt_data, id| {
         if let Some(evt_ui) = evt_ui.upgrade() {
           match evt {
-            E::OnNotice                          	=> if handle == evt_ui.layer_notice	{SystemTray::reload_layer_icon(&evt_ui);
-              } else                             	   if handle == evt_ui.cfg_notice  	{SystemTray::reload_cfg_icon(&evt_ui);
-              } else                             	   if handle == evt_ui.err_notice  	{SystemTray::notify_error(&evt_ui);
-              } else                             	   if handle == evt_ui.tt_notice   	{SystemTray::update_tooltip_pos(&evt_ui);}
-            E::OnWindowClose                     	=> if handle == evt_ui.window      	{SystemTray::exit  (&evt_ui);}
-            E::OnMousePress(Em::MousePressLeftUp)	=> if handle == evt_ui.tray        	{SystemTray::show_menu(&evt_ui);}
-            E::OnContextMenu/*🖰›*/               	=> if handle == evt_ui.tray        	{SystemTray::show_menu(&evt_ui);}
+            E::OnNotice                          	=> if id == evt_ui.layer_notice	{SystemTray::reload_layer_icon 	(&evt_ui);
+              } else                             	   if id == evt_ui.cfg_notice  	{SystemTray::reload_cfg_icon   	(&evt_ui);
+              } else                             	   if id == evt_ui.err_notice  	{SystemTray::notify_error      	(&evt_ui);
+              } else                             	   if id == evt_ui.tt_notice   	{SystemTray::update_tooltip_pos	(&evt_ui);}
+            E::OnWindowClose                     	=> if id == evt_ui.window      	{SystemTray::exit              	(&evt_ui);}
+            E::OnMousePress(Em::MousePressLeftUp)	=> if id == evt_ui.tray        	{SystemTray::show_menu         	(&evt_ui);}
+            E::OnContextMenu/*🖰›*/               	=> if id == evt_ui.tray        	{SystemTray::show_menu         	(&evt_ui);}
             E::OnTimerStop/*🕐*/ => {SystemTray::hide_tooltip(&evt_ui);}
             E::OnMenuHover =>
-              if        handle == evt_ui.tray_1cfg_m	{SystemTray::check_active(&evt_ui);}
+              if        id == evt_ui.tray_1cfg_m	{SystemTray::check_active(&evt_ui);}
             E::OnMenuItemSelected =>
-              if        handle == evt_ui.tray_2reload	{let _ = SystemTray::reload_cfg(&evt_ui,None);SystemTray::update_tray_icon_cfg_group(&evt_ui,true);
-              } else if handle == evt_ui.tray_3exit  	{SystemTray::exit  (&evt_ui);
-              } else if let ControlHandle::MenuItem(parent, id) = handle {
+              if        id == evt_ui.tray_2reload	{let _ = SystemTray::reload_cfg(&evt_ui,None);SystemTray::update_tray_icon_cfg_group(&evt_ui,true);
+              } else if id == evt_ui.tray_3exit  	{SystemTray::exit  (&evt_ui);
+              } else if let ControlHandle::MenuItem(parent, uid) = id {
                 {let tray_item_dyn	= &evt_ui.tray_item_dyn.borrow(); //
                 for (i, h_cfg) in tray_item_dyn.iter().enumerate() {
-                  if &handle == h_cfg { //info!("CONFIG handle i={:?} {:?}",i,&handle);
+                  if &id == h_cfg { //info!("CONFIG id i={:?} {:?}",i,&id);
                     // if SystemTray::reload_cfg(&evt_ui,Some(i)).is_ok() {
                       for (j, h_cfg_j) in tray_item_dyn.iter().enumerate() {
                         if h_cfg_j.checked() {h_cfg_j.set_checked(false);} } // uncheck others
@@ -957,10 +957,10 @@ pub mod system_tray_ui {
       ui.handler_def.borrow_mut().push(nwg::full_bind_event_handler(&ui.window.handle, handle_events));
 
       // let evt_ui = Rc::downgrade(&ui.inner); // Events
-      // let handle_events = move |evt, _evt_data, handle| {
+      // let handle_events = move |evt, _evt_data, id| {
       //   if let Some(evt_ui) = evt_ui.upgrade() {
       //     match evt {
-      //       E::OnWindowClose	=> if &handle == &evt_ui.win_tt {
+      //       E::OnWindowClose	=> if &id == &evt_ui.win_tt {
       //           // nwg::modal_info_message(&evt_ui.win_tt.handle, "Goodbye", &format!("Goodbye {}", name_edit.text()));
       //           nwg::stop_thread_dispatch();},
       //       _ => {}
