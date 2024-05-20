@@ -1,3 +1,6 @@
+#![cfg_attr(debug_assertions,allow(unused_imports,unused_mut,unused_variables,dead_code,unused_assignments,unused_macros))]
+use std::io::Write;
+use std::fs::File;
 use crate::*;
 use anyhow::{anyhow, Context};
 use clap::{error::ErrorKind, CommandFactory};
@@ -7,7 +10,8 @@ use native_windows_gui    as nwg;
 
 /// Parse CLI arguments and initialize logging.
 fn cli_init() -> Result<ValidatedArgs> {
-    let noti_lvl = LevelFilter::Error; // min lvl above which to use Win system notifications
+    let noti_lvl = LevelFilter::Error; // min lvl above which to use Win system notifications (only works if gui exists)
+    let log_file_p = "kanata.log";
     let args = match Args::try_parse() {
       Ok (args )      => args,
       Err(e)          => {
@@ -16,15 +20,24 @@ fn cli_init() -> Result<ValidatedArgs> {
           CombinedLogger::init(vec![TermLogger::new(LevelFilter::Debug,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,),
             log_win::windbg_simple_combo(LevelFilter::Debug,noti_lvl),]).expect("logger can init");
         } else {log_win::init();log::set_max_level(LevelFilter::Debug);} // doesn't panic
+        } else {CombinedLogger::init(vec![
+            log_win::windbg_simple_combo(LevelFilter::Debug,noti_lvl),
+            WriteLogger::new(LevelFilter::Debug,Config::default(),File::create(log_file_p).unwrap()),
+            ]).expect("logger can init");
+        }
+
         match e.kind() {
           ErrorKind::DisplayHelp  => {
             let mut cmd = Args::command();
             let help = cmd.render_help();
             info!("{help}");
             log::set_max_level(LevelFilter::Off);
+            let op = open::that_detached(log_file_p); // detached to be able to open log that's still opened for writing
             return Err(anyhow!(""))
           },
-          _   => return Err(e.into()),
+          _   => {
+            let op = open::that_detached(log_file_p);
+            return Err(e.into())},
         }
       }
     };
@@ -48,10 +61,15 @@ fn cli_init() -> Result<ValidatedArgs> {
         eprintln!("WARNING: could not set log TZ to local: {e:?}");
     };
     log_cfg.set_time_format_custom(format_description!(version=2,"[minute]:[second].[subsecond digits:3]"));
-    if *IS_TERM {
-        CombinedLogger::init(vec![TermLogger::new(log_lvl,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,),
-        log_win::windbg_simple_combo(log_lvl,noti_lvl),]).expect("logger can init");
-    } else {CombinedLogger::init(vec![log_win::windbg_simple_combo(log_lvl,noti_lvl),]).expect("logger can init");}
+    if *IS_TERM {CombinedLogger::init(vec![TermLogger::new(log_lvl,log_cfg.build(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi,),
+        log_win::windbg_simple_combo(log_lvl,noti_lvl),
+        WriteLogger::new(log_lvl,Config::default(),File::create("my_rust_binary_normal_term.log").unwrap()),
+        ]).expect("logger can init");
+    } else {CombinedLogger::init(vec![
+        log_win::windbg_simple_combo(log_lvl,noti_lvl),
+        WriteLogger::new(log_lvl,Config::default(),File::create("my_rust_binary_normal_noterm.log").unwrap()),
+        ]).expect("logger can init");
+    }
     log::info!("kanata v{} starting", env!("CARGO_PKG_VERSION"));
     #[cfg(all(not(feature = "interception_driver"), target_os = "windows"))]
     log::info!("using LLHOOK+SendInput for keyboard IO");
