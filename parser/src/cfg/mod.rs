@@ -1629,8 +1629,14 @@ fn parse_action_list(ac: &[SExpr], s: &ParserState) -> Result<&'static KanataAct
         CMD_OUTPUT_KEYS => parse_cmd(&ac[1..], s, CmdType::OutputKeys),
         PUSH_MESSAGE => parse_push_message(&ac[1..], s),
         FORK => parse_fork(&ac[1..], s),
-        CAPS_WORD | CAPS_WORD_A => parse_caps_word(&ac[1..], s),
-        CAPS_WORD_CUSTOM | CAPS_WORD_CUSTOM_A => parse_caps_word_custom(&ac[1..], s),
+        CAPS_WORD | CAPS_WORD_A => parse_caps_word(&ac[1..], CapsWordRepressBehaviour::Overwrite, s),
+        CAPS_WORD_CUSTOM | CAPS_WORD_CUSTOM_A => {
+            parse_caps_word_custom(&ac[1..], CapsWordRepressBehaviour::Overwrite, s)
+        }
+        CAPS_WORD_TOGGLE => parse_caps_word(&ac[1..], CapsWordRepressBehaviour::Toggle, s),
+        CAPS_WORD_CUSTOM_TOGGLE => {
+            parse_caps_word_custom(&ac[1..], CapsWordRepressBehaviour::Toggle, s)
+        }
         DYNAMIC_MACRO_RECORD_STOP_TRUNCATE => parse_macro_record_stop_truncate(&ac[1..], s),
         SWITCH => parse_switch(&ac[1..], s),
         SEQUENCE => parse_sequence_start(&ac[1..], s),
@@ -3304,7 +3310,11 @@ fn parse_fork(ac_params: &[SExpr], s: &ParserState) -> Result<&'static KanataAct
     }))))
 }
 
-fn parse_caps_word(ac_params: &[SExpr], s: &ParserState) -> Result<&'static KanataAction> {
+fn parse_caps_word(
+    ac_params: &[SExpr],
+    repress_behaviour: CapsWordRepressBehaviour,
+    s: &ParserState,
+) -> Result<&'static KanataAction> {
     const ERR_STR: &str = "caps-word expects 1 param: <timeout>";
     if ac_params.len() != 1 {
         bail!("{ERR_STR}\nFound {} params instead of 1", ac_params.len());
@@ -3312,6 +3322,7 @@ fn parse_caps_word(ac_params: &[SExpr], s: &ParserState) -> Result<&'static Kana
     let timeout = parse_non_zero_u16(&ac_params[0], s, "timeout")?;
     Ok(s.a.sref(Action::Custom(s.a.sref(s.a.sref_slice(
         CustomAction::CapsWord(CapsWordCfg {
+            repress_behaviour,
             keys_to_capitalize: &[
                 KeyCode::A,
                 KeyCode::B,
@@ -3374,7 +3385,11 @@ fn parse_caps_word(ac_params: &[SExpr], s: &ParserState) -> Result<&'static Kana
     )))))
 }
 
-fn parse_caps_word_custom(ac_params: &[SExpr], s: &ParserState) -> Result<&'static KanataAction> {
+fn parse_caps_word_custom(
+    ac_params: &[SExpr],
+    repress_behaviour: CapsWordRepressBehaviour,
+    s: &ParserState,
+) -> Result<&'static KanataAction> {
     const ERR_STR: &str = "caps-word-custom expects 3 param: <timeout> <keys-to-capitalize> <extra-non-terminal-keys>";
     if ac_params.len() != 3 {
         bail!("{ERR_STR}\nFound {} params instead of 3", ac_params.len());
@@ -3383,6 +3398,7 @@ fn parse_caps_word_custom(ac_params: &[SExpr], s: &ParserState) -> Result<&'stat
     Ok(s.a.sref(Action::Custom(
         s.a.sref(
             s.a.sref_slice(CustomAction::CapsWord(CapsWordCfg {
+                repress_behaviour,
                 keys_to_capitalize: s.a.sref_vec(
                     parse_key_list(&ac_params[1], s, "keys-to-capitalize")?
                         .into_iter()
