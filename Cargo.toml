@@ -12,6 +12,7 @@ members = [
 ]
 exclude = [
     "wasm",
+    "key-sort-add",
 ]
 resolver = "2"
 
