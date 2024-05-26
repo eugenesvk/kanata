@@ -169,7 +169,10 @@ fn get_icon_p_impl(lyr_icn:&str, lyr_nm:&str, cfg_icn:&str, p:&Path, match_name:
     if nm == lyr_icn_p                {is_full_p = true}; // user configs can have full paths, so test them even if all parent folders are emtpy
     if nm == cfg_icn_p                {is_full_p = true};
     let    icn_ext                    = &f_ext[i].unwrap_or_else(||OsStr::new("")).to_string_lossy().to_string();
-    let is_icn_ext_valid              = if ! IMG_EXT.iter().any(|&i| {i==icn_ext}) && f_ext[i].is_some() {warn!("user icon extension \"{}\" might be invalid (or just not an extension)!",icn_ext); false} else {trace!("icn_ext={:?}",icn_ext);true};
+    let is_icn_ext_valid              = if f_ext[i].is_some() {
+      if IMG_EXT.iter().any(|&i| {i==icn_ext}) {trace!("icn_ext={:?}",icn_ext);true
+      } else {warn!("user icon extension \"{}\" might be invalid (or just not an extension)!",icn_ext);false}
+    } else {false};
     'p:for   p_par in parents         {trace!("{}p_par={:?}"  ,"  " ,p_par);
             if   p_par == blank_p     &&
               ! is_full_p             {trace!("blank parent for non-user, skip");continue;}
@@ -668,7 +671,12 @@ impl SystemTray {
         self.tray.set_icon(     &self.icon) ;*icon_act_key = Some(cfg_layer_pkey);
         self.show_tooltip (None);trace!("✗💬 1a");
       }
-    } else if let Some(layer_icon) = layer_icon { // 1b cfg+layer path hasn't been checked, but layer has an icon configured, so check it
+    } else if layer_icon.is_some() // 1b cfg+layer path hasn't been checked, but layer has an icon configured...
+      || app_data.gui_opts.icon_match_layer_name { // or configured to check its name, so check it
+      let layer_icon = match layer_icon {
+        Some(layer_icon_inner)	=> {trace!("configured layer icon = {}", layer_icon_inner); layer_icon_inner},
+        None                  	=> {trace!("no configured layer icon, checking its name = {}", layer_name); layer_name},
+      };
       if let Some(ico_p) = get_icon_p(layer_icon, layer_name, "", &path_cur_cc, &app_data.gui_opts.icon_match_layer_name) {
         if let Ok(icn) = self.get_icon_from_file(ico_p) {info!("✓ Using an icon from this config+layer: {}",cfg_layer_pkey_s);
           self.tray.set_icon(&icn.icon);
