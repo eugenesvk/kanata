@@ -872,13 +872,6 @@ impl Kanata {
         let mut live_reload_requested = false;
         let cur_keys = &mut self.cur_keys;
         cur_keys.extend(layout.keycodes());
-        self.overrides
-            .override_keys(cur_keys, &mut self.override_states);
-        if let Some(caps_word) = &mut self.caps_word {
-            if caps_word.maybe_add_lsft(cur_keys) == CapsWordNextState::End {
-                self.caps_word = None;
-            }
-        }
         // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs handle_keystate_changes caps_word",(start.elapsed()).as_micros());
 
         match custom_event {
@@ -933,6 +926,13 @@ impl Kanata {
         }
         // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs handle_keystate_changes unmod",(start.elapsed()).as_micros());
 
+        self.overrides
+            .override_keys(cur_keys, &mut self.override_states);
+        if let Some(caps_word) = &mut self.caps_word {
+            if caps_word.maybe_add_lsft(cur_keys) == CapsWordNextState::End {
+                self.caps_word = None;
+            }
+        }
         // Release keys that do not exist in the current state but exist in the previous state. This used to use a HashSet but it was changed to a Vec because the order of operations matters.
         //
         // BUG(sequences):
