@@ -127,8 +127,12 @@ simulated_output = ["indoc"]
 simulated_input = ["indoc"]
 passthru_ahk = ["simulated_input","simulated_output"]
 wasm = [ "instant/wasm-bindgen" ]
-gui = ["win_manifest","lazy_static","kanata-parser/gui","kanata-parser/gui","native-windows-gui/tray-notification","native-windows-gui/message-window","native-windows-gui/menu","native-windows-gui/cursor","native-windows-gui/high-dpi","native-windows-gui/embed-resource","native-windows-gui/image-decoder","native-windows-gui/notice","native-windows-gui/animation-timer","dep:windows-sys","muldiv","win_sendinput_send_scancodes","win_llhook_read_scancodes","strip-ansi-escapes",
+gui = ["win_manifest","kanata-parser/gui","kanata-parser/gui",
+  "win_sendinput_send_scancodes","win_llhook_read_scancodes",
+  "lazy_static","strip-ansi-escapes","muldiv",
+  "dep:windows-sys",
   "winapi/processthreadsapi",
+  "native-windows-gui/tray-notification","native-windows-gui/message-window","native-windows-gui/menu","native-windows-gui/cursor","native-windows-gui/high-dpi","native-windows-gui/embed-resource","native-windows-gui/image-decoder","native-windows-gui/notice","native-windows-gui/animation-timer",
 ]
 
 [profile.release]
