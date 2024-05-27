@@ -143,6 +143,7 @@ pub struct Kanata {
     pub switch_max_key_timing: u16, // The maximum value of switch's key-timing item in the configuration.
     #[cfg(feature = "tcp_server")]
     tcp_server_address: Option<SocketAddrWrapper>, //
+    #[cfg(all(any(target_os = "windows", target_os = "unknown"), feature = "gui"))]
     /// Various GUI-related options.
     pub gui_opts: CfgOptionsGui,
 }
