@@ -14,8 +14,8 @@ pub struct WinMsgSid(String);
 impl Default for WinMsgSid {
     fn default() -> Self {Self("kanata_4117d2917ccb4678a7a8c71a5ff898ed".to_string())} //TODO: replace with str
 }
-impl Into<String> for WinMsgSid {
-    fn into(self) -> String {self.0}  }
+impl From<WinMsgSid> for String {
+    fn from(val: WinMsgSid) -> Self {val.0}  }
 impl Deref for WinMsgSid {type Target = String; fn deref(&self) -> &Self::Target {&self.0}}
 impl<T> AsRef<T> for WinMsgSid
     where T: ?Sized, <WinMsgSid as Deref>::Target: AsRef<T>, {
