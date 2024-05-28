@@ -1662,7 +1662,7 @@ fn parse_action_list(ac: &[SExpr], s: &ParserState) -> Result<&'static KanataAct
         CMD_OUTPUT_KEYS => parse_cmd(&ac[1..], s, CmdType::OutputKeys),
         PUSH_MESSAGE => parse_push_message(&ac[1..], s),
         PUSH_MESSAGE_S | PUSH_MESSAGE_S_A => parse_push_message_s(&ac[1..], s, &ac_type),
-        PUSH_MESSAGE_NN | PUSH_MESSAGE_NN_A => parse_push_message_nn(&ac[1..], s, &ac_type),
+        PUSH_MESSAGE_N | PUSH_MESSAGE_N_A => parse_push_message_n(&ac[1..], s, &ac_type),
         SEND_WMSG_SYNC => win_send_message(&ac[1..], s, SEND_WMSG_SYNC),
         SEND_WMSG_SYNC_A => win_send_message(&ac[1..], s, SEND_WMSG_SYNC_A),
         SEND_WMSG_ASYNC => win_post_message(&ac[1..], s, SEND_WMSG_ASYNC),
@@ -2283,7 +2283,7 @@ fn parse_push_message_s(ac_params: &[SExpr], s: &ParserState, ac_type: &String) 
     custom(CustomAction::PushMessageS(message.to_string()), &s.a)
 }
 use num_format::{Locale, ToFormattedString};
-fn parse_push_message_nn(ac_params: &[SExpr], s: &ParserState, ac_type: &String) -> Result<&'static KanataAction> {
+fn parse_push_message_n(ac_params: &[SExpr], s: &ParserState, ac_type: &String) -> Result<&'static KanataAction> {
     let cmd_name = ac_type.blue().bold();
     if ac_params.len() > 1 {
         bail!(
