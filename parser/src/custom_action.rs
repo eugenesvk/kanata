@@ -15,6 +15,7 @@ pub enum CustomAction {
     Cmd(Vec<String>),
     CmdOutputKeys(Vec<String>),
     PushMessage(Vec<SimpleSExpr>),
+    PushMessageS(String),
     WinSendMessage(WinMsg),
     WinPostMessage(WinMsg),
     Unicode(char),
