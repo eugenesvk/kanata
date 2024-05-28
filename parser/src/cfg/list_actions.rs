@@ -88,6 +88,8 @@ pub const CMD: &str = "cmd";
 pub const PUSH_MESSAGE: &str = "push-msg";
 pub const PUSH_MESSAGE_S: &str = "push-msg-s";
 pub const PUSH_MESSAGE_S_A: &str = "🖂"; //🖅
+pub const PUSH_MESSAGE_N: &str = "push-msg-n";
+pub const PUSH_MESSAGE_N_A: &str = "🖂#"; //🖅
 pub const SEND_WMSG_SYNC: &str = "win-send-msg";
 pub const SEND_WMSG_SYNC_A: &str = "msg❖sync";
 pub const SEND_WMSG_ASYNC: &str = "win-post-msg";
@@ -172,6 +174,8 @@ pub fn is_list_action(ac: &str) -> bool {
         PUSH_MESSAGE,
         PUSH_MESSAGE_S,
         PUSH_MESSAGE_S_A,
+        PUSH_MESSAGE_N,
+        PUSH_MESSAGE_N_A,
         SEND_WMSG_SYNC,
         SEND_WMSG_ASYNC,
         SEND_WMSG_SYNC_A,
