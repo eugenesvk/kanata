@@ -9,11 +9,15 @@ pub enum ServerMessage {
     ConfigFileReload { new: String },
     CurrentLayerName { name: String },
     MessagePush { message: serde_json::Value },
+    MessagePushS(String),
     Error { msg: String },
 }
 
 impl ServerMessage {
     pub fn as_bytes(&self) -> Vec<u8> {
+        if let ServerMessage::MessagePushS(msg) = self {
+            return msg.clone().into_bytes()
+        }
         let mut msg = serde_json::to_vec(self).expect("ServerMessage should serialize");
         msg.push(b'\n');
         msg
