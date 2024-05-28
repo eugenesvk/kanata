@@ -1,0 +1,21 @@
+#|
+1. Launch kanata with -p '127.0.0.1:1111'
+2. Press F1 to connect to kanata's TCP server
+|#
+(defcfg
+  process-unmapped-keys	yes
+  log-layer-changes    	yes
+)
+(defsrc      	                	1	2	3	4	5	6	7	8	9	0)
+(deflayermap 	(win-msg-socket)	;;
+1 (🖂         	print_date_short) ;; print date in the ‘yy’ format
+2 (push-msg-s	"print date long") ;; quotes are ignored! print date in the ‘dddd MMMM d, yyyy H:mm:ss’ format
+3 (push-msg-s	r#"print time "H:mm:ss""#) ;; print time using the ‘H:mm:ss’ format in inner quotes
+4 (push-msg-n	 1 ) ;; print date with a prefix: ‘¦#1¦dddd’ format
+5 (🖂#        	"2") ;; print date with a prefix: ‘¦#2¦MMMM’ format
+6 (🖂#        	2024) ;; print date with a prefix: ‘¦#2024¦yyyy’ format
+7 (🖂#        	4268070197446523707) ;; same as ;;;;;;;; so could be mistakenly parsed as a string
+8 lrld
+9 lrld-prev
+0 lrld-next
+)
