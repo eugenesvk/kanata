@@ -1,0 +1,7 @@
+(defcfg)
+(defsrc 1 2 3)
+(deflayermap 	(win-msg-socket)
+1 (🖂         	print_date_short)
+2 (push-msg-s	"print date long")
+3 (push-msg-s	r#"print time "H:mm:ss""#)
+)
