@@ -2001,3 +2001,9 @@ fn win_message_too_many_args() {
 "#;
     parse_cfg(source).map(|_| ()).expect_err("fails");
 }
+
+#[test]
+fn win_push_msg_s() {
+    let _lk = lock(&CFG_PARSE_LOCK);
+    new_from_file(&std::path::PathBuf::from("./test_cfgs/push-msg-s.kbd")).unwrap();
+}
