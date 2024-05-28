@@ -1662,6 +1662,7 @@ fn parse_action_list(ac: &[SExpr], s: &ParserState) -> Result<&'static KanataAct
         CMD_OUTPUT_KEYS => parse_cmd(&ac[1..], s, CmdType::OutputKeys),
         PUSH_MESSAGE => parse_push_message(&ac[1..], s),
         PUSH_MESSAGE_S | PUSH_MESSAGE_S_A => parse_push_message_s(&ac[1..], s, &ac_type),
+        PUSH_MESSAGE_NN | PUSH_MESSAGE_NN_A => parse_push_message_nn(&ac[1..], s, &ac_type),
         SEND_WMSG_SYNC => win_send_message(&ac[1..], s, SEND_WMSG_SYNC),
         SEND_WMSG_SYNC_A => win_send_message(&ac[1..], s, SEND_WMSG_SYNC_A),
         SEND_WMSG_ASYNC => win_post_message(&ac[1..], s, SEND_WMSG_ASYNC),
@@ -2280,6 +2281,27 @@ fn parse_push_message_s(ac_params: &[SExpr], s: &ParserState, ac_type: &String) 
         _ => bail_expr!(&ac_params[0], "No lists allowed in {PUSH_MESSAGE_S}"),
     };
     custom(CustomAction::PushMessageS(message.to_string()), &s.a)
+}
+use num_format::{Locale, ToFormattedString};
+fn parse_push_message_nn(ac_params: &[SExpr], s: &ParserState, ac_type: &String) -> Result<&'static KanataAction> {
+    let cmd_name = ac_type.blue().bold();
+    if ac_params.len() > 1 {
+        bail!(
+            "{cmd_name} expects at most {} number, found {}", "1".blue(), ac_params.len().to_string().blue()
+        );
+    }
+    const ERR_MSG: &str = "expects at most 2 numeric arguments";
+    let mut argu = Default::default();
+    if ac_params.len() > 0 { let arg = &ac_params[0];
+        if let Some(a) = arg.atom(s.vars()) {
+            argu = match str::parse::<usize>(a.trim_atom_quotes()) {
+                Ok(argu) => argu,
+                Err(_) => bail_expr!(&arg, "invalid numeric argument, expected {}–{}. {} {}",
+                usize::MIN.to_formatted_string(&Locale::en).blue(),usize::MAX.to_formatted_string(&Locale::en).blue(),cmd_name,ERR_MSG),
+            }
+        } else {bail!("No lists allowed in {ac_type}");}
+    }
+    custom(CustomAction::PushMessageN(argu), &s.a)
 }
 #[cfg(any(target_os = "windows", target_os = "unknown"))]
 pub mod windows;
