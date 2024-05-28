@@ -1256,6 +1256,35 @@ impl Kanata {
                                 PUSH_MESSAGE
                             );
                         }
+                        CustomAction::PushMessageS(_message) => {
+                            log::debug!("Action push-msg-s");
+                            #[cfg(feature = "tcp_server")]
+                            if let Some(tx) = _tx {
+                                log::debug!("Action push-msg message: {}", _message);
+                                match tx.try_send(ServerMessage::MessagePushS(_message.to_string())) {
+                                    Ok(_) => {}
+                                    Err(error) => {
+                                        log::error!(
+                                            "could not send {} or {} event notification: {}",
+                                            PUSH_MESSAGE_S,PUSH_MESSAGE_S_A,
+                                            error
+                                        );
+                                    }
+                                }
+                            }
+                            #[cfg(feature = "tcp_server")]
+                            match self.tcp_server_address {
+                                None => {
+                                    log::warn!("{} or {} was used, but TCP server is not running. did you specify a port?", PUSH_MESSAGE_S,PUSH_MESSAGE_S_A);
+                                }
+                                Some(_) => {}
+                            }
+                            #[cfg(not(feature = "tcp_server"))]
+                            log::warn!(
+                                "{} or {} was used, but Kanata was compiled with TCP server disabled.",
+                                PUSH_MESSAGE_S,PUSH_MESSAGE_S_A
+                            );
+                        }
                         CustomAction::WinSendMessage(_win_msg) => {
                             #[cfg(target_os = "windows")] {
                             // log::trace!("Sent a message {_win_msg:?}");
