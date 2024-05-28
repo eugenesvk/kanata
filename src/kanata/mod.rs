@@ -1260,7 +1260,7 @@ impl Kanata {
                             log::debug!("Action push-msg-s");
                             #[cfg(feature = "tcp_server")]
                             if let Some(tx) = _tx {
-                                log::debug!("Action push-msg message: {}", _message);
+                                log::debug!("Action push-msg-s message: {}", _message);
                                 match tx.try_send(ServerMessage::MessagePushS(_message.to_string())) {
                                     Ok(_) => {}
                                     Err(error) => {
