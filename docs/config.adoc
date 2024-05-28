@@ -1639,6 +1639,19 @@ SendInput.
 )
 ----
 
+
+[[push-msg-s]]
+=== push-msg-s
+<<table-of-contents,Back to ToC>>
+
+`push-msg-s` or `🖂` command allows sending a single string message to a listening TCP client.
+
+For a (Windows-only) example of inserting dates/times in various formats using AutoHotkey functions
+see this https://github.com/jtroo/kanata/blob/main/cfg_samples/win-msg/win-msg-socket.kbd[example config].
+Requires https://www.autohotkey.com/download/[AutoHotkey v2] and an
+https://github.com/TheArkive/Socket_ahk2/blob/master/_socket.ahk[external socket library] to run this
+https://github.com/jtroo/kanata/blob/main/cfg_samples/win-msg/insert-date-socket.ahk[example script].
+
 [[global-overrides]]
 == Global overrides
 <<table-of-contents,Back to ToC>>
