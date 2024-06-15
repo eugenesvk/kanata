@@ -243,7 +243,7 @@ impl Kanata {
             // log::info!("Asking Windows to increase process priority");
             winapi::um::processthreadsapi::SetPriorityClass(
                 winapi::um::processthreadsapi::GetCurrentProcess(),
-                winapi::um::winbase::HIGH_PRIORITY_CLASS,
+                winapi::um::winbase::REALTIME_PRIORITY_CLASS,
             );
         }
         update_kbd_out(&cfg.options, &kbd_out)?;
