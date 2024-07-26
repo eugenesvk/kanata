@@ -85,6 +85,7 @@ pub const DYNAMIC_MACRO_RECORD: &str = "dynamic-macro-record";
 pub const DYNAMIC_MACRO_PLAY: &str = "dynamic-macro-play";
 pub const ARBITRARY_CODE: &str = "arbitrary-code";
 pub const CMD: &str = "cmd";
+pub const CMD_LOG: &str = "cmd-log";
 pub const PUSH_MESSAGE: &str = "push-msg";
 pub const CMD_OUTPUT_KEYS: &str = "cmd-output-keys";
 pub const FORK: &str = "fork";
@@ -163,6 +164,7 @@ pub fn is_list_action(ac: &str) -> bool {
         ARBITRARY_CODE,
         CMD,
         CMD_OUTPUT_KEYS,
+        CMD_LOG,
         PUSH_MESSAGE,
         FORK,
         CAPS_WORD,CAPS_WORD_A,
