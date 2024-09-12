@@ -134,6 +134,7 @@ pub struct Kanata {
     dynamic_macro_max_presses: u16, // Configured maximum for dynamic macro recording, to protect users from themselves if they have accidentally left it on.
     dynamic_macro_replay_behaviour: ReplayBehaviour, // Determines behaviour of replayed dynamic macros.
     unmodded_keys: Vec<KeyCode>, // Keys that should be unmodded. If non-empty, any modifier should be cleared.
+    unmodded_mods: UnmodMods, // Modifiers to be cleared in case the above is non-empty.
     unshifted_keys: Vec<KeyCode>, // Keys that should be unshifted. If non-empty, left+right shift keys should be cleared.
     last_pressed_key: KeyCode,    // Keep track of last pressed key for [`CustomAction::Repeat`].
     #[cfg(feature = "tcp_server")]
@@ -307,6 +308,7 @@ impl Kanata {
             ticks_since_idle: 0,
             movemouse_buffer: None,
             unmodded_keys: vec![],
+            unmodded_mods: UnmodMods::empty(),
             unshifted_keys: vec![],
             last_pressed_key: KeyCode::No,
             #[cfg(feature = "tcp_server")]
@@ -414,6 +416,7 @@ impl Kanata {
             ticks_since_idle: 0,
             movemouse_buffer: None,
             unmodded_keys: vec![],
+            unmodded_mods: UnmodMods::empty(),
             unshifted_keys: vec![],
             last_pressed_key: KeyCode::No,
             #[cfg(feature = "tcp_server")]
@@ -825,11 +828,12 @@ impl Kanata {
             CustomEvent::Press(custacts) => {
                 for custact in custacts.iter() {
                     match custact {
-                        CustomAction::Unmodded { keys } => {
-                            self.unmodded_keys.extend(keys);
+                        CustomAction::Unmodded { keys, mods } => {
+                            self.unmodded_keys.extend(keys.iter());
+                            self.unmodded_mods = *mods;
                         }
                         CustomAction::Unshifted { keys } => {
-                            self.unshifted_keys.extend(keys);
+                            self.unshifted_keys.extend(keys.iter());
                         }
                         _ => {}
                     }
@@ -838,7 +842,7 @@ impl Kanata {
             CustomEvent::Release(custacts) => {
                 for custact in custacts.iter() {
                     match custact {
-                        CustomAction::Unmodded { keys } => {
+                        CustomAction::Unmodded { keys, mods: _ } => {
                             self.unmodded_keys.retain(|k| !keys.contains(k));
                         }
                         CustomAction::Unshifted { keys } => {
@@ -851,19 +855,20 @@ impl Kanata {
             _ => {}
         }
         if !self.unmodded_keys.is_empty() {
-            cur_keys.retain(|k| {
-                !matches!(
-                    k,
-                    KeyCode::LShift
-                        | KeyCode::RShift
-                        | KeyCode::LGui
-                        | KeyCode::RGui
-                        | KeyCode::LCtrl
-                        | KeyCode::RCtrl
-                        | KeyCode::LAlt
-                        | KeyCode::RAlt
-                )
-            });
+            for mod_key in self.unmodded_mods.iter() {
+                let kc = match mod_key {
+                    UnmodMods::LSft => KeyCode::LShift,
+                    UnmodMods::RSft => KeyCode::RShift,
+                    UnmodMods::LAlt => KeyCode::LGui,
+                    UnmodMods::RAlt => KeyCode::RGui,
+                    UnmodMods::LCtl => KeyCode::LCtrl,
+                    UnmodMods::RCtl => KeyCode::RCtrl,
+                    UnmodMods::LMet => KeyCode::LAlt,
+                    UnmodMods::RMet => KeyCode::RAlt,
+                    _ => unreachable!("all bits of u8 should be covered"), // test_unmodmods_bits
+                };
+                cur_keys.retain(|k| *k != kc);
+            }
             cur_keys.extend(self.unmodded_keys.iter());
         }
         if !self.unshifted_keys.is_empty() {
@@ -1784,6 +1789,12 @@ impl Kanata {
                 .map(|cv2| cv2.is_idle_chv2())
                 .unwrap_or(true)
     }
+}
+
+#[test]
+fn test_unmodmods_bits() {
+    assert_eq!(UnmodMods::empty().bits(), 0u8);
+    assert_eq!(UnmodMods::all().bits(), 255u8);
 }
 
 #[cfg(feature = "cmd")]
