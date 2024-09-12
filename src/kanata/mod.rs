@@ -1924,7 +1924,7 @@ fn check_for_exit(event: &KeyEvent) {#[cfg(not(feature = "passthru_ahk"))] {
             #[cfg(    feature = "interception_driver")]
             send_gui_exit_notice(); // interception driver is running in another thread to allow GUI take the main one, so it's calling this function from a thread that has no access to the main one, so can't stop main thread's dispatch
         }
-        #[cfg(all(not(target_os = "linux"),not(target_os = "windows"),not(feature = "gui")))]
+        #[cfg(all(not(target_os = "linux"),not(all(target_os = "windows", feature = "gui"))))]
         {
             panic!("{EXIT_MSG}");
         }
