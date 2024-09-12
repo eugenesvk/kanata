@@ -120,9 +120,11 @@ pub struct Kanata {
     #[cfg(target_os = "linux")]
     pub exclude_names: Option<Vec<String>>, // Tracks the Linux user configuration for device names (instead of paths) that should be excluded for interception and processing by kanata.
     #[cfg(all(feature = "interception_driver", target_os = "windows"))]
-    intercept_mouse_hwids: Option<Vec<[u8; HWID_ARR_SZ]>>, // Used to know which input device to treat as a mouse for intercepting and processing inputs by kanata.
+    intercept_mouse_hwids_exclude: Option<Vec<[u8; HWID_ARR_SZ]>>, // Used to know which mouse input devices to exclude from processing inputs by kanata. This is mutually exclusive from `intercept_mouse_hwids` and kanata will panic if both are included.
     #[cfg(all(feature = "interception_driver", target_os = "windows"))]
-    intercept_kb_hwids: Option<Vec<[u8; HWID_ARR_SZ]>>, // Used to know which input device to treat as a mouse for intercepting and processing inputs by kanata.
+    intercept_kb_hwids: Option<Vec<[u8; HWID_ARR_SZ]>>, // Used to know which input device to treat as a keyboard for intercepting and processing inputs by kanata.
+    #[cfg(all(feature = "interception_driver", target_os = "windows"))]
+    intercept_kb_hwids_exclude: Option<Vec<[u8; HWID_ARR_SZ]>>, // Used to know which keyboard input devices to exclude from processing inputs by kanata. This// is mutually exclusive from `intercept_kb_hwids` and kanata will panic if both are included.
     log_layer_changes: bool, // User configuration to do logging of layer changes or not.
     pub caps_word: Option<CapsWordState>, // Tracks the caps-word state. Is Some(...) if caps-word is active and None otherwise.
     #[cfg(target_os = "linux")]
