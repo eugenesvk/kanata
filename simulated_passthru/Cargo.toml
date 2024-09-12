@@ -13,7 +13,7 @@ anyhow = "1"
 clap = { version = "4", features = [ "std", "derive", "help", "suggestions" ], default_features = false }
 dirs = "5.0.1"
 indoc = { version = "2.0.4", optional = true }
-log = { version = "0.4.8", default_features = false }
+log = { version = "0.4.8", default-features = false }
 miette = { version = "5.7.0", features = ["fancy"] }
 once_cell = "1"
 parking_lot = "0.12"
@@ -23,7 +23,7 @@ simplelog = "0.12.0"
 regex = "1.10.3"
 rand = "0.8.5"
 
-kanata = {path="..", default_features=false}
+kanata = {path=".." , default-features=false}
 helper = { path = "../helper" }
 
 # kanata-keyberon = "0.160.1"
@@ -54,7 +54,7 @@ winapi = { version = "0.3.9", features = [
     "timeapi",
     "mmsystem",
 ] }
-native-windows-gui = { version = "1.0.12", default_features = false }
+native-windows-gui = { version = "1.0.12", default-features = false }
 kanata-interception = { version = "0.2.0", optional = true }
 win_dbg_logger = "0.1.0"
 
