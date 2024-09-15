@@ -226,6 +226,11 @@ impl Kanata {
             &args.symlink_path,
             #[cfg(target_os = "linux")]
             cfg.options.linux_use_trackpoint_property,
+            #[cfg(target_os = "linux")]
+            match cfg.options.linux_opts.linux_output_bus_type {
+                LinuxCfgOutputBusType::BusUsb => evdev::BusType::BUS_USB,
+                LinuxCfgOutputBusType::BusI8042 => evdev::BusType::BUS_I8042,
+            },
             #[cfg(feature = "passthru_ahk")]
             _tx,
         ) {
@@ -351,6 +356,11 @@ impl Kanata {
             &None,
             #[cfg(target_os = "linux")]
             cfg.options.linux_use_trackpoint_property,
+            #[cfg(target_os = "linux")]
+            match cfg.options.linux_opts.linux_output_bus_type {
+                LinuxCfgOutputBusType::BusUsb => evdev::BusType::BUS_USB,
+                LinuxCfgOutputBusType::BusI8042 => evdev::BusType::BUS_I8042,
+            },
             #[cfg(feature = "passthru_ahk")]
             None,
         ) {
