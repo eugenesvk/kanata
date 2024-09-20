@@ -2027,6 +2027,19 @@ fn disallow_whitespace_in_tooltip_size() {
 }
 
 #[test]
+fn reverse_release_order_must_be_within_multi() {
+    let source = "
+(defsrc a)
+(deflayer base reverse-release-order)
+";
+    let e = parse_cfg(source).map(|_| ()).expect_err("fails");
+    assert_eq!(
+        e.msg,
+        "reverse-release-order is only allowed inside of a (multi ...) action list"
+    );
+}
+
+#[test]
 fn layer_name_allows_var() {
     let source = "
 (defvar l1name base)

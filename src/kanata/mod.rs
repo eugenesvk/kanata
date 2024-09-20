@@ -838,6 +838,7 @@ impl Kanata {
         let mut live_reload_requested = false;
         let cur_keys = &mut self.cur_keys;
         cur_keys.extend(layout.keycodes());
+        let mut reverse_release_order = false;
         // #[cfg(feature="perf_logging")] log::debug!("🕐{}μs handle_keystate_changes caps_word",(start.elapsed()).as_micros());
 
         match custom_event {
@@ -864,6 +865,9 @@ impl Kanata {
                         }
                         CustomAction::Unshifted { keys } => {
                             self.unshifted_keys.retain(|k| !keys.contains(k));
+                        }
+                        CustomAction::ReverseReleaseOrder => {
+                            reverse_release_order = true;
                         }
                         _ => {}
                     }
@@ -946,7 +950,11 @@ impl Kanata {
         // Given that there appears to be no practical negative consequences for this bug
         // remaining.
         log::trace!("{:?}", &self.prev_keys);
-        for k in &self.prev_keys {
+        let keys: &mut dyn Iterator<Item = &KeyCode> = match reverse_release_order {
+            false => &mut self.prev_keys.iter(),
+            true => &mut self.prev_keys.iter().rev(),
+        };
+        for k in keys {
             if cur_keys.contains(k) {
                 continue;
             }
@@ -1399,6 +1407,8 @@ impl Kanata {
                         | CustomAction::DelayOnRelease(_)
                         | CustomAction::Unmodded { .. }
                         | CustomAction::Unshifted { .. }
+                        // Note: ReverseReleaseOrder is already handled earlier on.
+                        | CustomAction::ReverseReleaseOrder { .. }
                         | CustomAction::CancelMacroOnRelease => {}
                     }
                 }
