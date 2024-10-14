@@ -148,6 +148,7 @@ pub struct Kanata {
     tcp_server_address: Option<SocketAddrWrapper>, //
     /// Various GUI-related options.
     pub gui_opts: CfgOptionsGui,
+    pub allow_hardware_repeat: bool,
 }
 
 
@@ -328,6 +329,7 @@ impl Kanata {
             tcp_server_address: args.tcp_server_address.clone(),
             #[cfg(all(target_os = "windows", feature = "gui"))]
             gui_opts: cfg.options.gui_opts,
+            allow_hardware_repeat: cfg.options.allow_hardware_repeat,
         })
     }
     /// Create a new configuration from a file, wrapped in an Arc<Mutex<_>>
@@ -442,6 +444,7 @@ impl Kanata {
             tcp_server_address: None,
             #[cfg(all(target_os = "windows", feature = "gui"))]
             gui_opts: cfg.options.gui_opts,
+            allow_hardware_repeat: cfg.options.allow_hardware_repeat,
         })
     }
 
