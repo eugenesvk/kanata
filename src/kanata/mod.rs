@@ -129,6 +129,8 @@ pub struct Kanata {
     pub caps_word: Option<CapsWordState>, // Tracks the caps-word state. Is Some(...) if caps-word is active and None otherwise.
     #[cfg(target_os = "linux")]
     pub x11_repeat_rate: Option<KeyRepeatSettings>, // Config items from `defcfg`.
+    #[cfg(target_os = "linux")]
+    pub device_detect_mode: DeviceDetectMode, // Determines what types of devices to grab based on autodetection mode.
     pub waiting_for_idle: HashSet<FakeKeyOnIdle>, // Fake key actions that are waiting for a certain duration of keyboard idling.
     pub ticks_since_idle: u16,                    // Number of ticks since kanata was idle.
     movemouse_inherit_accel_state: bool, // If a mousemove action is active and another mousemove action is activated, reuse the acceleration state.
@@ -315,6 +317,12 @@ impl Kanata {
             },
             #[cfg(target_os = "linux")]
             x11_repeat_rate: cfg.options.linux_opts.linux_x11_repeat_delay_rate,
+            #[cfg(target_os = "linux")]
+            device_detect_mode: cfg
+                .options
+                .linux_opts
+                .linux_device_detect_mode
+                .expect("parser should default to some"),
             waiting_for_idle: HashSet::default(),
             ticks_since_idle: 0,
             movemouse_buffer: None,
@@ -430,6 +438,12 @@ impl Kanata {
             },
             #[cfg(target_os = "linux")]
             x11_repeat_rate: cfg.options.linux_opts.linux_x11_repeat_delay_rate,
+            #[cfg(target_os = "linux")]
+            device_detect_mode: cfg
+                .options
+                .linux_opts
+                .linux_device_detect_mode
+                .expect("parser should default to some"),
             waiting_for_idle: HashSet::default(),
             ticks_since_idle: 0,
             movemouse_buffer: None,
