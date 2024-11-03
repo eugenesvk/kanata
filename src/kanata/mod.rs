@@ -88,8 +88,8 @@ pub struct Kanata {
     pub cur_cfg_idx: usize, // Index into `cfg_paths`, used to know which file to live reload. Changes when cycling through the configuration files.
     pub key_outputs: cfg::KeyOutputs, // The potential key outputs of every key input. Used for managing key repeat.
     pub layout: cfg::KanataLayout,    // Handle to the keyberon library layout.
-    pub cur_keys: Vec<KeyCode>, // Reusable vec (to save on allocations) that stores the currently active output keys.
-    pub prev_keys: Vec<KeyCode>, // Reusable vec (to save on allocations) that stores the active output keys from the previous tick.
+    pub cur_keys: Vec<KeyCode>, // Reusable vec (to save on allocations) that stores the currently active output keys. This can be cleared and reused in various procedures as buffer space.
+    pub prev_keys: Vec<KeyCode>, // Reusable vec (to save on allocations) that stores the active output keys from the previous tick. This must only be updated once per tick and must not be modified outside of the one procedure that updates it.
     pub layer_info: Vec<LayerInfo>, // Used for printing layer info to the info log when changing layers.
     pub prev_layer: usize,          // Used to track when a layer change occurs.
     pub scroll_state: Option<ScrollState>, // Vertical scrolling state tracker. Is Some(...) when a vertical scrolling action is active and None otherwise.
@@ -1663,7 +1663,14 @@ impl Kanata {
                     k.can_block_update_idle_waiting(ms_elapsed)
                 };
                 if can_block {
-                    log::debug!("                       blocking on channel");
+                    #[cfg(all(
+                        target_os = "windows",
+                        not(feature = "interception_driver"),
+                        not(feature = "simulated_input"),
+                    ))]
+                    kanata.lock().win_synchronize_keystates();
+
+                    log::trace!("blocking on channel");
                     match rx.recv() {
                         Ok(kev) => {
                             let mut k = kanata.lock();
@@ -1683,11 +1690,11 @@ impl Kanata {
                             ))]
                             {
                                 if (now - last_input_time)
-                                    > time::Duration::from_secs(LLHOOK_IDLE_TIME_CLEAR_INPUTS)
+                                    > time::Duration::from_secs(LLHOOK_IDLE_TIME_SECS_CLEAR_INPUTS)
                                 {
                                     log::debug!(
                                         "clearing keyberon normal key states due to inactivity"
-                                    ); // If kanata has been inactive for long enough, clear all states. This won't trigger if there are macros running, or if a key is held down for a long time and is sending OS repeats. The reason for this code is in case like Win+L which locks the Windows desktop. When this happens, the Win key and L key will be stuck as pressed in the kanata state because LLHOOK kanata cannot read keys in the lock screen or administrator applications. So this is heuristic to detect such an issue and clear states assuming that's what happened. Only states in the normal key row are cleared, since those are the states that might be stuck. A real use case might be to have a fake key pressed for a long period of time, so make sure those are not cleared.
+                                    ); // If kanata has been inactive for long enough, clear all states. This won't trigger if there are macros running, or if a key is held down for a long time and is sending OS repeats. The reason for this code is in cases like Win+L which locks the Windows desktop. When this happens, the Win key and L key will be stuck as pressed in the kanata state because LLHOOK kanata cannot read keys in the lock screen or administrator applications. So this is heuristic to detect such an issue and clear states assuming that's what happened. Only states in the normal key row are cleared, since those are the states that might be stuck. A real use case might be to have a fake key pressed for a long period of time, so make sure those are not cleared.
                                     let layout = k.layout.bm();
                                     release_normalkey_states(layout);
                                     PRESSED_KEYS.lock().clear();
@@ -1776,7 +1783,7 @@ impl Kanata {
                             {
                                 // If kanata has been inactive for long enough, clear all states. This won't trigger if there are macros running, or if a key is held down for a long time and is sending OS repeats. The reason for this code is in case like Win+L which locks the Windows desktop. When this happens, the Win key and L key will be stuck as pressed in the kanata state because LLHOOK kanata cannot read keys in the lock screen or administrator applications. So this is heuristic to detect such an issue and clear states assuming that's what happened. Only states in the normal key row are cleared, since those are the states that might be stuck. A real use case might be to have a fake key pressed for a long period of time, so make sure those are not cleared.
                                 if (instant::Instant::now() - (last_input_time))
-                                    > time::Duration::from_secs(LLHOOK_IDLE_TIME_CLEAR_INPUTS)
+                                    > time::Duration::from_secs(LLHOOK_IDLE_TIME_SECS_CLEAR_INPUTS)
                                     && !idle_clear_happened
                                 {
                                     idle_clear_happened = true;
@@ -1802,6 +1809,7 @@ impl Kanata {
         });
     }
 
+    /// Returns `true` if kanata's processing thread loop can block on the channel instead of doing a non-blocking channel read and then sleeping for ~1ms. In addition to doing the logic for the above, this mutates the `waiting_for_idle` state used by the `on-idle` action for virtual keys.
     pub fn can_block_update_idle_waiting(&mut self, ms_elapsed: u16) -> bool {
         let k = self;
         let is_idle = k.is_idle();
