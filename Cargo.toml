@@ -69,6 +69,7 @@ kanata-tcp-protocol = { path = "tcp_protocol" }
 karabiner-driverkit = "0.1.3"
 objc = "0.2.7"
 core-graphics = "0.24.0"
+open = { version = "5", optional = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 signal-hook = "0.3.14"
