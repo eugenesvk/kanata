@@ -22,6 +22,7 @@ pub extern "win64" fn input_ev_listener(vk: c_uint, sc: c_uint, up: c_int) -> LR
         let handled = fnhook(key_event); // box(closure)() = closure()
         *h_cbl = Some(fnhook); // put our closure back
         if handled {
+            // info!("✓fnHook {key_event} from {vk} sc={sc} up={up}");
             // now try to get the out key events that another thread should've sent via
             #[cfg(feature = "perf_logging")]
             debug!(
@@ -32,6 +33,7 @@ pub extern "win64" fn input_ev_listener(vk: c_uint, sc: c_uint, up: c_int) -> LR
             debug!("   →→→✓ {key_event} from {vk} sc={sc} up={up}");
             1
         } else {
+            // info!("✗fnHook {key_event} from {vk} sc={sc} up={up}");
             0
         }
     } else {
