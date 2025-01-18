@@ -109,7 +109,7 @@ kanata_dll(vkC) {
     for i in [1,2,3,4,5,5,5,5] { ; poll a key out channel@kanata) a few times to see if there are key events
       sleep(i)
       isOut := K_output_ev_check(), dbgOut.=isOut
-      if (isOut < 0) { ; get as many keys as are available untill reception errors out
+      if (isOut < 0) { ; get as many keys as are available until reception errors out
         break
       }
     }
@@ -170,7 +170,7 @@ kanata_dll(vkC) {
     OutputDebug('—`n`n——————————————— Timeout')
     🕐k_now := A_TickCount, 🕐Δ := 🕐k_now - 🕐k_pre
     cleanup := true
-    res := fnKanata_reset(🕐Δ) ; reset kanata's state, progressing time to catch up, release held keys (even those physically held sinc reset is reset, so from kanata's perspective they should be released)
+    res := fnKanata_reset(🕐Δ) ; reset kanata's state, progressing time to catch up, release held keys (even those physically held since reset is reset, so from kanata's perspective they should be released)
     cleanup := false
     dbgtxt := ''
     dbgtxt .= 'ih¦' 🕐Δ '🕐Δ timeout A_TimeSinceThisHotkey ' A_TimeSinceThisHotkey
