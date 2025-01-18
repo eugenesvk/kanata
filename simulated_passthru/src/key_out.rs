@@ -47,33 +47,53 @@ fn set_cb_out_ev(cb_addr: c_longlong) -> Result<()> {
 
 pub fn send_out_ev(in_ev: InputEvent) -> Result<()> {
     // ext callback accepts vk:i64,sc:i64,up:i64
-    #[cfg(feature = "perf_logging")]
+    // #[cfg(feature = "perf_logging")]
     let start = std::time::Instant::now();
     let key_event = KeyEvent::try_from(in_ev);
     // debug!("@send_out_ev key_event={key_event:?}");
-    info!("@send_out_ev key_event={key_event:?}");
+    debug!("@send_out_ev key_event={key_event:?}");
     let vk: i64 = in_ev.code.into();
     let sc: i64 = 0;
     let up: i64 = in_ev.up.into();
 
     let mut handled = 0i64;
+    let mut h_state= 0i64;
+    let mut h_hook = 0i64;
     CBOUTEV_WRAP.with(|state| {
+        h_state = 1i64;
         if let Some(hook) = state.take() {
+            h_hook = 1i64;
             handled = hook(vk, sc, up);
             state.set(Some(hook));
         }
     });
-    #[cfg(feature = "perf_logging")]
-    debug!(
-        "🕐{}μs ←←←{} fnHookCC {key_event:?} {vk} {sc} {up}",
-        (start.elapsed()).as_micros(),
-        if handled == 1 { "✓" } else { "✗" }
-    );
-    #[cfg(not(feature = "perf_logging"))]
+    // #[cfg(feature = "perf_logging")]
+    // debug!(
+    //     "🕐{}μs ←←←{} fnHookCC {key_event:?} {vk} {sc} {up}",
+    //     (start.elapsed()).as_micros(),
+    //     if handled == 1 { "✓" } else { "✗" }
+    // );
+    // #[cfg(not(feature = "perf_logging"))]
+    // info!(
+    //     "🢦🄺{} fnHookCC {key_event:?} {vk} {sc} {} {} ⑀{}",
+    //     if handled == 1 { "✓" } else { "✗" },
+    //     if up == 1 {"↑"} else {"↓"},if h_state == 1 {"∃"} else {"∄"},if h_hook == 1 {"✓"} else {"✗"},
+    // );
+    // #[cfg(not(feature = "perf_logging"))]
+    if handled == 1 {
+    // info!(
+    //     "🢦🄺{} fnHookCC {key_event:?} {vk} {sc} {} {} ⑀{}",
+    //     if handled == 1 { "✓" } else { "✗" },
+    //     if up == 1 {"↑"} else {"↓"},if h_state == 1 {"∃"} else {"∄"},if h_hook == 1 {"✓"} else {"✗"},
+    // );
+    } else {
     info!(
-        "←←←{} fnHookCC {key_event:?} {vk} {sc} {up}",
-        if handled == 1 { "✓" } else { "✗" }
+        "🢦🄺{} fnHookCC {key_event:?} {vk} {sc} {} {} ⑀{} 🕐{}μs",
+        if handled == 1 { "✓" } else { "✗" },
+        if up == 1 {"↑"} else {"↓"},if h_state == 1 {"∃"} else {"∄"},if h_hook == 1 {"✓"} else {"✗"},
+        (start.elapsed()).as_micros(),
     );
+    }
     Ok(())
 }
 
