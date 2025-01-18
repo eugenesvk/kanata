@@ -9,7 +9,7 @@ Dependencies and config:
   kanata_cfg	:= "./kanata_dll.kbd"	; kanata config @ this file location
   ihDuration	:= 999999            	; seconds of activity after pressing F8
   dbg       	:= 1                 	; script's debug level (0 to silence some of its output)
-  dbg_dll   	:= 1                  ; kanata's debug level (Err=1 Warn=2 Inf=3 Dbg=4 Trace=5)
+  dbg_dll   	:= 3                  ; kanata's debug level (Err=1 Warn=2 Inf=3 Dbg=4 Trace=5)
 /*
 Brief overview of the architecture:
 Setup:
@@ -73,7 +73,7 @@ kanata_dll(vkC) {
   }
 
   cbK↓(token,  ih,vk,sc) {
-    static _d := 1, isUp := false, dir := (isUp?'↑':'↓')
+    static _d := 2, isUp := false, dir := (isUp?'↑':'↓')
     🕐k_pre := 🕐k_now
     🕐k_now := A_TickCount
     if (dbg>=_d) {
@@ -95,7 +95,7 @@ kanata_dll(vkC) {
     (dbg<_d+1)?'':(dbgtxt:='🏁ih' dir ' pos isH=' isH ' isOut=' dbgOut ' ' format(" 🕐Δ{:.3f}",A_TickCount - 🕐k_now) ' ' A_ThisFunc ' ¦' id_thread '¦', OutputDebug(dbgtxt))
   }
   cbK↑(token,  ih,vk,sc) {
-    static _d := 1, isUp := true, dir := (isUp?'↑':'↓')
+    static _d := 2, isUp := true, dir := (isUp?'↑':'↓')
     🕐k_pre := 🕐k_now
     🕐k_now := A_TickCount
     if (dbg>=_d) {
@@ -118,17 +118,20 @@ kanata_dll(vkC) {
   }
   ; set up machinery for AHK to receive data from kanata
   cbKanataOut(kvk,ksc,up) {
+    ; OutputDebug("cbKanataOut kvk=" kvk " ksc=" ksc " up=" up ' ¦' id_thread '¦')
     ; static K	:= keyConstant, vk:=K._map, vkr:=K._mapr, vkl:=K._maplng, vkrl:=K._maprlng, vk→en:=vkrl['en'], sc:=K._mapsc  ; various key name constants, gets vk code to avoid issues with another layout
     static _d := 1, lvl_to := 0
+    ; (dbg<_d)?'':(dbgtxt := "          🄷🢦 : vk=" kvk " ksc=" ksc " " (up?'↑':'↓') ' @l' A_SendLevel ' → ' lvl_to ' ¦' id_thread '¦ ' A_ThisFunc, OutputDebug(dbgtxt))
     🕐1 := preciseTΔ()
     vk_hex := Format("vk{:x}",kvk)
     if not C↑ && up && (kvk=Cvk_d) {
       C↑ := true , (dbg<_d)?'':(OutputDebug('trigger key released'))
     }
     if cleanup && C↑ && up && (kvk=Cvk_d) { ; todo: check for physical position before excluding?
-      (dbg<_d)?'':(OutputDebug("dupe release of trigger key on kanata's cleanup, ignore"))
+      ; (dbg<_d)?'':(OutputDebug("dupe release of trigger key on kanata's cleanup, ignore"))
+      OutputDebug("dupe release of trigger key on kanata's cleanup, ignore")
       C↑ := false
-      return
+      return 1
     }
     Critical ; todo: needed??? avoid being interrupted by itself (or any other thread)
     if (dbg>=_d) {
@@ -142,11 +145,17 @@ kanata_dll(vkC) {
     if isSet(vk_hex) {
       (dbg<_d)?'':(dbgtxt .= key_name "       🄷🢦 : vk=" kvk '¦' vk_hex ' @l' A_SendLevel ' → ' lvl_to ' ' hooks ' ¦' id_thread '¦ ' A_ThisFunc, OutputDebug(dbgtxt))
       if up {
+        SendInput('{Blind}{' vk_hex ' up}') ; less error-prone?
+        ; SendInput('{' vk_hex ' up}')
         ; SendEvent('{' vk_hex ' up}')
-        SendInput('{' vk_hex ' up}')
+        ; SendEvent('{Blind}{' vk_hex ' up}')
+        ; SendPlay ('{' vk_hex ' up}')
       } else {
+        SendInput('{Blind}{' vk_hex ' down}') ; less error-prone?
+        ; SendInput('{' vk_hex ' down}')
         ; SendEvent('{' vk_hex ' down}')
-        SendInput('{' vk_hex ' down}')
+        ; SendEvent('{Blind}{' vk_hex ' down}')
+        ; SendPlay ('{' vk_hex ' down}')
       }
     } else {
       (dbg<_d)?'':(dbgtxt .= '✗name' "       🄷🢦 : vk=" kvk '¦' vk_hex ' @l' A_SendLevel ' → ' lvl_to ' ' hooks ' ¦' id_thread '¦ ' A_ThisFunc, OutputDebug(dbgtxt))
