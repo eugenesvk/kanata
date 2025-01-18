@@ -91,8 +91,8 @@ kanata_dll(vkC) {
       if (isOut < 0) { ; get as many keys as are available until reception errors out
         break
       }
-    }
-    (dbg<_d)?'':(dbgtxt:='¦' id_thread '¦ih' dir ' pos isH=' isH ' isOut=' dbgOut ' ' format(" 🕐Δ{:.3f}",A_TickCount - 🕐k_now) ' ' A_ThisFunc, OutputDebug(dbgtxt))
+    } ;🔚∎🏁
+    (dbg<_d+1)?'':(dbgtxt:='🏁ih' dir ' pos isH=' isH ' isOut=' dbgOut ' ' format(" 🕐Δ{:.3f}",A_TickCount - 🕐k_now) ' ' A_ThisFunc ' ¦' id_thread '¦', OutputDebug(dbgtxt))
   }
   cbK↑(token,  ih,vk,sc) {
     static _d := 1, isUp := true, dir := (isUp?'↑':'↓')
@@ -114,7 +114,7 @@ kanata_dll(vkC) {
         break
       }
     }
-    (dbg<_d)?'':(dbgtxt:='¦' id_thread '¦ih' dir ' pos isH=' isH ' isOut=' dbgOut ' ' format(" 🕐Δ{:.3f}",A_TickCount - 🕐k_now) ' ' A_ThisFunc, OutputDebug(dbgtxt))
+    (dbg<_d+1)?'':(dbgtxt:='🏁ih' dir ' pos isH=' isH ' isOut=' dbgOut ' ' format(" 🕐Δ{:.3f}",A_TickCount - 🕐k_now) ' ' A_ThisFunc ' ¦' id_thread '¦', OutputDebug(dbgtxt))
   }
   ; set up machinery for AHK to receive data from kanata
   cbKanataOut(kvk,ksc,up) {
@@ -153,9 +153,9 @@ kanata_dll(vkC) {
     }
     🕐2 := preciseTΔ(), 🕐Δ := 🕐2-🕐1
     if 🕐Δ > 0.5 {
-      (dbg<_d)?'':(OutputDebug('pos ' format(" 🕐Δ{:.3f}",🕐Δ) ' ¦' id_thread '¦ ' A_ThisFunc))
+      (dbg<_d+1)?'':(OutputDebug('🐢🏁 ' format(" 🕐Δ{:.3f}",🕐Δ) ' ¦' id_thread '¦ ' A_ThisFunc))
     } else {
-      (dbg<_d)?'':(OutputDebug('pos ' format(" 🕐Δ{:.3f}",🕐Δ) ' ¦' id_thread '¦ ' A_ThisFunc))
+      (dbg<_d+1)?'':(OutputDebug('🐇🏁 ' format(" 🕐Δ{:.3f}",🕐Δ) ' ¦' id_thread '¦ ' A_ThisFunc))
     }
     return 1
   }
