@@ -9,6 +9,7 @@ Dependencies and config:
   kanata_cfg	:= "./kanata_dll.kbd"	; kanata config @ this file location
   ihDuration	:= 999999            	; seconds of activity after pressing F8
   dbg       	:= 1                 	; script's debug level (0 to silence some of its output)
+  dbg_dll   	:= 1                  ; kanata's debug level (Err=1 Warn=2 Inf=3 Dbg=4 Trace=5)
 /*
 Brief overview of the architecture:
 Setup:
@@ -36,7 +37,7 @@ kanata_dll(vkC) {
   ; static K	:= keyConstant , vk := K._map, sc := K._mapsc  ; various key name constants, gets vk code to avoid issues with another layout
    ; , s    	:= helperString ; K.▼ = vk['▼']
   static is_init := false
-   ,lErr:=1, lWarn:=2, lInf:=3, lDbg:=4, lTrace:=5, log_lvl := lDbg ; Kanata's
+   ,lErr:=1, lWarn:=2, lInf:=3, lDbg:=4, lTrace:=5, log_lvl := dbg_dll ; Kanata's
    ,last↓ := [0,0]
    ,id_thread := get_thread_id()
    ,Cvk_d := GetKeyVK(vkC), Csc_d := GetKeySC(vkC), token1 := 1, ih0 := 0 ; decimal value
