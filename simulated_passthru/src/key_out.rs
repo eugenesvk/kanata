@@ -50,7 +50,8 @@ pub fn send_out_ev(in_ev: InputEvent) -> Result<()> {
     #[cfg(feature = "perf_logging")]
     let start = std::time::Instant::now();
     let key_event = KeyEvent::try_from(in_ev);
-    debug!("@send_out_ev key_event={key_event:?}");
+    // debug!("@send_out_ev key_event={key_event:?}");
+    info!("@send_out_ev key_event={key_event:?}");
     let vk: i64 = in_ev.code.into();
     let sc: i64 = 0;
     let up: i64 = in_ev.up.into();
@@ -69,7 +70,7 @@ pub fn send_out_ev(in_ev: InputEvent) -> Result<()> {
         if handled == 1 { "✓" } else { "✗" }
     );
     #[cfg(not(feature = "perf_logging"))]
-    debug!(
+    info!(
         "←←←{} fnHookCC {key_event:?} {vk} {sc} {up}",
         if handled == 1 { "✓" } else { "✗" }
     );
