@@ -962,10 +962,10 @@ The actions are as follows:
 
 The mouse wheel actions are:
 
-* `mwheel-up` or `🖱↑`: vertical scroll up
-* `mwheel-down` or `🖱↓`: vertical scroll down
-* `mwheel-left` or `🖱←`: horizontal scroll left
-* `mwheel-right` or `🖱→`: horizontal scroll right
+* `mwheel-up` or `🖱☸↑`: vertical scroll up
+* `mwheel-down` or `🖱☸↓`: vertical scroll down
+* `mwheel-left` or `🖱☸←`: horizontal scroll left
+* `mwheel-right` or `🖱☸→`: horizontal scroll right
 
 All of these actions accept two number strings. The first is the interval
 (unit: ms) between scroll actions. The second number is the distance
@@ -994,10 +994,10 @@ you will probably get way more events than you intended.
 
 The mouse movement actions are:
 
-* `movemouse-up` or `🖰↑`
-* `movemouse-down` or `🖰↓`
-* `movemouse-left` or `🖰←`
-* `movemouse-right` or `🖰→`
+* `movemouse-up` or `🖱↑`
+* `movemouse-down` or `🖱↓`
+* `movemouse-left` or `🖱←`
+* `movemouse-right` or `🖱→`
 
 Similar to the mouse wheel actions, all of these actions accept two number strings.
 The first is the interval (unit: ms) between movement actions and the second number
@@ -1006,10 +1006,10 @@ is the distance (unit: pixels) of each movement.
 The following are variants of the above mouse movements that apply linear mouse
 acceleration from the minimum distance to the maximum distance as the mapped key is held.
 
-* `movemouse-accel-up` or `🖰accel↑`
-* `movemouse-accel-down` or `🖰accel↓`
-* `movemouse-accel-left` or `🖰accel←`
-* `movemouse-accel-right` or `🖰accel→`
+* `movemouse-accel-up` or `🖱accel↑`
+* `movemouse-accel-down` or `🖱accel↓`
+* `movemouse-accel-left` or `🖱accel←`
+* `movemouse-accel-right` or `🖱accel→`
 
 All these actions accept four number strings. The first number is the
 interval (unit: ms) between movement actions. The second number is the time it
@@ -1023,7 +1023,7 @@ There is a toggable defcfg option related to `movemouse-accel` - <<movemouse-inh
 ==== Set absolute mouse position
 <<table-of-contents,Back to ToC>>
 
-The action `setmouse` or `set🖰` sets the absolute mouse position.
+The action `setmouse` or `set🖱` sets the absolute mouse position.
 
 WARNING: This is only supported in Windows right now.
 For an interesting keyboard-centric mouse solution in Linux,
@@ -1044,7 +1044,7 @@ Experimentation will be needed.
 ==== Modify the speed of mouse movements
 <<table-of-contents,Back to ToC>>
 
-The action `movemouse-speed` or `🖰speed` modifies the speed at which `movemouse` and
+The action `movemouse-speed` or `🖱speed` modifies the speed at which `movemouse` and
 `movemouse-accel` function at runtime. It does this by expanding or shrinking
 `min_distance` and `max_distance` while the action key is pressed.
 
@@ -1175,10 +1175,10 @@ There are four variants of the `+one-shot+` action:
   end on the first press of another key
 - `+one-shot-release+` or `+one-shot↑+`:
   end on the first release of another key
-- `+one-shot-press-pcancel+` or `+one-shot↓🗙+`:
+- `+one-shot-press-pcancel+` or `+one-shot↓⤫+`:
   end on the first press of another key
   or on re-press of another active one-shot key
-- `+one-shot-release-pcancel+` or `+one-shot↑🗙+`:
+- `+one-shot-release-pcancel+` or `+one-shot↑⤫+`:
   end on the first release of another key
   or on re-press of another active one-shot key
 
@@ -1282,10 +1282,10 @@ activate.
 
 There are two additional variants of `+tap-hold+`:
 
-* `+tap-hold-press+` or `+tap🠿↓+`
+* `+tap-hold-press+` or `+tap⬓↓+`
 ** If there is a press of a different key, the hold action is activated even if
 the hold timeout hasn't expired yet
-* `+tap-hold-release+` or `+tap🠿↑+`
+* `+tap-hold-release+` or `+tap⬓↑+`
 ** If there is a press+release of a different key, the hold action is activated
 even if the hold timeout hasn't expired yet
 
@@ -1304,15 +1304,15 @@ but you should be wary of activating the hold action unintentionally.
 
 There are further additional variants of `tap-hold-press` and `tap-hold-release`:
 
-- `tap-hold-press-timeout` or `tap🠿↓timeout`
-- `tap-hold-release-timeout` or `tap🠿↑timeout`
+- `tap-hold-press-timeout` or `tap⬓↓timeout`
+- `tap-hold-release-timeout` or `tap⬓↑timeout`
 
 These variants take a 5th parameter, in addition to the same 4 as the other
 variants. The 5th parameter is another action, which will activate if the hold
 timeout expires as opposed to being triggered by other key actions, whereas the
 non `-timeout` variants will activate the hold action in both cases.
 
-- `tap-hold-release-keys` or `tap🠿↑keys`
+- `tap-hold-release-keys` or `tap⬓↑keys`
 
 This variant takes a 5th parameter which is a list of keys
 that trigger an early tap
@@ -1338,7 +1338,7 @@ that are in `deflayer`, `defalias`, etc. for the corresponding `defsrc` key.
 )
 ----
 
-- `tap-hold-except-keys` or `tap-hold🗙keys`
+- `tap-hold-except-keys` or `tap-hold⤫keys`
 
 This variant takes a 5th parameter which is a list of keys
 that always trigger a tap
