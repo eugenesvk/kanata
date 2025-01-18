@@ -80,7 +80,7 @@ kanata_dll(vkC) {
       dbgtxt := ''
       vk_hex := Format("vk{:x}",vk)
       key_name := GetKeyName(Format("vk{:x}",vk)) ; bugs with layouts, not english even if english is active
-      dbgtxt .= "ih" dir (isSet(key_name)?key_name:'') "  ¦" id_thread "¦  🢥🄺: vk=" vk "¦" vk_hex " sc=" sc ' l' A_SendLevel
+      dbgtxt .= "ih" dir (isSet(key_name)?key_name:'') "      🢥🄺: vk=" vk "¦" vk_hex " sc=" sc ' l' A_SendLevel " ¦" id_thread "¦"
       OutputDebug(dbgtxt)
     }
     isH := fnKanata_in_ev(vk,sc,isUp)
@@ -102,7 +102,7 @@ kanata_dll(vkC) {
       dbgtxt := ''
       vk_hex := Format("vk{:x}",vk)
       key_name := GetKeyName(Format("vk{:x}",vk)) ; bugs with layouts, not english even if english is active
-      dbgtxt .= "ih" dir (isSet(key_name)?key_name:'') "  ¦" id_thread "¦  🢥🄺: vk=" vk "¦" vk_hex " sc=" sc ' l' A_SendLevel
+      dbgtxt .= "ih" dir (isSet(key_name)?key_name:'') "      🢥🄺: vk=" vk "¦" vk_hex " sc=" sc ' l' A_SendLevel " ¦" id_thread "¦"
       OutputDebug(dbgtxt)
     }
     isH := fnKanata_in_ev(vk,sc,isUp)
