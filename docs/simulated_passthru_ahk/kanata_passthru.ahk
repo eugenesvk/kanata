@@ -80,7 +80,7 @@ kanata_dll(vkC) {
       dbgtxt := ''
       vk_hex := Format("vk{:x}",vk)
       key_name := GetKeyName(Format("vk{:x}",vk)) ; bugs with layouts, not english even if english is active
-      dbgtxt .= "ih" dir (isSet(key_name)?key_name:'') "  ¦" id_thread "¦ ahk→→→kan: vk=" vk "¦" vk_hex " sc=" sc ' l' A_SendLevel
+      dbgtxt .= "ih" dir (isSet(key_name)?key_name:'') "  ¦" id_thread "¦  🢥🄺: vk=" vk "¦" vk_hex " sc=" sc ' l' A_SendLevel
       OutputDebug(dbgtxt)
     }
     isH := fnKanata_in_ev(vk,sc,isUp)
@@ -102,7 +102,7 @@ kanata_dll(vkC) {
       dbgtxt := ''
       vk_hex := Format("vk{:x}",vk)
       key_name := GetKeyName(Format("vk{:x}",vk)) ; bugs with layouts, not english even if english is active
-      dbgtxt .= "ih" dir (isSet(key_name)?key_name:'') "  ¦" id_thread "¦ ahk→→→kan: vk=" vk "¦" vk_hex " sc=" sc ' l' A_SendLevel
+      dbgtxt .= "ih" dir (isSet(key_name)?key_name:'') "  ¦" id_thread "¦  🢥🄺: vk=" vk "¦" vk_hex " sc=" sc ' l' A_SendLevel
       OutputDebug(dbgtxt)
     }
     isH := fnKanata_in_ev(vk,sc,isUp)
@@ -140,7 +140,7 @@ kanata_dll(vkC) {
       dbgtxt .= dir
     }
     if isSet(vk_hex) {
-      (dbg<_d)?'':(dbgtxt .= key_name "       ahk←←←: vk=" kvk '¦' vk_hex ' @l' A_SendLevel ' → ' lvl_to ' ' hooks ' ¦' id_thread '¦ ' A_ThisFunc, OutputDebug(dbgtxt))
+      (dbg<_d)?'':(dbgtxt .= key_name "       🄷🢦 : vk=" kvk '¦' vk_hex ' @l' A_SendLevel ' → ' lvl_to ' ' hooks ' ¦' id_thread '¦ ' A_ThisFunc, OutputDebug(dbgtxt))
       if up {
         ; SendEvent('{' vk_hex ' up}')
         SendInput('{' vk_hex ' up}')
@@ -149,7 +149,7 @@ kanata_dll(vkC) {
         SendInput('{' vk_hex ' down}')
       }
     } else {
-      (dbg<_d)?'':(dbgtxt .= '✗name' "       ahk←←←: vk=" kvk '¦' vk_hex ' @l' A_SendLevel ' → ' lvl_to ' ' hooks ' ¦' id_thread '¦ ' A_ThisFunc, OutputDebug(dbgtxt))
+      (dbg<_d)?'':(dbgtxt .= '✗name' "       🄷🢦 : vk=" kvk '¦' vk_hex ' @l' A_SendLevel ' → ' lvl_to ' ' hooks ' ¦' id_thread '¦ ' A_ThisFunc, OutputDebug(dbgtxt))
     }
     🕐2 := preciseTΔ(), 🕐Δ := 🕐2-🕐1
     if 🕐Δ > 0.5 {
