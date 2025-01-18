@@ -7,7 +7,7 @@ Dependencies and config:
 */
   libPath   	:= "./"              	; kanata_passthru.dll @ this folder
   kanata_cfg	:= "./kanata_dll.kbd"	; kanata config @ this file location
-  ihDuration	:= 10                	; seconds of activity after pressing F8
+  ihDuration	:= 999999            	; seconds of activity after pressing F8
   dbg       	:= 1                 	; script's debug level (0 to silence some of its output)
 /*
 Brief overview of the architecture:
@@ -84,10 +84,10 @@ kanata_dll(vkC) {
     }
     isH := fnKanata_in_ev(vk,sc,isUp)
     dbgOut := ''
-    for i in [4,4,4,5,5,5] { ; poll a key out channel@kanata) a few times to see if there are key events
+    for i in [1,2,3,4,5,5,5,5] { ; poll a key out channel@kanata) a few times to see if there are key events
       sleep(i)
       isOut := K_output_ev_check(), dbgOut.=isOut
-      if (isOut < 0) { ; get as many keys as are available untill reception errors out
+      if (isOut < 0) { ; get as many keys as are available until reception errors out
         break
       }
     }
@@ -106,7 +106,7 @@ kanata_dll(vkC) {
     }
     isH := fnKanata_in_ev(vk,sc,isUp)
     dbgOut := ''
-    for i in [4,4,4,5,5,5] { ; poll a key out channel@kanata) a few times to see if there are key events
+    for i in [1,2,3,4,5,5,5,5] { ; poll a key out channel@kanata) a few times to see if there are key events
       sleep(i)
       isOut := K_output_ev_check(), dbgOut.=isOut
       if (isOut < 0) { ; get as many keys as are available untill reception errors out
@@ -129,7 +129,7 @@ kanata_dll(vkC) {
       C↑ := false
       return
     }
-    ; Critical ; todo: needed??? avoid being interrupted by itself (or any other thread)
+    Critical ; todo: needed??? avoid being interrupted by itself (or any other thread)
     if (dbg>=_d) {
       dbgtxt := ''
       dir := (up?'↑':'↓')

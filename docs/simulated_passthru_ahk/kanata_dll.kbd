@@ -5,8 +5,8 @@
 )
 
 (defvar
-  🕐↕	1000 ;;|500| tap-timeout
-  🕐🠿	1500 ;;|500| hold-timeout
+  🕐↕	150 ;;|500| tap-timeout
+  🕐🠿	300 ;;|500| hold-timeout
   )
 (defalias	;;      timeout→ 	tap	  hold   ¦	 tap	 hold ←action
   f⌂‹⇧   	(tap-hold-release	$🕐↕	$🕐🠿       	f   	‹⇧)
