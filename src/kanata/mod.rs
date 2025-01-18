@@ -997,7 +997,9 @@ impl Kanata {
         let custom_event = layout.tick();
         let mut live_reload_requested = false;
         let cur_keys = &mut self.cur_keys;
+        log::debug!("@handle_keystate_changes: pre0  curr_keys {:?}", cur_keys);
         cur_keys.extend(layout.keycodes());
+        log::debug!("@handle_keystate_changes: +lyt  curr_keys {:?}", cur_keys);
         let mut reverse_release_order = false;
 
         // Deal with unmodded. Unlike other custom actions, this should come before key presses and
@@ -1053,10 +1055,12 @@ impl Kanata {
                 cur_keys.retain(|k| *k != kc);
             }
             cur_keys.extend(self.unmodded_keys.iter());
+            log::debug!("@handle_keystate_changes: +umod curr_keys {:?}", cur_keys);
         }
         if !self.unshifted_keys.is_empty() {
             cur_keys.retain(|k| !matches!(k, KeyCode::LShift | KeyCode::RShift));
             cur_keys.extend(self.unshifted_keys.iter());
+            log::debug!("@handle_keystate_changes: +usft curr_keys {:?}", cur_keys);
         }
 
         self.overrides
