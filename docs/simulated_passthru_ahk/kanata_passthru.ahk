@@ -144,18 +144,52 @@ kanata_dll(vkC) {
     }
     if isSet(vk_hex) {
       (dbg<_d)?'':(dbgtxt .= key_name "       🄷🢦 : vk=" kvk '¦' vk_hex ' @l' A_SendLevel ' → ' lvl_to ' ' hooks ' ¦' id_thread '¦ ' A_ThisFunc, OutputDebug(dbgtxt))
+      if vk_hex == 'vk90' {
       if up {
-        SendInput('{Blind}{' vk_hex ' up}') ; less error-prone?
-        ; SendInput('{' vk_hex ' up}')
+        OutputDebug("UP NUMLOCK! vk90 switching numlock state manually sate before " GetKeyState("NumLock", "T"))
+        ; WORKS
+        ; sleep(2)
+        ; SetNumLockState !GetKeyState("NumLock", "T")
+        ; sleep(2)
+        ; FAILS
+        sleep(2)
+        SendInput('{vk90 down}')
+        sleep(2)
+        SendInput('{vk90 up}')
+        sleep(2)
+        OutputDebug("state after " GetKeyState("NumLock", "T"))
+      } else {
+        ; OutputDebug("down NUMLOCK! vk90 switching numlock state manually sate before " GetKeyState("NumLock", "T"))
+        ; SendInput('{vk90 down}')
+        ; OutputDebug("state after " GetKeyState("NumLock", "T"))
+      }
+      } else {
+      if up {
+        ; SendInput('{Blind}{' vk_hex ' up}') ; less error-prone?
+        SendInput('{' vk_hex ' up}')
         ; SendEvent('{' vk_hex ' up}')
         ; SendEvent('{Blind}{' vk_hex ' up}')
         ; SendPlay ('{' vk_hex ' up}')
+
+        ; WORKS, but only for regular keys
+        ; sleep(10)
+        ; SetNumLockState !GetKeyState("NumLock", "T")
+
+        ; WORKS, but only for regular keys
+        ; name := 'Numlock'
+        ; ; vk  sc
+        ; ; 90  145		u	0.12	Numlock
+        ; vk_hex := 'vk90' ;
+        ; SendInput('{vk90 up}'  )
+        ; sleep(10)
       } else {
-        SendInput('{Blind}{' vk_hex ' down}') ; less error-prone?
-        ; SendInput('{' vk_hex ' down}')
+        ; SendInput('{Blind}{' vk_hex ' down}') ; less error-prone?
+        SendInput('{' vk_hex ' down}')
+        ; SendInput('{vk90 down}')
         ; SendEvent('{' vk_hex ' down}')
         ; SendEvent('{Blind}{' vk_hex ' down}')
         ; SendPlay ('{' vk_hex ' down}')
+      }
       }
     } else {
       (dbg<_d)?'':(dbgtxt .= '✗name' "       🄷🢦 : vk=" kvk '¦' vk_hex ' @l' A_SendLevel ' → ' lvl_to ' ' hooks ' ¦' id_thread '¦ ' A_ThisFunc, OutputDebug(dbgtxt))
