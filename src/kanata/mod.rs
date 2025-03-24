@@ -119,6 +119,8 @@ pub struct Kanata {
     pub include_names: Option<Vec<String>>, // Tracks the Linux/Macos user configuration for device names (instead of paths) that should be included for interception and processing by kanata.
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     pub exclude_names: Option<Vec<String>>, // Tracks the Linux/Macos user configuration for device names (instead of paths) that should be excluded for interception and processing by kanata.
+    #[cfg(target_os = "windows")]
+    pub windows_sync_keystates: bool, // Tracks whether Kanata should try to synchronize keystates with the Windows OS. Has no effect on Interception. Fixes some use cases related to admin window permissions and potentially locking via Win+L.
     #[cfg(all(feature = "interception_driver", target_os = "windows"))]
     intercept_mouse_hwids_exclude: Option<Vec<[u8; HWID_ARR_SZ]>>, // Used to know which mouse input devices to exclude from processing inputs by kanata. This is mutually exclusive from `intercept_mouse_hwids` and kanata will panic if both are included.
     #[cfg(all(feature = "interception_driver", target_os = "windows"))]
@@ -264,7 +266,7 @@ impl Kanata {
         }
         update_kbd_out(&cfg.options, &kbd_out)?;
         #[cfg(target_os = "windows")]
-        set_win_altgr_behaviour(cfg.options.windows_altgr);
+        set_win_altgr_behaviour(cfg.options.windows_opts.windows_altgr);
         *MAPPED_KEYS.lock() = cfg.mapped_keys;
         #[cfg(feature = "zippychord")]
         {
@@ -308,6 +310,8 @@ impl Kanata {
             include_names: cfg.options.linux_opts.linux_dev_names_include,
             #[cfg(target_os = "linux")]
             exclude_names: cfg.options.linux_opts.linux_dev_names_exclude,
+            #[cfg(target_os = "windows")]
+            windows_sync_keystates: cfg.options.windows_opts.sync_keystates,
             #[cfg(all(target_os = "windows", feature = "interception_driver"))]
             intercept_mouse_hwids: cfg.options.windows_interception_mouse_hwids,
             #[cfg(all(target_os = "windows", feature = "interception_driver"))]
@@ -437,6 +441,8 @@ impl Kanata {
             include_names: cfg.options.linux_opts.linux_dev_names_include,
             #[cfg(target_os = "linux")]
             exclude_names: cfg.options.linux_opts.linux_dev_names_exclude,
+            #[cfg(target_os = "windows")]
+            windows_sync_keystates: cfg.options.windows_opts.sync_keystates,
             #[cfg(all(feature = "interception_driver", target_os = "windows"))]
             intercept_mouse_hwids: cfg.options.windows_interception_mouse_hwids,
             #[cfg(all(feature = "interception_driver", target_os = "windows"))]
@@ -501,7 +507,7 @@ impl Kanata {
         };
         update_kbd_out(&cfg.options, &self.kbd_out)?;
         #[cfg(target_os = "windows")]
-        set_win_altgr_behaviour(cfg.options.windows_altgr);
+        set_win_altgr_behaviour(cfg.options.windows_opts.windows_altgr);
         self.sequence_backtrack_modcancel = cfg.options.sequence_backtrack_modcancel;
         self.sequence_always_on = cfg.options.sequence_always_on;
         self.sequence_input_mode = cfg.options.sequence_input_mode;
@@ -520,11 +526,15 @@ impl Kanata {
         self.dynamic_macro_replay_behaviour = ReplayBehaviour {
             delay: cfg.options.dynamic_macro_replay_delay_behaviour,
         };
+        self.switch_max_key_timing = cfg.switch_max_key_timing;
         #[cfg(feature = "tcp_server")]
         {
             self.virtual_keys = cfg.fake_keys;
         }
-        self.switch_max_key_timing = cfg.switch_max_key_timing;
+        #[cfg(target_os = "windows")]
+        {
+            self.windows_sync_keystates = cfg.options.windows_opts.sync_keystates;
+        }
         #[cfg(all(target_os = "windows", feature = "gui"))] {
         self.gui_opts.tray_icon               	= cfg.options.gui_opts.tray_icon;
         self.gui_opts.icon_match_layer_name   	= cfg.options.gui_opts.icon_match_layer_name;
