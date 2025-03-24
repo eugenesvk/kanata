@@ -2,6 +2,7 @@
 
 use core::fmt;
 use log::{debug, info, trace};
+use once_cell::sync::Lazy;
 use parking_lot::Mutex;
 use std::cell::Cell;
 use std::io;
@@ -22,7 +23,6 @@ pub const LLHOOK_IDLE_TIME_SECS_CLEAR_INPUTS: u64 = 60;
 
 type HookFn = dyn FnMut(InputEvent) -> bool + Send + Sync + 'static;
 
-type Lazy<T> = std::sync::LazyLock<T>;
 pub static HOOK_CB: Lazy<Mutex<Option<Box<HookFn>>>> = Lazy::new(|| Mutex::new(None)); // store thread-safe hook callback with a mutex (can be called from an external process)
 
 pub struct KeyboardHook {} // reusing hook type for our listener
