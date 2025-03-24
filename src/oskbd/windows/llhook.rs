@@ -198,6 +198,9 @@ impl KbdOut {
     pub fn write_code(&mut self, code: u32, value: KeyValue) -> Result<(), io::Error> {
         super::write_code(code as u16, value)
     }
+    pub fn write_code_raw(&mut self, code: u16, value: KeyValue) -> Result<(), io::Error> {
+        super::write_code_raw(code, value)
+    }
     pub fn press_key(&mut self, key: OsCode) -> Result<(), io::Error> {
         self.write_key(key, KeyValue::Press)
     }
