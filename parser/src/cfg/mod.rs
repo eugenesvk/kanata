@@ -2421,11 +2421,12 @@ fn parse_unicode(ac_params: &[SExpr], s: &ParserState) -> Result<&'static Kanata
         .ok_or_else(|| anyhow_expr!(&ac_params[0], "{ERR_STR}"))?
 }
 
-enum CmdType {
-    Standard,        	// Execute command in own thread.
-    OutputKeys,      	// Execute command synchronously and output stdout as macro-like SExpr.
-    ClipboardSet,    	// Execute command and set clipboard to output. Clipboard content is passed as stdin to the command.
-    ClipboardSaveSet,	// Execute command and set clipboard save id to output. Clipboard save id content is passed as stdin to the command.
+#[docpos] enum CmdType {
+    Standard,        	/// Execute command in own thread.
+    OutputKeys,      	/// Execute command synchronously and output stdout as macro-like SExpr.
+    ClipboardSet,    	/// Execute command and set clipboard to output. Clipboard content is passed as stdin to the command.
+                     	//↓ Execute command and set clipboard save id to output. Clipboard save id content is passed as stdin to the command.
+    ClipboardSaveSet,	//
 }
 
 // Parse cmd, but there are 2 arguments before specifying normal log and error log

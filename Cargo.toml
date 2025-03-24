@@ -65,7 +65,7 @@ time = "0.3.36"
 kanata-keyberon = { path = "keyberon" }
 kanata-parser =   { path = "parser" }
 kanata-tcp-protocol = { path = "tcp_protocol" }
-docpos = "0.2.0"
+docpos = "0.2.1"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 karabiner-driverkit = "0.1.4"
