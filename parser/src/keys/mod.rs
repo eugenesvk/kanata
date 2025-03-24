@@ -254,6 +254,11 @@ pub fn str_to_oscode(s: &str) -> Option<OsCode> {
     #[cfg(any(target_os="linux",target_os="unknown"))] "plyr"|"player" 	=> OsCode::KEY_PLAYER,
     #[cfg(any(target_os="linux",target_os="unknown"))] "powr"|"power"  	=> OsCode::KEY_POWER,
     #[cfg(any(target_os="linux",target_os="unknown"))] "zzz"  | "sleep"	=> OsCode::KEY_SLEEP,
+    "sls"|"SpotLightSearch"                                            	=> OsCode::KEY_249,
+    "dtn"|"Dictation"                                                  	=> OsCode::KEY_250,
+    "dnd"|"DoNotDisturb"                                               	=> OsCode::KEY_251,
+    "mctl"|"MissionControl"                                            	=> OsCode::KEY_252,
+    "lpad"|"LaunchPad"                                                 	=> OsCode::KEY_253,
     // Keys that behave as no-ops but can be used in sequences. Also see: POTENTIAL PROBLEM - G-keys
     "nop0" => OsCode::KEY_676,"nop1" => OsCode::KEY_677,"nop2" => OsCode::KEY_678,"nop3" => OsCode::KEY_679,"nop4" => OsCode::KEY_680,"nop5" => OsCode::KEY_681,"nop6" => OsCode::KEY_682,"nop7" => OsCode::KEY_683,"nop8" => OsCode::KEY_684,"nop9" => OsCode::KEY_685,
     _ => return None,
