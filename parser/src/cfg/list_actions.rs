@@ -53,6 +53,8 @@ pub const ON_PRESS_FAKEKEY: &str = "on-press-fakekey";
 pub const ON_PRESS_FAKEKEY_A: &str = "on↓fakekey";
 pub const ON_RELEASE_FAKEKEY: &str = "on-release-fakekey";
 pub const ON_RELEASE_FAKEKEY_A: &str = "on↑fakekey";
+pub const ON_PRESS_DELAY: &str = "on-press-delay";
+pub const ON_RELEASE_DELAY: &str = "on-release-delay";
 pub const ON_PRESS_FAKEKEY_DELAY: &str = "on-press-fakekey-delay";
 pub const ON_PRESS_FAKEKEY_DELAY_A: &str = "on↓fakekey-delay";
 pub const ON_RELEASE_FAKEKEY_DELAY: &str = "on-release-fakekey-delay";
@@ -155,6 +157,7 @@ pub fn is_list_action(ac: &str) -> bool {
         RELEASE_LAYER,RELEASE_LAYER_A,
         ON_PRESS_FAKEKEY,ON_PRESS_FAKEKEY_A,
         ON_RELEASE_FAKEKEY,ON_RELEASE_FAKEKEY_A,
+        ON_PRESS_DELAY,ON_RELEASE_DELAY,
         ON_PRESS_FAKEKEY_DELAY,ON_PRESS_FAKEKEY_DELAY_A,
         ON_RELEASE_FAKEKEY_DELAY,ON_RELEASE_FAKEKEY_DELAY_A,
         ON_IDLE_FAKEKEY,
