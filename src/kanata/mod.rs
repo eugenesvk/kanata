@@ -86,82 +86,79 @@ type HashSet<T> = rustc_hash::FxHashSet<T>;
 type HashMap<K, V> = rustc_hash::FxHashMap<K, V>;
 
 pub struct Kanata {
-    pub kbd_out: KbdOut,              // Handle to some OS keyboard output mechanism.
-    pub cfg_paths: Vec<PathBuf>, // Paths to one or more configuration files that define kanata's behaviour.
-    pub cur_cfg_idx: usize, // Index into `cfg_paths`, used to know which file to live reload. Changes when cycling through the configuration files.
-    pub key_outputs: cfg::KeyOutputs, // The potential key outputs of every key input. Used for managing key repeat.
-    pub layout: cfg::KanataLayout,    // Handle to the keyberon library layout.
-    pub cur_keys: Vec<KeyCode>, // Reusable vec (to save on allocations) that stores the currently active output keys. This can be cleared and reused in various procedures as buffer space.
-    pub prev_keys: Vec<KeyCode>, // Reusable vec (to save on allocations) that stores the active output keys from the previous tick. This must only be updated once per tick and must not be modified outside of the one procedure that updates it.
-    pub layer_info: Vec<LayerInfo>, // Used for printing layer info to the info log when changing layers.
-    pub prev_layer: usize,          // Used to track when a layer change occurs.
-    pub scroll_state: Option<ScrollState>, // Vertical scrolling state tracker. Is Some(...) when a vertical scrolling action is active and None otherwise.
-    pub hscroll_state: Option<ScrollState>, // Horizontal scrolling state. Is Some(...) when a horizontal scrolling action is active and None otherwise.
-    pub move_mouse_state_vertical: Option<MoveMouseState>, // Vertical mouse movement state. Is Some(...) when vertical mouse movement is active and None otherwise.
-    pub move_mouse_state_horizontal: Option<MoveMouseState>, // Horizontal mouse movement state. Is Some(...) when horizontal mouse movement is active and None otherwise.
-    pub move_mouse_speed_modifiers: Vec<u16>, // A list of mouse speed modifiers in percentages by which mouse travel distance is scaled.
-    pub sequence_backtrack_modcancel: bool, // The user configuration for backtracking to find valid sequences. See <../../docs/sequence-adding-chords-ideas.md> for more info.
-    pub sequence_always_on: bool, // The user configuration for sequences be permanently on.
-    pub sequence_input_mode: SequenceInputMode, // Default sequence input mode for use with always-on.
-    pub sequence_timeout: u16, // Default sequence timeout for use with always-on.
-    pub sequence_state: SequenceState, // Tracks sequence progress. Is Some(...) when in sequence mode and None otherwise.
-    pub sequences: cfg::KeySeqsToFKeys,        // Valid sequences defined in the user configuration.
-    pub dynamic_macros: HashMap<u16, Vec<DynamicMacroItem>>, // Stores the user recored dynamic macros.
-    pub dynamic_macro_replay_state: Option<DynamicMacroReplayState>, // Tracks the progress of an active dynamic macro. Is Some(...) when a dynamic macro is being replayed and None otherwise.
-    pub dynamic_macro_record_state: Option<DynamicMacroRecordState>, // Tracks the the inputs for a dynamic macro recording. Is Some(...) when a dynamic macro is being recorded and None otherwise.
-    pub overrides: Overrides, // Global overrides defined in the user configuration.
-    pub override_states: OverrideStates, // Reusable allocations to help with computing whether overrides are active based on key outputs.
-    last_tick: instant::Instant, // Time of the last tick to know how many tick iterations to run, to achieve a 1ms tick interval more closely.
-    time_remainder: u128, // Tracks the non-whole-millisecond gaps between ticks to know when to do another tick iteration without sleeping, to achive a 1ms tick interval more closely.
-    live_reload_requested: bool, // Is true if a live reload was requested by the user and false otherwise.
-    #[cfg(target_os = "linux")]
-    pub kbd_in_paths: Vec<String>, // Linux input paths in the user configuration.
-    #[cfg(target_os = "linux")]
-    continue_if_no_devices: bool, // Tracks the Linux user configuration to continue or abort if no devices are found.
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    pub include_names: Option<Vec<String>>, // Tracks the Linux/Macos user configuration for device names (instead of paths) that should be included for interception and processing by kanata.
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    pub exclude_names: Option<Vec<String>>, // Tracks the Linux/Macos user configuration for device names (instead of paths) that should be excluded for interception and processing by kanata.
-    #[cfg(target_os = "windows")]
-    pub windows_sync_keystates: bool, // Tracks whether Kanata should try to synchronize keystates with the Windows OS. Has no effect on Interception. Fixes some use cases related to admin window permissions and potentially locking via Win+L.
-    #[cfg(all(feature = "interception_driver", target_os = "windows"))]
-    intercept_mouse_hwids_exclude: Option<Vec<[u8; HWID_ARR_SZ]>>, // Used to know which mouse input devices to exclude from processing inputs by kanata. This is mutually exclusive from `intercept_mouse_hwids` and kanata will panic if both are included.
-    #[cfg(all(feature = "interception_driver", target_os = "windows"))]
-    intercept_kb_hwids: Option<Vec<[u8; HWID_ARR_SZ]>>, // Used to know which input device to treat as a keyboard for intercepting and processing inputs by kanata.
-    #[cfg(all(feature = "interception_driver", target_os = "windows"))]
-    intercept_kb_hwids_exclude: Option<Vec<[u8; HWID_ARR_SZ]>>, // Used to know which keyboard input devices to exclude from processing inputs by kanata. This// is mutually exclusive from `intercept_kb_hwids` and kanata will panic if both are included.
-    log_layer_changes: bool, // User configuration to do logging of layer changes or not.
-    pub caps_word: Option<CapsWordState>, // Tracks the caps-word state. Is Some(...) if caps-word is active and None otherwise.
-    #[cfg(target_os = "linux")]
-    pub x11_repeat_rate: Option<KeyRepeatSettings>, // Config items from `defcfg`.
-    #[cfg(target_os = "linux")]
-    pub device_detect_mode: DeviceDetectMode, // Determines what types of devices to grab based on autodetection mode.
-    pub waiting_for_idle: HashSet<FakeKeyOnIdle>, // Fake key actions that are waiting for a certain duration of keyboard idling.
-    pub vkeys_pending_release: HashMap<Coord, u16>, // Fake key actions that are being held and are pending release. The key is the coordinate and the value is the number of ticks until release should be done.
-    pub ticks_since_idle: u16,                    // Number of ticks since kanata was idle.
-    movemouse_inherit_accel_state: bool, // If a mousemove action is active and another mousemove action is activated, reuse the acceleration state.
-    movemouse_smooth_diagonals: bool, // Removes jaggedneess of vertical and horizontal mouse movements when used simultaneously at the cost of increased mousemove actions latency.
-    movemouse_buffer: Option<(Axis, CalculatedMouseMove)>, // If movemouse_smooth_diagonals is enabled, the previous mouse actions gets stored in this buffer and if the next movemouse action is opposite axis than the one stored in the buffer, both events are outputted at the same time.
-    override_release_on_activation: bool,
-    dynamic_macro_max_presses: u16, // Configured maximum for dynamic macro recording, to protect users from themselves if they have accidentally left it on.
-    dynamic_macro_replay_behaviour: ReplayBehaviour, // Determines behaviour of replayed dynamic macros.
-    unmodded_keys: Vec<KeyCode>, // Keys that should be unmodded. If non-empty, any modifier should be cleared.
-    unmodded_mods: UnmodMods, // Modifiers to be cleared in case the above is non-empty.
-    unshifted_keys: Vec<KeyCode>, // Keys that should be unshifted. If non-empty, left+right shift keys should be cleared.
-    last_pressed_key: KeyCode,    // Keep track of last pressed key for [`CustomAction::Repeat`].
-    #[cfg(feature = "tcp_server")]
-    pub virtual_keys: HashMap<String, usize>, // Names of fake keys mapped to their index in the fake keys row
-    pub switch_max_key_timing: u16, // The maximum value of switch's key-timing item in the configuration.
-    #[cfg(feature = "tcp_server")]
-    tcp_server_address: Option<SocketAddrWrapper>, //
-    /// Various GUI-related options.
-    pub gui_opts: CfgOptionsGui,
-    pub allow_hardware_repeat: bool,
-    /// When > 0, it means macros should be cancelled on the next press.
-    /// Upon cancelling this should be set to 0.
-    pub macro_on_press_cancel_duration: u32,
-    /// Stores user's saved clipboard contents.
-    pub saved_clipboard_content: SavedClipboardData,
+  pub kbd_out                       	:KbdOut                             	,/// Handle to some OS keyboard output mechanism.
+  pub cfg_paths                     	:Vec<PathBuf>                       	,/// Paths to one or more configuration files that define kanata's behaviour.
+  pub cur_cfg_idx                   	:usize                              	,/// Index into `cfg_paths`, used to know which file to live reload. Changes when cycling through the configuration files.
+  pub key_outputs                   	:cfg::KeyOutputs                    	,/// The potential key outputs of every key input. Used for managing key repeat.
+  pub layout                        	:cfg::KanataLayout                  	,/// Handle to the keyberon library layout.
+  pub cur_keys                      	:Vec<KeyCode>                       	,/// Reusable vec (to save on allocations) that stores the currently active output keys. This can be cleared and reused in various procedures as buffer space.
+  pub prev_keys                     	:Vec<KeyCode>                       	,/// Reusable vec (to save on allocations) that stores the active output keys from the previous tick. This must only be updated once per tick and must not be modified outside of the one procedure that updates it.
+  pub layer_info                    	:Vec<LayerInfo>                     	,/// Used for printing layer info to the info log when changing layers.
+  pub prev_layer                    	:usize                              	,/// Used to track when a layer change occurs.
+  pub scroll_state                  	:Option<ScrollState>                	,/// Vertical scrolling state tracker. Is Some(...) when a vertical scrolling action is active and None otherwise.
+  pub hscroll_state                 	:Option<ScrollState>                	,/// Horizontal scrolling state. Is Some(...) when a horizontal scrolling action is active and None otherwise.
+  pub move_mouse_state_vertical     	:Option<MoveMouseState>             	,/// Vertical mouse movement state. Is Some(...) when vertical mouse movement is active and None otherwise.
+  pub move_mouse_state_horizontal   	:Option<MoveMouseState>             	,/// Horizontal mouse movement state. Is Some(...) when horizontal mouse movement is active and None otherwise.
+  pub move_mouse_speed_modifiers    	:Vec<u16>                           	,/// A list of mouse speed modifiers in percentages by which mouse travel distance is scaled.
+  pub sequence_backtrack_modcancel  	:bool                               	,/// The user configuration for backtracking to find valid sequences. See <../../docs/sequence-adding-chords-ideas.md> for more info.
+  pub sequence_always_on            	:bool                               	,/// The user configuration for sequences be permanently on.
+  pub sequence_input_mode           	:SequenceInputMode                  	,/// Default sequence input mode for use with always-on.
+  pub sequence_timeout              	:u16                                	,/// Default sequence timeout for use with always-on.
+  pub sequence_state                	:SequenceState                      	,/// Tracks sequence progress. Is Some(...) when in sequence mode and None otherwise.
+  pub sequences                     	:cfg::KeySeqsToFKeys                	,/// Valid sequences defined in the user configuration.
+  pub dynamic_macros                	:HashMap<u16, Vec<DynamicMacroItem>>	,/// Stores the user recored dynamic macros.
+  pub dynamic_macro_replay_state    	:Option<DynamicMacroReplayState>    	,/// Tracks the progress of an active dynamic macro. Is Some(...) when a dynamic macro is being replayed and None otherwise.
+  pub dynamic_macro_record_state    	:Option<DynamicMacroRecordState>    	,/// Tracks the the inputs for a dynamic macro recording. Is Some(...) when a dynamic macro is being recorded and None otherwise.
+  pub overrides                     	:Overrides                          	,/// Global overrides defined in the user configuration.
+  pub override_states               	:OverrideStates                     	,/// Reusable allocations to help with computing whether overrides are active based on key outputs.
+  last_tick                         	:instant::Instant                   	,/// Time of the last tick to know how many tick iterations to run, to achieve a 1ms tick interval more closely.
+  time_remainder                    	:u128                               	,/// Tracks the non-whole-millisecond gaps between ticks to know when to do another tick iteration without sleeping, to achive a 1ms tick interval more closely.
+  live_reload_requested             	:bool                               	,/// Is true if a live reload was requested by the user and false otherwise.
+  #[cfg(target_os                   	="linux")]                          	 //
+  pub kbd_in_paths                  	:Vec<String>                        	,/// Linux input paths in the user configuration.
+  #[cfg(target_os                   	="linux")]                          	 //
+  continue_if_no_devices            	:bool                               	,/// Tracks the Linux user configuration to continue or abort if no devices are found.
+  #[cfg(any(target_os               	="linux", target_os="macos"))]      	 //
+  pub include_names                 	:Option<Vec<String>>                	,/// Tracks the Linux/Macos user configuration for device names (instead of paths) that should be included for interception and processing by kanata.
+  #[cfg(any(target_os               	="linux", target_os="macos"))]      	 //
+  pub exclude_names                 	:Option<Vec<String>>                	,/// Tracks the Linux/Macos user configuration for device names (instead of paths) that should be excluded for interception and processing by kanata.
+  #[cfg(target_os                   	="windows")]
+  pub windows_sync_keystates        	:bool                               	,/// Tracks whether Kanata should try to synchronize keystates with the Windows OS. Has no effect on Interception. Fixes some use cases related to admin window permissions and potentially locking via Win+L.
+  #[cfg(all(feature                 	="interception_driver",target_os    	="windows"))]
+  intercept_mouse_hwids_exclude     	:Option<Vec<[u8; HWID_ARR_SZ]>>     	,/// Used to know which mouse input devices to exclude from processing inputs by kanata. This is mutually exclusive from `intercept_mouse_hwids` and kanata will panic if both are included.
+  #[cfg(all(feature                 	="interception_driver",target_os    	="windows"))]
+  intercept_kb_hwids                	:Option<Vec<[u8; HWID_ARR_SZ]>>     	,/// Used to know which input device to treat as a keyboard for intercepting and processing inputs by kanata.
+  #[cfg(all(feature                 	="interception_driver",target_os    	="windows"))]
+  intercept_kb_hwids_exclude        	:Option<Vec<[u8; HWID_ARR_SZ]>>     	,/// Used to know which keyboard input devices to exclude from processing inputs by kanata. This// is mutually exclusive from `intercept_kb_hwids` and kanata will panic if both are included.
+  log_layer_changes                 	:bool                               	,/// User configuration to do logging of layer changes or not.
+  pub caps_word                     	:Option<CapsWordState>              	,/// Tracks the caps-word state. Is Some(...) if caps-word is active and None otherwise.
+  #[cfg(target_os                   	="linux")]                          	 //
+  pub x11_repeat_rate               	:Option<KeyRepeatSettings>          	,/// Config items from `defcfg`.
+  #[cfg(target_os                   	="linux")]                          	 //
+  pub device_detect_mode            	:DeviceDetectMode                   	,/// Determines what types of devices to grab based on autodetection mode.
+  pub waiting_for_idle              	:HashSet<FakeKeyOnIdle>             	,/// Fake key actions that are waiting for a certain duration of keyboard idling.
+  pub vkeys_pending_release         	:HashMap<Coord, u16>                	,/// Fake key actions that are being held and are pending release. The key is the coordinate and the value is the number of ticks until release should be done.
+  pub ticks_since_idle              	:u16                                	,/// Number of ticks since kanata was idle.
+  movemouse_inherit_accel_state     	:bool                               	,/// If a mousemove action is active and another mousemove action is activated, reuse the acceleration state.
+  movemouse_smooth_diagonals        	:bool                               	,/// Removes jaggedneess of vertical and horizontal mouse movements when used simultaneously at the cost of increased mousemove actions latency.
+  movemouse_buffer                  	:Option<(Axis, CalculatedMouseMove)>	,/// If movemouse_smooth_diagonals is enabled, the previous mouse actions gets stored in this buffer and if the next movemouse action is opposite axis than the one stored in the buffer, both events are outputted at the same time.
+  override_release_on_activation    	:bool                               	,
+  dynamic_macro_max_presses         	:u16                                	,/// Configured maximum for dynamic macro recording, to protect users from themselves if they have accidentally left it on.
+  dynamic_macro_replay_behaviour    	:ReplayBehaviour                    	,/// Determines behaviour of replayed dynamic macros.
+  unmodded_keys                     	:Vec<KeyCode>                       	,/// Keys that should be unmodded. If non-empty, any modifier should be cleared.
+  unmodded_mods                     	:UnmodMods                          	,/// Modifiers to be cleared in case the above is non-empty.
+  unshifted_keys                    	:Vec<KeyCode>                       	,/// Keys that should be unshifted. If non-empty, left+right shift keys should be cleared.
+  last_pressed_key                  	:KeyCode                            	,/// Keep track of last pressed key for [`CustomAction::Repeat`].
+  #[cfg(feature                     	="tcp_server")]                     	 //
+  pub virtual_keys                  	:HashMap<String, usize>             	,/// Names of fake keys mapped to their index in the fake keys row
+  pub switch_max_key_timing         	:u16                                	,/// The maximum value of switch's key-timing item in the configuration.
+  #[cfg(feature                     	="tcp_server")]                     	 //
+  tcp_server_address                	:Option<SocketAddrWrapper>          	,//
+  pub gui_opts                      	:CfgOptionsGui                      	,/// Various GUI-related options.
+  pub allow_hardware_repeat         	:bool                               	,//
+  pub macro_on_press_cancel_duration	:u32                                	,/// When > 0, it means macros should be cancelled on the next press. Upon cancelling this should be set to 0.
+                                    	                                    	 ///↓ Stores user's saved clipboard contents.
+  pub saved_clipboard_content       	:SavedClipboardData                 	,
 }
 
 
@@ -669,7 +666,7 @@ impl Kanata {
 
         self.last_tick = match ms_elapsed {
             0 => self.last_tick,
-            1..=10 => now, // If too many ms elapsed, probably doing a tight loop of something that's quite expensive, e.g. click spamming. To avoid a growing ms_elapsed due to trying and failing to catch up, reset last_tick to the "actual now" instead the "past now" even though that means ticks will be missed - meaning there will be fewer than 1000 ticks in 1ms on average. In practice, there will already be fewer than 1000 ticks in 1ms when running expensive operations, this just avoids having tens to thousands of ticks all happening as soon as the expensive operations end.
+            1..=10 => now	,/// If too many ms elapsed, probably doing a tight loop of something that's quite expensive, e.g. click spamming. To avoid a growing ms_elapsed due to trying and failing to catch up, reset last_tick to the "actual now" instead the "past now" even though that means ticks will be missed - meaning there will be fewer than 1000 ticks in 1ms on average. In practice, there will already be fewer than 1000 ticks in 1ms when running expensive operations, this just avoids having tens to thousands of ticks all happening as soon as the expensive operations end.
             _ => instant::Instant::now(),
         };
 
@@ -974,7 +971,7 @@ impl Kanata {
                     UnmodMods::RCtl => KeyCode::RCtrl,
                     UnmodMods::LMet => KeyCode::LGui,
                     UnmodMods::RMet => KeyCode::RGui,
-                    _ => unreachable!("all bits of u8 should be covered"), // test_unmodmods_bits
+                    _ => unreachable!("all bits of u8 should be covered")	,/// test_unmodmods_bits
                 };
                 cur_keys.retain(|k| *k != kc);
             }
@@ -1129,7 +1126,7 @@ impl Kanata {
                 let mut prev_mouse_btn = None;
                 for custact in custacts.iter() {
                     match custact {
-                        CustomAction::Unicode(c) => self.kbd_out.send_unicode(*c)?, // For unicode, only send on the press. No repeat action is supported for this for now.
+                        CustomAction::Unicode(c) => self.kbd_out.send_unicode(*c)?	,/// For unicode, only send on the press. No repeat action is supported for this for now.
                         CustomAction::LiveReload => {
                             live_reload_requested = true;
                             log::info!(
