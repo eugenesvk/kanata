@@ -117,8 +117,8 @@ pub struct Kanata {
     continue_if_no_devices: bool, // Tracks the Linux user configuration to continue or abort if no devices are found.
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     pub include_names: Option<Vec<String>>, // Tracks the Linux/Macos user configuration for device names (instead of paths) that should be included for interception and processing by kanata.
-    #[cfg(target_os = "linux")]
-    pub exclude_names: Option<Vec<String>>, // Tracks the Linux user configuration for device names (instead of paths) that should be excluded for interception and processing by kanata.
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    pub exclude_names: Option<Vec<String>>, // Tracks the Linux/Macos user configuration for device names (instead of paths) that should be excluded for interception and processing by kanata.
     #[cfg(all(feature = "interception_driver", target_os = "windows"))]
     intercept_mouse_hwids_exclude: Option<Vec<[u8; HWID_ARR_SZ]>>, // Used to know which mouse input devices to exclude from processing inputs by kanata. This is mutually exclusive from `intercept_mouse_hwids` and kanata will panic if both are included.
     #[cfg(all(feature = "interception_driver", target_os = "windows"))]
@@ -297,7 +297,9 @@ impl Kanata {
             overrides: cfg.overrides,
             override_states: OverrideStates::new(),
             #[cfg(target_os = "macos")]
-            include_names: cfg.options.macos_dev_names_include,
+            include_names: cfg.options.macos_opts.macos_dev_names_include,
+            #[cfg(target_os = "macos")]
+            exclude_names: cfg.options.macos_opts.macos_dev_names_exclude,
             #[cfg(target_os = "linux")]
             kbd_in_paths: cfg.options.linux_opts.linux_dev,
             #[cfg(target_os = "linux")]
@@ -424,7 +426,9 @@ impl Kanata {
             overrides: cfg.overrides,
             override_states: OverrideStates::new(),
             #[cfg(target_os = "macos")]
-            include_names: cfg.options.macos_dev_names_include,
+            include_names: cfg.options.macos_opts.macos_dev_names_include,
+            #[cfg(target_os = "macos")]
+            exclude_names: cfg.options.macos_opts.macos_dev_names_exclude,
             #[cfg(target_os = "linux")]
             kbd_in_paths: cfg.options.linux_opts.linux_dev,
             #[cfg(target_os = "linux")]
