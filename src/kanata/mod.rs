@@ -108,7 +108,7 @@ pub struct Kanata {
   pub sequences                     	:cfg::KeySeqsToFKeys                	,/// Valid sequences defined in the user configuration.
   pub dynamic_macros                	:HashMap<u16, Vec<DynamicMacroItem>>	,/// Stores the user recored dynamic macros.
   pub dynamic_macro_replay_state    	:Option<DynamicMacroReplayState>    	,/// Tracks the progress of an active dynamic macro. Is Some(...) when a dynamic macro is being replayed and None otherwise.
-  pub dynamic_macro_record_state    	:Option<DynamicMacroRecordState>    	,/// Tracks the the inputs for a dynamic macro recording. Is Some(...) when a dynamic macro is being recorded and None otherwise.
+  pub dynamic_macro_record_state    	:Option<DynamicMacroRecordState>    	,/// Tracks the inputs for a dynamic macro recording. Is Some(...) when a dynamic macro is being recorded and None otherwise.
   pub overrides                     	:Overrides                          	,/// Global overrides defined in the user configuration.
   pub override_states               	:OverrideStates                     	,/// Reusable allocations to help with computing whether overrides are active based on key outputs.
   last_tick                         	:instant::Instant                   	,/// Time of the last tick to know how many tick iterations to run, to achieve a 1ms tick interval more closely.
