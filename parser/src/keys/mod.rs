@@ -175,20 +175,20 @@ pub fn str_to_oscode(s: &str) -> Option<OsCode> {
     "Tab"|"tab"|"⭾"|"↹"                 	=> OsCode::KEY_TAB,
     "Quote"|"apo"|"apos"                	=> OsCode::KEY_APOSTROPHE,
     "kp="|"clr"                         	=> OsCode::KEY_CLEAR,
-    "Enter"|"ret"|"return"|"ent"|"enter"|"⏎"|"↩"|"⌤"|"␤"=> OsCode::KEY_ENTER,
+    "Enter"|"ret"|"return"|"ent"|"enter"|"⏎"|"↩"|"↵"|"↲"|"⤶"|"⎆"|"⌤"|"␤"=> OsCode::KEY_ENTER,
     "Semicolon"|"scln"|"︔"=>OsCode::KEY_SEMICOLON,"Comma"|"comm"|"⸴"=>OsCode::KEY_COMMA,"period"|"．"=>OsCode::KEY_DOT,
     "Slash"|"⁄"=>OsCode::KEY_SLASH,"Backslash"|"bksl"|"⧵"|"＼"=>OsCode::KEY_BACKSLASH,
     // Modifiers
     "ShiftLeft"|"lshift"|"lshft"|"lsft"|"shft"|"sft"|"‹⇧"	=> OsCode::KEY_LEFTSHIFT,"ShiftRight"|"RightShift"|"rshift"|"rshft"|"rsft"|"⇧›"	=> OsCode::KEY_RIGHTSHIFT,
-    "ControlLeft"|"lctrl"|"lctl"|"ctl"|"‹⎈"|"‹⌃"         	=> OsCode::KEY_LEFTCTRL ,"ControlRight"|"rctrl"|"rctl"|"⎈›"|"⌃›"  	=> OsCode::KEY_RIGHTCTRL,
-    "MetaLeft"|"lmeta"|"lmet"|"met"|"‹◆"|"‹⌘"|"‹❖"       	=> OsCode::KEY_LEFTMETA ,"MetaRight"|"rmeta"|"rmet"|"◆›"|"⌘›"|"❖›"	=> OsCode::KEY_RIGHTMETA,     // Also known as Windows, GUI, Comand, Super
-    "AltLeft"|"lalt"|"alt"|"‹⎇"|"‹⌥"                     	=> OsCode::KEY_LEFTALT,"AltRight"|"ralt"|"⎇›"|"⌥›"                	=> OsCode::KEY_RIGHTALT,
+    "ControlLeft"|"lctrl"|"lctl"|"ctl"|"‹⎈"|"‹⌃"         	=> OsCode::KEY_LEFTCTRL ,"ControlRight"|"rctrl"|"rctl"|"⎈›"|"⌃›"               	=> OsCode::KEY_RIGHTCTRL,
+    "MetaLeft"|"lmeta"|"lmet"|"met"|"‹◆"|"‹⌘"|"‹❖"|"‹⊞"  	=>OsCode::KEY_LEFTMETA  ,"MetaRight"|"rmeta"|"rmet"|"◆›"|"⌘›"|"❖›"|"⊞›"        	=> OsCode::KEY_RIGHTMETA,
+    "AltLeft"|"lalt"|"alt"|"‹⎇"|"‹⌥"                     	=> OsCode::KEY_LEFTALT  ,"AltRight"|"ralt"|"altgr"|"⎇›"|"⌥›"|"⇮"               	=> OsCode::KEY_RIGHTALT,
     "caps"|"⇪"                                           	=> OsCode::KEY_CAPSLOCK,
     "NumLock"|"nlck"|"nlk"|"⇭"                           	=> OsCode::KEY_NUMLOCK,
     // The kp<etc> keys are also known as the numpad keys. E.g. below is numpad enter.
     "Numpad0"|"kp0"|"🔢₀"=>OsCode::KEY_KP0,"Numpad1"|"kp1"|"🔢₁"=>OsCode::KEY_KP1,"Numpad2"|"kp2"|"🔢₂"=>OsCode::KEY_KP2,"Numpad3"|"kp3"|"🔢₃"=>OsCode::KEY_KP3,"Numpad4"|"kp4"|"🔢₄"=>OsCode::KEY_KP4,"Numpad5"|"kp5"|"🔢₅"=>OsCode::KEY_KP5,"Numpad6"|"kp6"|"🔢₆"=>OsCode::KEY_KP6,"Numpad7"|"kp7"|"🔢₇"=>OsCode::KEY_KP7,"Numpad8"|"kp8"|"🔢₈"=>OsCode::KEY_KP8,"Numpad9"|"kp9"|"🔢₉"=>OsCode::KEY_KP9,
     "NumpadSubtract"|"kp-"|"🔢₋"=>OsCode::KEY_KPMINUS,"NumpadAdd"|"kp+"|"🔢₊"=>OsCode::KEY_KPPLUS,"NumpadEqual"|"🔢₌"=>OsCode::KEY_KPEQUAL,"NumpadDivide"|"kp/"|"🔢⁄"=>OsCode::KEY_KPSLASH,"NumpadMultiply"|"kp*"|"🔢∗"=>OsCode::KEY_KPASTERISK,
-    "NumpadDecimal"|"kp."|"🔢．"=>OsCode::KEY_KPDOT,"NumpadEnter"|"kprt"|"🔢⏎"|"🔢↩"|"🔢⌤"|"🔢␤"=>OsCode::KEY_KPENTER,
+    "NumpadDecimal"|"kp."|"🔢．"=>OsCode::KEY_KPDOT,"NumpadEnter"|"kprt"|"🔢⏎"|"🔢↩"|"🔢↵"|"🔢↲"|"🔢⤶"|"🔢⎆"|"🔢⌤"|"🔢␤"=>OsCode::KEY_KPENTER,
     "NumpadComma"|"kp,"|"🔢⸴"=>OsCode::KEY_KPCOMMA,
     //
     "Escape"|"esc"|"⎋"                                         	=> OsCode::KEY_ESC,
@@ -203,9 +203,9 @@ pub fn str_to_oscode(s: &str) -> Option<OsCode> {
     "Delete"|"del"|"␡"|"⌦"                                     	=> OsCode::KEY_DELETE,
     "Insert"|"ins"|"⎀"                                         	=> OsCode::KEY_INSERT,
     "BrowserBack"|"bck"                                        	=> OsCode::KEY_BACK,"BrowserForward"|"fwd"	=> OsCode::KEY_FORWARD,
-    "ArrowDown"|"down"|"▼"                                     	=>OsCode::KEY_DOWN                        	,"ArrowUp"|"up"|"▲"                       	=>OsCode::KEY_UP,"lft"|"ArrowLeft"|"left"|"◀"=>OsCode::KEY_LEFT,"ArrowRight"|"rght"|"▶"=>OsCode::KEY_RIGHT,
-    "PageDown"|"pgdn"|"⇟"                                      	=>OsCode::KEY_PAGEDOWN                    	,"PageUp"|"pgup"|"⇞"                      	=>OsCode::KEY_PAGEUP,
-    "Home"|"home"|"⇤"|"⤒"|"↖"                                  	=> OsCode::KEY_HOME                       	,"End"|"end"|"⇥"|"⤓"|"↘"                  	=> OsCode::KEY_END,
+    "ArrowDown"|"down"|"▼"|"↓"                                 	=>OsCode::KEY_DOWN                        	,"ArrowUp"|"up"|"▲"|"↑"                   	=>OsCode::KEY_UP,"ArrowLeft"|"lft"|"left"|"◀"|"←"	=>OsCode::KEY_LEFT,"ArrowRight"|"rght"|"▶"|"→"	=>OsCode::KEY_RIGHT,
+    "PageDown"|"pgdn"|"⇟"|"⎘"                                  	=>OsCode::KEY_PAGEDOWN                    	,"PageUp"|"pgup"|"⇞"|"⎗"                  	=>OsCode::KEY_PAGEUP,
+    "Home"|"home"|"⇤"|"⤒"|"↖"|"⇱"                              	=>OsCode::KEY_HOME                        	,"End"|"end"|"⇥"|"⤓"|"↘"|"⇲"              	=>OsCode::KEY_END,
     "MediaTrackPrevious"|"prev"|"◀◀"                           	=> OsCode::KEY_PREVIOUSSONG               	,"MediaTrackNext"|"next"|"▶▶"             	=> OsCode::KEY_NEXTSONG,"MediaPlayPause"|"pp"|"▶⏸"	=> OsCode::KEY_PLAYPAUSE,
     "brdown"|"brdwn"|"brdn"|"🔅"                                	=> OsCode::KEY_BRIGHTNESSDOWN             	,"brup"|"bru"|"🔆"                         	=> OsCode::KEY_BRIGHTNESSUP,
     "VolumeDown"|"voldwn"|"vold"|"🔉"|"🔈−"|"🔈➖"|"🔈₋"|"🔈⊖"       	=> OsCode::KEY_VOLUMEDOWN                 	,"VolumeUp"|"volu"|"🔊"|"🔈+"|"🔈➕"|"🔈₊"|"🔈⊕"	=> OsCode::KEY_VOLUMEUP,"VolumeMute"|"mute"  | "🔇"|"🔈⓪"|"🔈⓿"|"🔈₀"	=> OsCode::KEY_MUTE,
@@ -229,9 +229,9 @@ pub fn str_to_oscode(s: &str) -> Option<OsCode> {
     "IntlRo"|"ro"                     	=> OsCode::KEY_RO,
 
     #[cfg(any(target_os="linux", target_os="unknown"))]
-    "PrintScreen"|"prtsc"|"prnt"	=> OsCode::KEY_SYSRQ,
+    "PrintScreen"|"prtsc"|"prnt"|"⎙" => OsCode::KEY_SYSRQ,
     #[cfg(target_os="windows")]
-    "PrintScreen"|"prtsc"|"prnt"	=> OsCode::KEY_PRINT,
+    "PrintScreen"|"prtsc"|"prnt"|"⎙" => OsCode::KEY_PRINT,
 
     // NOTE: these are linux and interception-only due to missing implementation for LLHOOK.
     "mlft"|"mouseleft"|"🖰1"|"‹🖰" 	=> OsCode::BTN_LEFT,
