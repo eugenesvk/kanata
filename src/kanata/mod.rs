@@ -1541,7 +1541,7 @@ impl Kanata {
                         | CustomAction::Unmodded { .. }
                         | CustomAction::Unshifted { .. }
                         // Note: ReverseReleaseOrder is already handled earlier on.
-                        | CustomAction::ReverseReleaseOrder { .. }
+                        | CustomAction::ReverseReleaseOrder
                         | CustomAction::CancelMacroOnRelease => {}
                     }
                 }
