@@ -261,6 +261,7 @@ pub fn str_to_oscode(s: &str) -> Option<OsCode> {
     "lpad"|"LaunchPad"                                                 	=> OsCode::KEY_253,
     // Keys that behave as no-ops but can be used in sequences. Also see: POTENTIAL PROBLEM - G-keys
     "nop0" => OsCode::KEY_676,"nop1" => OsCode::KEY_677,"nop2" => OsCode::KEY_678,"nop3" => OsCode::KEY_679,"nop4" => OsCode::KEY_680,"nop5" => OsCode::KEY_681,"nop6" => OsCode::KEY_682,"nop7" => OsCode::KEY_683,"nop8" => OsCode::KEY_684,"nop9" => OsCode::KEY_685,
+    "mvmt"|"mousemovement"|"🖰mv" => OsCode::KEY_766, // has no output mapping. only intended to be used in the input position, in conjunction with `mouse-movement-key mvmt`
     _ => return None,
   })
 }
@@ -1039,7 +1040,7 @@ pub enum OsCode {
     KEY_763 = 763,
     KEY_764 = 764,
     KEY_765 = 765,
-    KEY_766 = 766,
+    KEY_766 = 766, // aliased to mvmt as a dummy input for use with mouse-movement-key
 
     KEY_MAX = 767,
 }

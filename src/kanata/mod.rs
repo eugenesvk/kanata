@@ -157,8 +157,10 @@ pub struct Kanata {
   pub gui_opts                      	:CfgOptionsGui                      	,/// Various GUI-related options.
   pub allow_hardware_repeat         	:bool                               	,//
   pub macro_on_press_cancel_duration	:u32                                	,/// When > 0, it means macros should be cancelled on the next press. Upon cancelling this should be set to 0.
-                                    	                                    	 ///↓ Stores user's saved clipboard contents.
-  pub saved_clipboard_content       	:SavedClipboardData                 	,
+  pub saved_clipboard_content       	:SavedClipboardData                 	,/// Stores user's saved clipboard contents.
+                                    	                                    	 ///↓ if set, key taps of this code are sent whenever mouse movement events are passed through
+  #[cfg(any(all(target_os="windows",feature="interception_driver"),target_os="linux",target_os="unknown"))]
+  mouse_movement_key: Arc<Mutex<Option<OsCode>>>,
 }
 
 
@@ -357,6 +359,8 @@ impl Kanata {
             allow_hardware_repeat: cfg.options.allow_hardware_repeat,
             macro_on_press_cancel_duration: 0,
             saved_clipboard_content: Default::default(),
+            #[cfg(any(all(target_os="windows",feature="interception_driver"),target_os="linux",target_os="unknown"))]
+            mouse_movement_key: Arc::new(Mutex::new(cfg.options.mouse_movement_key)),
         })
     }
     /// Create a new configuration from a file, wrapped in an Arc<Mutex<_>>
@@ -489,6 +493,8 @@ impl Kanata {
             allow_hardware_repeat: cfg.options.allow_hardware_repeat,
             macro_on_press_cancel_duration: 0,
             saved_clipboard_content: Default::default(),
+            #[cfg(any(all(target_os="windows",feature="interception_driver"),target_os="linux",target_os="unknown"))]
+            mouse_movement_key: Arc::new(Mutex::new(cfg.options.mouse_movement_key)),
         })
     }
 
@@ -582,6 +588,17 @@ impl Kanata {
         self.prev_layer = cur_layer;
         self.print_layer(cur_layer);
         self.macro_on_press_cancel_duration = 0;
+
+        #[cfg(any(all(target_os="windows",feature="interception_driver"),target_os="linux",target_os="unknown"))] {
+            #[cfg(all(target_os="windows",feature="interception_driver"))] {
+                if            self.mouse_movement_key.lock().is_none()
+                    && cfg.options.mouse_movement_key       .is_some() {
+                    log::warn!("defcfg option mouse-movement-key will not take effect until kanata is restarted!");
+                }
+            }
+            *self.mouse_movement_key.lock() = cfg.options.mouse_movement_key;
+        }
+
         #[cfg(not(target_os = "linux"))]
         {
             PRESSED_KEYS.lock().clear();
