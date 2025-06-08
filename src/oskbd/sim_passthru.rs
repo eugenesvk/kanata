@@ -61,7 +61,7 @@ impl KbdOut {
         Ok(Self {})
     }
     #[cfg(all(target_os = "linux", feature = "passthru_ahk"))]
-    pub fn new(_s: &Option<String>, _tp: bool, _bustype: evdev::BusType, tx: Option<ASender<InputEvent>>) -> Result<Self, io::Error> {
+    pub fn new(_s: &Option<String>, _tp: bool, _name: &str, _bustype: evdev::BusType, tx: Option<ASender<InputEvent>>) -> Result<Self, io::Error> {
         Ok(Self { tx_kout: tx })
     }
     #[cfg(target_os = "linux")]
