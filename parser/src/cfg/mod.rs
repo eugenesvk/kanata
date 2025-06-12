@@ -1914,11 +1914,11 @@ fn parse_tap_hold(
         bail!(
             r"tap-hold expects 4 items after it, got {}.
 Params in order:
-<tap-timeout> <hold-timeout> <tap-action> <hold-action>",
+<tap-repress-timeout> <hold-timeout> <tap-action> <hold-action>",
             ac_params.len(),
         )
     }
-    let tap_timeout = parse_u16(&ac_params[0], s, "tap timeout")?;
+    let tap_repress_timeout = parse_u16(&ac_params[0], s, "tap repress timeout")?;
     let hold_timeout = parse_non_zero_u16(&ac_params[1], s, "hold timeout")?;
     let tap_action = parse_action(&ac_params[2], s)?;
     let hold_action = parse_action(&ac_params[3], s)?;
@@ -1927,7 +1927,7 @@ Params in order:
     }
     Ok(s.a.sref(Action::HoldTap(s.a.sref(HoldTapAction {
         config,
-        tap_hold_interval: tap_timeout,
+        tap_hold_interval: tap_repress_timeout,
         timeout: hold_timeout,
         tap: *tap_action,
         hold: *hold_action,
@@ -1944,11 +1944,11 @@ fn parse_tap_hold_timeout(
         bail!(
             r"tap-hold-(press|release)-timeout expects 5 items after it, got {}.
 Params in order:
-<tap-timeout> <hold-timeout> <tap-action> <hold-action> <timeout-action>",
+<tap-repress-timeout> <hold-timeout> <tap-action> <hold-action> <timeout-action>",
             ac_params.len(),
         )
     }
-    let tap_timeout = parse_u16(&ac_params[0], s, "tap timeout")?;
+    let tap_repress_timeout = parse_u16(&ac_params[0], s, "tap repress timeout")?;
     let hold_timeout = parse_non_zero_u16(&ac_params[1], s, "hold timeout")?;
     let tap_action = parse_action(&ac_params[2], s)?;
     let hold_action = parse_action(&ac_params[3], s)?;
@@ -1958,7 +1958,7 @@ Params in order:
     }
     Ok(s.a.sref(Action::HoldTap(s.a.sref(HoldTapAction {
         config,
-        tap_hold_interval: tap_timeout,
+        tap_hold_interval: tap_repress_timeout,
         timeout: hold_timeout,
         tap: *tap_action,
         hold: *hold_action,
@@ -1976,12 +1976,12 @@ fn parse_tap_hold_keys(
         bail!(
             r"tap-hold-{}-keys expects 5 items after it, got {}.
 Params in order:
-<tap-timeout> <hold-timeout> <tap-action> <hold-action> <tap-trigger-keys>",
+<tap-repress-timeout> <hold-timeout> <tap-action> <hold-action> <tap-trigger-keys>",
             custom_name,
             ac_params.len(),
         )
     }
-    let tap_timeout = parse_u16(&ac_params[0], s, "tap timeout")?;
+    let tap_repress_timeout = parse_u16(&ac_params[0], s, "tap repress timeout")?;
     let hold_timeout = parse_non_zero_u16(&ac_params[1], s, "hold timeout")?;
     let tap_action = parse_action(&ac_params[2], s)?;
     let hold_action = parse_action(&ac_params[3], s)?;
@@ -1991,7 +1991,7 @@ Params in order:
     }
     Ok(s.a.sref(Action::HoldTap(s.a.sref(HoldTapAction {
         config: HoldTapConfig::Custom(custom_func(&tap_trigger_keys, &s.a)),
-        tap_hold_interval: tap_timeout,
+        tap_hold_interval: tap_repress_timeout,
         timeout: hold_timeout,
         tap: *tap_action,
         hold: *hold_action,
